@@ -1,3 +1,6 @@
 rootProject.name = 'sb12_modoo_playlist'
 include 'core'
 include 'infra'
+include 'module-api'
+include 'module-batch'
+include 'module-realtime'
