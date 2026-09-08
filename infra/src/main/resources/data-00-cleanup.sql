@@ -1,7 +1,7 @@
 SET FOREIGN_KEY_CHECKS = 0;
 
 DELETE FROM user_similarities;
-DELETE FROM user_preference_tag;
+DELETE FROM user_preference_tags;
 DELETE FROM watching_sessions;
 DELETE FROM user_content_interactions;
 DELETE FROM playlist_contents;

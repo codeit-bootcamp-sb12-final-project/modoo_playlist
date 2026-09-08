@@ -1,12 +1,13 @@
 package com.codeit.modoo_playlist.core.global.common.dto.base;
 
+import java.time.Instant;
+import java.util.List;
+
 import com.querydsl.core.types.Order;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-
-import java.time.Instant;
-import java.util.List;
 
 @Getter
 @AllArgsConstructor

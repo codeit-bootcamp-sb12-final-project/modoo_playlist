@@ -1,12 +1,11 @@
 package com.codeit.modoo_playlist.core.global.exception;
 
-import com.codeit.modoo_playlist.core.global.exception.BaseException;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 // GlobalExceptionHandler에서 에러 응답 바디로 사용
 // timestamp, code, message, details, exceptionType, status 포함한 구조화된 에러 응답

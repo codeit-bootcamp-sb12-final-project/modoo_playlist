@@ -1,12 +1,14 @@
 package com.codeit.modoo_playlist.core.domain.user.entity;
 
+import java.time.Instant;
+
 import com.codeit.modoo_playlist.core.global.common.entity.baseentity.BaseUpdatableEntity;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
-import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

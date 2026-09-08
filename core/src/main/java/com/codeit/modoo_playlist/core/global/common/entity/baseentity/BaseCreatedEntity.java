@@ -2,7 +2,7 @@ package com.codeit.modoo_playlist.core.global.common.entity.baseentity;
 
 import java.time.Instant;
 
-import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import jakarta.persistence.Column;
@@ -20,10 +20,10 @@ import lombok.experimental.SuperBuilder;
 @ToString
 @EntityListeners(AuditingEntityListener.class)
 @SuperBuilder
-public class BaseUpdatableEntity extends BaseEntity{
+public abstract class BaseCreatedEntity {
 
-    @LastModifiedDate
-    @Column(name = "updated_at", nullable = false,
-            columnDefinition = "timestamp with time zone default now()")
-    private Instant updatedAt;
+	@CreatedDate
+	@Column(name = "created_at", updatable = false, nullable = false)
+	private Instant createdAt;
+
 }

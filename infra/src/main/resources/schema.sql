@@ -5,7 +5,7 @@ DROP TABLE IF EXISTS `playlist_subscriptions`;
 DROP TABLE IF EXISTS `social_accounts`;
 DROP TABLE IF EXISTS `content_videos`;
 DROP TABLE IF EXISTS `watching_sessions`;
-DROP TABLE IF EXISTS `user_preference_tag`;
+DROP TABLE IF EXISTS `user_preference_tags`;
 DROP TABLE IF EXISTS `content_review_summaries`;
 DROP TABLE IF EXISTS `playlist_contents`;
 DROP TABLE IF EXISTS `notifications`;
@@ -275,7 +275,7 @@ CREATE TABLE `user_content_interactions` (
 );
 
 
-CREATE TABLE `user_preference_tag` (
+CREATE TABLE `user_preference_tags` (
 	`user_id`	BINARY(16)	NOT NULL,
 	`tag_id`	BINARY(16)	NOT NULL,
 	`score`	DECIMAL(10,4)	NOT NULL	DEFAULT 0.0000	COMMENT '시간감쇠·IDF 반영 최종 점수',
@@ -448,11 +448,11 @@ ALTER TABLE `user_content_interactions` ADD CONSTRAINT `FK_contents_TO_user_cont
 	FOREIGN KEY (`content_id`) REFERENCES `contents` (`id`)
 	ON UPDATE RESTRICT ON DELETE CASCADE;
 
-ALTER TABLE `user_preference_tag` ADD CONSTRAINT `FK_users_TO_user_preference_tag_1`
+ALTER TABLE `user_preference_tags` ADD CONSTRAINT `FK_users_TO_user_preference_tags_1`
 	FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
 	ON UPDATE RESTRICT ON DELETE CASCADE;
 
-ALTER TABLE `user_preference_tag` ADD CONSTRAINT `FK_tags_TO_user_preference_tag_1`
+ALTER TABLE `user_preference_tags` ADD CONSTRAINT `FK_tags_TO_user_preference_tags_1`
 	FOREIGN KEY (`tag_id`) REFERENCES `tags` (`id`)
 	ON UPDATE RESTRICT ON DELETE CASCADE;
 

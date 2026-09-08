@@ -1,10 +1,10 @@
 package com.codeit.modoo_playlist.core.global.exception;
 
-import lombok.Getter;
-
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+
+import lombok.Getter;
 
 @Getter
 public class BaseException extends RuntimeException {
