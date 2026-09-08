@@ -1,7 +1,9 @@
-package com.codeit.modoo_playlist.infra.exception;
+package com.codeit.modoo_playlist.moduleapi.exception;
 
+import com.codeit.modoo_playlist.core.global.exception.BaseException;
+import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
+import com.codeit.modoo_playlist.core.global.exception.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -65,29 +67,29 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
-    // 400 - @RequestPart @Valid 실패 (multipart) → 필드별 에러맵 반환
-    @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<ErrorResponse> handleConstraintViolation(ConstraintViolationException e) {
-        log.error("요청 유효성 검사 실패(multipart) : {}", e.getMessage());
-
-        Map<String, Object> details = new LinkedHashMap<>();
-        e.getConstraintViolations().forEach(cv -> {
-            // 경로에서 마지막 필드명만 추출 (ex. create.user.username -> username)
-            String path = cv.getPropertyPath().toString();
-            String field = path.contains(".") ? path.substring(path.lastIndexOf('.') + 1) : path;
-            details.put(field, cv.getMessage());
-        });
-
-        ErrorResponse response = new ErrorResponse(
-                Instant.now(),
-                "VALIDATION_ERROR",
-                "요청 데이터 유효성 검사에 실패하였습니다.",
-                details,
-                e.getClass().getSimpleName(),
-                HttpStatus.BAD_REQUEST.value()
-        );
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-    }
+//    // 400 - @RequestPart @Valid 실패 (multipart) → 필드별 에러맵 반환
+//    @ExceptionHandler(ConstraintViolationException.class)
+//    public ResponseEntity<ErrorResponse> handleConstraintViolation(ConstraintViolationException e) {
+//        log.error("요청 유효성 검사 실패(multipart) : {}", e.getMessage());
+//
+//        Map<String, Object> details = new LinkedHashMap<>();
+//        e.getConstraintViolations().forEach(cv -> {
+//            // 경로에서 마지막 필드명만 추출 (ex. create.user.username -> username)
+//            String path = cv.getPropertyPath().toString();
+//            String field = path.contains(".") ? path.substring(path.lastIndexOf('.') + 1) : path;
+//            details.put(field, cv.getMessage());
+//        });
+//
+//        ErrorResponse response = new ErrorResponse(
+//                Instant.now(),
+//                "VALIDATION_ERROR",
+//                "요청 데이터 유효성 검사에 실패하였습니다.",
+//                details,
+//                e.getClass().getSimpleName(),
+//                HttpStatus.BAD_REQUEST.value()
+//        );
+//        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+//    }
 
     // 404 - 데이터 없음
     @ExceptionHandler(NoSuchElementException.class)

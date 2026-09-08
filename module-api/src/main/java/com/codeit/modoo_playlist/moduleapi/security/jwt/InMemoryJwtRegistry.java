@@ -1,6 +1,6 @@
 package com.codeit.modoo_playlist.moduleapi.security.jwt;
 
-import com.codeit.blog.dto.jwt.JwtInformation;
+import com.codeit.modoo_playlist.moduleapi.dto.jwt.JwtInformation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 

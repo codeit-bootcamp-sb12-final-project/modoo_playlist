@@ -1,7 +1,7 @@
 package com.codeit.modoo_playlist.moduleapi.security.jwt;
 
-import com.codeit.blog.exception.ErrorResponse;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.codeit.modoo_playlist.core.global.exception.ErrorResponse;
+import tools.jackson.databind.json.JsonMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -29,7 +29,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider tokenProvider;
     private final UserDetailsService userDetailsService;
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;//spring4는 jackson3으로 구성하는 듯?
     private final JwtRegistry<UUID> jwtRegistry;
     private final RoleHierarchy roleHierarchy;
 

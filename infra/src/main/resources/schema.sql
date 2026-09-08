@@ -29,7 +29,7 @@ SET FOREIGN_KEY_CHECKS = 1;
 CREATE TABLE `users` (
 	`id`	BINARY(16)	NOT NULL,
 	`email`	VARCHAR(255)	NOT NULL	COMMENT '소셜 생성 계정과 일반 가입이 같은 이메일을 나누어 갖지 못하게 막는 지점',
-	`name`	VARCHAR(50)	NOT NULL,
+	`username`	VARCHAR(50)	NOT NULL,
 	`password`	VARCHAR(255)	NULL	COMMENT 'NULL = 소셜 전용 계정(비밀번호 로그인/초기화 불가). 일반 가입은 항상 값 존재',
 	`profile_image_url`	VARCHAR(500)	NULL,
 	`role`	VARCHAR(20)	NOT NULL	DEFAULT 'USER'	COMMENT 'USER / ADMIN',
@@ -37,7 +37,7 @@ CREATE TABLE `users` (
 	`temp_password`	VARCHAR(255)	NULL,
 	`temp_password_expires_at`	DATETIME(6)	NULL,
 	`created_at`	DATETIME(6)	NOT NULL	DEFAULT CURRENT_TIMESTAMP(6),
-	`updated_at`	DATETIME(6)	NULL	DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+	`updated_at`	DATETIME(6)	NOT NULL	DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
 	`deleted_at`	DATETIME(6)	NULL,
 
 	PRIMARY KEY (`id`),

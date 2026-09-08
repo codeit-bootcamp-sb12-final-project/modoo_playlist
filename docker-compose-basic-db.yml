@@ -1,0 +1,51 @@
+services:
+#  해당 compose 실행 명령어
+#  docker compose -f docker-compose-basic-db.yml up -d
+  # =========================
+  # MySQL - rds
+  # =========================
+
+  mysql:
+    image: mysql:8.4
+    container_name: modoo_mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: modoo_mysql
+      TZ: Asia/Seoul
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./infra/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./infra/src/main/resources/data-01-tags.sql:/docker-entrypoint-initdb.d/03-data-01-tags.sql:ro
+      - ./infra/src/main/resources/data-02-contents.sql:/docker-entrypoint-initdb.d/04-data-02-contents.sql:ro
+      - ./infra/src/main/resources/data-03-users.sql:/docker-entrypoint-initdb.d/05-data-03-users.sql:ro
+      - ./infra/src/main/resources/data-04-reviews.sql:/docker-entrypoint-initdb.d/06-data-04-reviews.sql:ro
+      - ./infra/src/main/resources/data-05-interactions.sql:/docker-entrypoint-initdb.d/07-data-05-interactions.sql:ro
+      - ./infra/src/main/resources/data-06-playlists.sql:/docker-entrypoint-initdb.d/08-data-06-playlists.sql:ro
+      - ./infra/src/main/resources/data-07-follows.sql:/docker-entrypoint-initdb.d/09-data-07-follows.sql:ro
+      - ./infra/src/main/resources/data-08-watching-sessions.sql:/docker-entrypoint-initdb.d/10-data-08-watching-sessions.sql:ro
+    restart: unless-stopped
+
+
+  # =========================
+  # Redis - 엘라스틱 캐시
+  # =========================
+
+  redis:
+    image: redis:7-alpine
+    container_name: modoo_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+
+# =========================
+# Volumes
+# =========================
+
+volumes:
+  mysql-data:
+  redis-data:

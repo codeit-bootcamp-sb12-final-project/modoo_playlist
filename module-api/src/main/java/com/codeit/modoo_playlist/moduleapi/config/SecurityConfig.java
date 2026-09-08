@@ -1,11 +1,11 @@
 package com.codeit.modoo_playlist.moduleapi.config;
 
-import com.codeit.blog.entity.UserRole;
-import com.codeit.blog.security.Http403ForbiddenAccessDeniedHandler;
-import com.codeit.blog.security.LoginFailureHandler;
-import com.codeit.blog.security.SpaCsrfTokenRequestHandler;
-import com.codeit.blog.security.jwt.*;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.codeit.modoo_playlist.moduleapi.domain.user.entity.UserRole;
+import com.codeit.modoo_playlist.moduleapi.security.Http403ForbiddenAccessDeniedHandler;
+import com.codeit.modoo_playlist.moduleapi.security.LoginFailureHandler;
+import com.codeit.modoo_playlist.moduleapi.security.SpaCsrfTokenRequestHandler;
+import com.codeit.modoo_playlist.moduleapi.security.jwt.*;
+import tools.jackson.databind.json.JsonMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
@@ -42,7 +42,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(
             HttpSecurity http,
-            ObjectMapper objectMapper,
+            JsonMapper objectMapper,
             Http403ForbiddenAccessDeniedHandler http403ForbiddenAccessDeniedHandler,
             JwtLoginSuccessHandler jwtLoginSuccessHandler,
             JwtLogoutHandler jwtLogoutHandler,

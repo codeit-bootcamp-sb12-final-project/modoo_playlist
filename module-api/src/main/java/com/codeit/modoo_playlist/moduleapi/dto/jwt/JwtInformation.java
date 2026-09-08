@@ -1,5 +1,6 @@
 package com.codeit.modoo_playlist.moduleapi.dto.jwt;
 
+import com.codeit.modoo_playlist.moduleapi.dto.UserDto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 

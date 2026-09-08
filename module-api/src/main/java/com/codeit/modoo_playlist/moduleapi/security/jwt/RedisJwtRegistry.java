@@ -1,10 +1,10 @@
 package com.codeit.modoo_playlist.moduleapi.security.jwt;
 
-import com.codeit.blog.dto.jwt.JwtInformation;
-import com.codeit.blog.store.KeyStore;
-import com.codeit.blog.store.ListStore;
-import com.codeit.blog.store.RedisKeyStore;
-import com.codeit.blog.store.RedisListStore;
+import com.codeit.modoo_playlist.moduleapi.dto.jwt.JwtInformation;
+import com.codeit.modoo_playlist.infra.store.KeyStore;
+import com.codeit.modoo_playlist.infra.store.ListStore;
+import com.codeit.modoo_playlist.infra.store.RedisKeyStore;
+import com.codeit.modoo_playlist.infra.store.RedisListStore;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;

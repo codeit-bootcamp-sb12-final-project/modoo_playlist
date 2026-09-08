@@ -1,5 +1,6 @@
-package com.codeit.modoo_playlist.infra.exception;
+package com.codeit.modoo_playlist.core.global.exception;
 
+import com.codeit.modoo_playlist.core.global.exception.BaseException;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 

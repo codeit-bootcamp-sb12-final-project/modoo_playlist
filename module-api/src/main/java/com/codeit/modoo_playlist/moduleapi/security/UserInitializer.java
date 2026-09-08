@@ -1,7 +1,7 @@
 package com.codeit.modoo_playlist.moduleapi.security;
 
-import com.codeit.blog.entity.User;
-import com.codeit.blog.repository.UserRepository;
+import com.codeit.modoo_playlist.moduleapi.domain.user.entity.User;
+import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;

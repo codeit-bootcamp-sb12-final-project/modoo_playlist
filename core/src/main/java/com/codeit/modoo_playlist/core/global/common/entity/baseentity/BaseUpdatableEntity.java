@@ -20,7 +20,7 @@ import java.time.Instant;
 @ToString
 @EntityListeners(AuditingEntityListener.class)
 @SuperBuilder
-public class BaseTimeEntity extends BaseEntity{
+public class BaseUpdatableEntity extends BaseEntity{
 
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false,

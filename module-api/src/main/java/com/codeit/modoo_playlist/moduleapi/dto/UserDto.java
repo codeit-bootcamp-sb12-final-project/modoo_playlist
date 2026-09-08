@@ -1,6 +1,6 @@
-package com.codeit.modoo_playlist.moduleapi.dto.jwt;
+package com.codeit.modoo_playlist.moduleapi.dto;
 
-import com.codeit.blog.entity.UserRole;
+import com.codeit.modoo_playlist.moduleapi.domain.user.entity.UserRole;
 
 import java.util.UUID;
 

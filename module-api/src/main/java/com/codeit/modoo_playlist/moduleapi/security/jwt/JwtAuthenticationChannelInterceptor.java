@@ -1,6 +1,6 @@
 package com.codeit.modoo_playlist.moduleapi.security.jwt;
 
-import com.codeit.modoo_playlist.infra.security.BlogUserDetailsService;
+//import com.codeit.modoo_playlist.infra.security.BlogUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -25,7 +25,6 @@ public class JwtAuthenticationChannelInterceptor implements ChannelInterceptor {
 
     private final JwtTokenProvider tokenProvider;
     private final RoleHierarchy roleHierarchy;
-    private final BlogUserDetailsService userDetailsService;
     private final JwtRegistry<UUID> jwtRegistry;
 
     @Override
@@ -39,16 +38,16 @@ public class JwtAuthenticationChannelInterceptor implements ChannelInterceptor {
             if (tokenProvider.validateAccessToken(token)
                     && jwtRegistry.hasActiveJwtInformationByAccessToken(token)) {
                 String username = tokenProvider.getUsernameFromToken(token);
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+//                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(
-                                userDetails,
-                                null,
-                                roleHierarchy.getReachableGrantedAuthorities(userDetails.getAuthorities())
-                        );
+//                UsernamePasswordAuthenticationToken authentication =
+//                        new UsernamePasswordAuthenticationToken(
+//                                userDetails,
+//                                null,
+//                                roleHierarchy.getReachableGrantedAuthorities(userDetails.getAuthorities())
+//                        );
 
-                accessor.setUser(authentication);
+//                accessor.setUser(authentication);
                 log.debug("Set authentication for user: {}", username);
             } else {
                 log.debug("Invalid JWT token");

@@ -1,22 +1,18 @@
 package com.codeit.modoo_playlist.moduleapi.security.jwt;
 
-import com.codeit.blog.dto.jwt.UserDto;
-import com.codeit.modoo_playlist.infra.security.BlogUserDetails;
+//import com.codeit.modoo_playlist.infra.security.BlogUserDetails;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
-import com.nimbusds.jwt.JWTClaimsSet;
-import com.nimbusds.jwt.SignedJWT;
+    import com.nimbusds.jwt.SignedJWT;
 import jakarta.servlet.http.Cookie;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.stereotype.Component;
+    import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -34,64 +30,65 @@ public class JwtTokenProvider {
     private final JWSVerifier refreshTokenVerifier;
 
     public JwtTokenProvider(
-            @Value("${security.jwt.secret}") String secret,
-            @Value("${security.jwt.access-token-validity-seconds}") long accessTokenValiditySeconds,
-            @Value("${security.jwt.refresh-token-validity-seconds}") long refreshTokenValiditySeconds,
-            @Value("${security.jwt.issuer}") String issuer
+        @Value("${module-api.jwt.access-token.secret}") String accessTokenSecret,
+        @Value("${module-api.jwt.access-token.expiration-ms}") int accessTokenExpirationMs,
+        @Value("${module-api.jwt.refresh-token.secret}") String refreshTokenSecret,
+        @Value("${module-api.jwt.refresh-token.expiration-ms}") int refreshTokenExpirationMs,
+        @Value("${module-api.jwt.issuer}") String issuer
     ) throws JOSEException {
         this.issuer = issuer;
-        this.accessTokenExpirationMs = accessTokenValiditySeconds * 1000L;
-        this.refreshTokenExpirationMs = refreshTokenValiditySeconds * 1000L;
+        this.accessTokenExpirationMs = accessTokenExpirationMs * 1000L;
+        this.refreshTokenExpirationMs = refreshTokenExpirationMs * 1000L;
 
-        byte[] secretBytes = secret.getBytes(StandardCharsets.UTF_8);
+        byte[] secretBytes = accessTokenSecret.getBytes(StandardCharsets.UTF_8);
         this.accessTokenSigner = new MACSigner(secretBytes);
         this.accessTokenVerifier = new MACVerifier(secretBytes);
         this.refreshTokenSigner = new MACSigner(secretBytes);
         this.refreshTokenVerifier = new MACVerifier(secretBytes);
     }
 
-    public String generateAccessToken(BlogUserDetails userDetails) throws JOSEException {
-        return generateToken(userDetails, accessTokenExpirationMs, accessTokenSigner, "access");
-    }
-
-    public String generateRefreshToken(BlogUserDetails userDetails) throws JOSEException {
-        return generateToken(userDetails, refreshTokenExpirationMs, refreshTokenSigner, "refresh");
-    }
-
-    private String generateToken(BlogUserDetails userDetails, long expirationMs, JWSSigner signer,
-            String tokenType) throws JOSEException {
-        String tokenId = UUID.randomUUID().toString();
-        UserDto user = userDetails.getUserDto();
-
-        Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + expirationMs);
-
-        JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
-                .subject(user.username())
-                .jwtID(tokenId)
-                .issuer(issuer)
-                .claim("userId", user.id().toString())
-                .claim("type", tokenType)
-                .claim("nickname", user.nickname())
-                .claim("email", user.email())
-                .claim("roles", userDetails.getAuthorities().stream()
-                        .map(GrantedAuthority::getAuthority)
-                        .collect(Collectors.toList()))
-                .issueTime(now)
-                .expirationTime(expiryDate)
-                .build();
-
-        SignedJWT signedJWT = new SignedJWT(
-                new JWSHeader(JWSAlgorithm.HS256),
-                claimsSet
-        );
-
-        signedJWT.sign(signer);
-        String token = signedJWT.serialize();
-
-        log.debug("Generated {} token for user: {}", tokenType, user.username());
-        return token;
-    }
+//    public String generateAccessToken(BlogUserDetails userDetails) throws JOSEException {
+//        return generateToken(userDetails, accessTokenExpirationMs, accessTokenSigner, "access");
+//    }
+//
+//    public String generateRefreshToken(BlogUserDetails userDetails) throws JOSEException {
+//        return generateToken(userDetails, refreshTokenExpirationMs, refreshTokenSigner, "refresh");
+//    }
+//
+//    private String generateToken(BlogUserDetails userDetails, long expirationMs, JWSSigner signer,
+//            String tokenType) throws JOSEException {
+//        String tokenId = UUID.randomUUID().toString();
+//        UserDto user = userDetails.getUserDto();
+//
+//        Date now = new Date();
+//        Date expiryDate = new Date(now.getTime() + expirationMs);
+//
+//        JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
+//                .subject(user.username())
+//                .jwtID(tokenId)
+//                .issuer(issuer)
+//                .claim("userId", user.id().toString())
+//                .claim("type", tokenType)
+//                .claim("nickname", user.nickname())
+//                .claim("email", user.email())
+//                .claim("roles", userDetails.getAuthorities().stream()
+//                        .map(GrantedAuthority::getAuthority)
+//                        .collect(Collectors.toList()))
+//                .issueTime(now)
+//                .expirationTime(expiryDate)
+//                .build();
+//
+//        SignedJWT signedJWT = new SignedJWT(
+//                new JWSHeader(JWSAlgorithm.HS256),
+//                claimsSet
+//        );
+//
+//        signedJWT.sign(signer);
+//        String token = signedJWT.serialize();
+//
+//        log.debug("Generated {} token for user: {}", tokenType, user.username());
+//        return token;
+//    }
 
     // 만료시간 조회 (RedisJwtRegistry의 TTL 설정용)
     public long getAccessTokenExpirationMs() {
