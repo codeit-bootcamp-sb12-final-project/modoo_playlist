@@ -90,15 +90,14 @@ CREATE TABLE `content_videos` (
 
 CREATE TABLE `content_sports` (
 	`content_id`	BINARY(16)	NOT NULL	COMMENT 'contents와 1:1. type=SPORT 인 행에만 존재',
+    `sport_type` VARCHAR(50) NOT NULL    COMMENT 'Soccer / Basketball / Baseball / MMA 등',
 	`league`	VARCHAR(100)	NULL	COMMENT 'strLeague. 필터에 쓰려면 tags(kind=GENRE)에도 넣을 것',
 	`season`	VARCHAR(20)	NULL	COMMENT 'strSeason (예: 2025-2026)',
 	`home_team`	VARCHAR(100)	NULL,
 	`away_team`	VARCHAR(100)	NULL,
-	`home_score`	INT	NULL	COMMENT '경기 전이면 NULL',
-	`away_score`	INT	NULL	COMMENT '경기 전이면 NULL',
 	`venue`	VARCHAR(100)	NULL,
-	`status`	VARCHAR(20)	NOT NULL	DEFAULT 'SCHEDULED'	COMMENT 'SCHEDULED / LIVE / FINISHED. LIVE여야 같이보기가 의미가 있다',
-	`kickoff_at`	DATETIME(6)	NULL	COMMENT 'dateEvent + strTime. contents.release_date는 날짜만 담는다',
+	`status`	VARCHAR(20)	NOT NULL	DEFAULT 'SCHEDULED'	COMMENT 'SCHEDULED / LIVE / FINISHED. LIVE여야 같이보기가 의미가 있다 CANCELED 추가정도',
+	`kickoff_at`	DATETIME(6)	NOT NULL	COMMENT 'dateEvent + strTime. contents.release_date는 날짜만 담는다',
 
 	PRIMARY KEY (`content_id`),
 	KEY `IDX_SPORTS_KICKOFF` (`status`, `kickoff_at`)	COMMENT '오늘 경기 / 곧 시작 질의용'
@@ -136,7 +135,7 @@ CREATE TABLE `content_embeddings` (
 CREATE TABLE `tags` (
 	`id`	BINARY(16)	NOT NULL,
 	`name`	VARCHAR(50)	NOT NULL	COMMENT 'LLM 표기 흔들림(SF/공상과학/sci-fi)을 정규화하는 지점',
-	`kind`	VARCHAR(20)	NOT NULL	COMMENT 'GENRE / THEME / MOOD. 추천 점수 계수 분기',
+	`kind`	VARCHAR(20)	NOT NULL	COMMENT 'GENRE / THEME / MOOD / KEYWORD. 추천 점수 계수 분기',
 	`created_at`	DATETIME(6)	NOT NULL	DEFAULT CURRENT_TIMESTAMP(6),
 
 	PRIMARY KEY (`id`),
