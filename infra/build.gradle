@@ -1,20 +1,35 @@
 plugins {
-    id 'java'
-}
-
-group = 'com.codeit.modoo_playlist'
-version = '1.0-SNAPSHOT'
-
-repositories {
-    mavenCentral()
+    id 'java-library'
 }
 
 dependencies {
-    testImplementation platform('org.junit:junit-bom:5.10.0')
-    testImplementation 'org.junit.jupiter:junit-jupiter'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-}
+    implementation project(':core')
 
-test {
-    useJUnitPlatform()
+    // Database
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+    // Redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+    // MVC, Interceptor, ExceptionHandler
+    implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+
+    // Jakarta Validation
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    // LoggingAspect
+    implementation 'org.springframework.boot:spring-boot-starter-aop'
+
+    // RedisConfig, ErrorResponse
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+
+    // QueryDSL 실행
+    implementation 'io.github.openfeign.querydsl:querydsl-jpa:7.5'
+
+    // Swagger / OpenAPI
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.1'
+
+    // AWS S3
+    implementation platform('software.amazon.awssdk:bom:2.54.3')
+    implementation 'software.amazon.awssdk:s3'
 }
