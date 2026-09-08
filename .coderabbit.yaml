@@ -22,6 +22,12 @@ tone_instructions: >
 #                        리뷰 상세 설정                              #
 # ================================================================ #
 reviews:
+  # 자동 리뷰를 적용할 base 브랜치
+  auto_review:
+    base_branches:
+      - "main"
+      - "dev"
+
   # 리뷰 강도 설정
   # - quiet:     코멘트를 최소화하고 요약 위주로만 리뷰
   # - chill:     버그/보안 위주로 부드럽게. 팀이 CodeRabbit에 익숙하지 않거나
