@@ -15,6 +15,14 @@ services:
     volumes:
       - mysql-data:/var/lib/mysql
       - ./infra/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./infra/src/main/resources/data-01-tags.sql:/docker-entrypoint-initdb.d/03-data-01-tags.sql:ro
+      - ./infra/src/main/resources/data-02-contents.sql:/docker-entrypoint-initdb.d/04-data-02-contents.sql:ro
+      - ./infra/src/main/resources/data-03-users.sql:/docker-entrypoint-initdb.d/05-data-03-users.sql:ro
+      - ./infra/src/main/resources/data-04-reviews.sql:/docker-entrypoint-initdb.d/06-data-04-reviews.sql:ro
+      - ./infra/src/main/resources/data-05-interactions.sql:/docker-entrypoint-initdb.d/07-data-05-interactions.sql:ro
+      - ./infra/src/main/resources/data-06-playlists.sql:/docker-entrypoint-initdb.d/08-data-06-playlists.sql:ro
+      - ./infra/src/main/resources/data-07-follows.sql:/docker-entrypoint-initdb.d/09-data-07-follows.sql:ro
+      - ./infra/src/main/resources/data-08-watching-sessions.sql:/docker-entrypoint-initdb.d/10-data-08-watching-sessions.sql:ro
     restart: unless-stopped
 
 
