@@ -7,6 +7,10 @@ spring:
     url: ${DB_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
+  ai:
+    google:
+      genai:
+        api-key: ${GEMINI_API_KEY}
 
 module-api:
   jwt:
