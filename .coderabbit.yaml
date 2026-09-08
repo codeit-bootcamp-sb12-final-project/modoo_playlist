@@ -22,11 +22,9 @@ tone_instructions: >
 #                        리뷰 상세 설정                              #
 # ================================================================ #
 reviews:
-  # 자동 리뷰를 적용할 base 브랜치
+  # 자동 리뷰 비활성화
   auto_review:
-    base_branches:
-      - "main"
-      - "dev"
+    enabled: false
 
   # 리뷰 강도 설정
   # - quiet:     코멘트를 최소화하고 요약 위주로만 리뷰
