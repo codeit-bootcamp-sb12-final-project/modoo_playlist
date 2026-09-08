@@ -1,4 +1,4 @@
-package com.codeit.modoo_playlist.moduleapi.domain.user.entity;
+package com.codeit.modoo_playlist.core.global.common.domain.user.entity;
 
 import com.codeit.modoo_playlist.core.global.common.entity.baseentity.BaseUpdatableEntity;
 import jakarta.persistence.Column;
