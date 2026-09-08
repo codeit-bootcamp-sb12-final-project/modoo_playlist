@@ -1,7 +1,7 @@
 package com.codeit.modoo_playlist.moduleapi.security;
 
 import com.codeit.modoo_playlist.moduleapi.dto.UserDto;
-import com.codeit.modoo_playlist.core.global.common.domain.user.entity.User;
+import com.codeit.modoo_playlist.core.domain.user.entity.User;
 //import com.codeit.modoo_playlist.moduleapi.exception.user.UserNotFoundException;
 import com.codeit.modoo_playlist.moduleapi.mapper.UserMapper;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;

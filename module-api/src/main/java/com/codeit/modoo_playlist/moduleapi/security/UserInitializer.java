@@ -1,6 +1,6 @@
 package com.codeit.modoo_playlist.moduleapi.security;
 
-import com.codeit.modoo_playlist.core.global.common.domain.user.entity.User;
+import com.codeit.modoo_playlist.core.domain.user.entity.User;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

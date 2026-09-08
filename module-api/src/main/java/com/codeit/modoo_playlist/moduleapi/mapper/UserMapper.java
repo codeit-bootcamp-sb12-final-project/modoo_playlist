@@ -1,6 +1,6 @@
 package com.codeit.modoo_playlist.moduleapi.mapper;
 
-import com.codeit.modoo_playlist.core.global.common.domain.user.entity.User;
+import com.codeit.modoo_playlist.core.domain.user.entity.User;
 import com.codeit.modoo_playlist.moduleapi.dto.UserDto;
 import org.mapstruct.Mapper;
 

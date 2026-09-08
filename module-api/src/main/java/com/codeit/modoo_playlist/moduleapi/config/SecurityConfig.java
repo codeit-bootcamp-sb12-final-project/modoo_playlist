@@ -1,6 +1,6 @@
 package com.codeit.modoo_playlist.moduleapi.config;
 
-import com.codeit.modoo_playlist.core.global.common.domain.user.entity.UserRole;
+import com.codeit.modoo_playlist.core.domain.user.entity.UserRole;
 import com.codeit.modoo_playlist.moduleapi.security.Http403ForbiddenAccessDeniedHandler;
 import com.codeit.modoo_playlist.moduleapi.security.LoginFailureHandler;
 import com.codeit.modoo_playlist.moduleapi.security.SpaCsrfTokenRequestHandler;
