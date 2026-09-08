@@ -303,7 +303,7 @@ CREATE TABLE `user_similarities` (
 
 CREATE TABLE `conversations` (
 	`id`	BINARY(16)	NOT NULL,
-	`participant_id`	BINARY(16)	NOT NULL,
+	`participant_ids`	JSON	NOT NULL,
 	`type`	VARCHAR(20)	NOT NULL,
 	`created_at`	DATETIME(6)	NOT NULL	DEFAULT CURRENT_TIMESTAMP(6),
 	`updated_at`	DATETIME(6)	NULL	DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
@@ -314,18 +314,18 @@ CREATE TABLE `conversations` (
 
 CREATE TABLE `messages` (
 	`id`	BINARY(16)	NOT NULL,
-	`user1_id`	BINARY(16)	NOT NULL,
-	`user2_id`	BINARY(16)	NULL,
+	`sender_id`	BINARY(16)	NOT NULL,
+	`receiver_id`	BINARY(16)	NULL,
 	`content_id`	BINARY(16)	NULL,
 	`conversation_id`	BINARY(16)	NOT NULL,
 	`type`	VARCHAR(20)	NOT NULL,
-	`content`	TEXT	NOT NULL,
+	`message`	TEXT	NOT NULL,
 	`read_at`	DATETIME(6)	NULL,
 	`created_at`	DATETIME(6)	NOT NULL	DEFAULT CURRENT_TIMESTAMP(6),
 
 	PRIMARY KEY (`id`),
 	KEY `IDX_MESSAGES_CONVERSATION` (`conversation_id`, `created_at` DESC),
-	KEY `IDX_MESSAGES_RECEIVER` (`user2_id`, `read_at`),
+	KEY `IDX_MESSAGES_RECEIVER` (`receiver_id`, `read_at`),
 	KEY `IDX_MESSAGES_CONTENT` (`content_id`)
 );
 
@@ -469,11 +469,11 @@ ALTER TABLE `messages` ADD CONSTRAINT `FK_conversations_TO_messages_1`
 	ON UPDATE RESTRICT ON DELETE CASCADE;
 
 ALTER TABLE `messages` ADD CONSTRAINT `FK_users_TO_messages_1`
-	FOREIGN KEY (`user1_id`) REFERENCES `users` (`id`)
+	FOREIGN KEY (`sender`) REFERENCES `users` (`id`)
 	ON UPDATE RESTRICT ON DELETE RESTRICT;
 
 ALTER TABLE `messages` ADD CONSTRAINT `FK_users_TO_messages_2`
-	FOREIGN KEY (`user2_id`) REFERENCES `users` (`id`)
+	FOREIGN KEY (`receiver_id`) REFERENCES `users` (`id`)
 	ON UPDATE RESTRICT ON DELETE RESTRICT;
 
 ALTER TABLE `messages` ADD CONSTRAINT `FK_contents_TO_messages_1`
