@@ -6,6 +6,7 @@ import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
+import com.codeit.modoo_playlist.core.domain.content.entity.Content;
 import com.codeit.modoo_playlist.core.domain.interaction.enums.InteractionSource;
 import com.codeit.modoo_playlist.core.domain.interaction.enums.InteractionType;
 import com.codeit.modoo_playlist.core.domain.user.entity.User;

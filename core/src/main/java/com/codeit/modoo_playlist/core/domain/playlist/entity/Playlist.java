@@ -1,6 +1,7 @@
 package com.codeit.modoo_playlist.core.domain.playlist.entity;
 
-import com.codeit.modoo_playlist.core.global.common.entity.baseentity.BaseTimeEntity;
+import com.codeit.modoo_playlist.core.global.common.entity.baseentity.BaseUpdatableEntity;
+
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -15,7 +16,7 @@ import java.util.UUID;
 @Entity
 @Table (name = "playlists")
 
-public class Playlist extends BaseTimeEntity {
+public class Playlist extends BaseUpdatableEntity {
 
     @Column(name = "owner_id", nullable = false, columnDefinition = "BINARY(16)")
     private UUID ownerId;
