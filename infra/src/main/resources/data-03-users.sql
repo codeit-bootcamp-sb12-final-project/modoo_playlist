@@ -1,4 +1,4 @@
-INSERT INTO users (id, email, name, password, profile_image_url, role, locked, temp_password, temp_password_expires_at, created_at, updated_at, deleted_at)
+INSERT INTO users (id, email, username, password, profile_image_url, role, locked, temp_password, temp_password_expires_at, created_at, updated_at, deleted_at)
 VALUES
 (X'11111111000000000000000000000001', 'admin@modupli.com', '관리자', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhi5vN9SqQwq1Iw8bJz2X8vP0qzq3aXG', NULL, 'ADMIN', 0, NULL, NULL, '2025-04-25 12:00:00.000', '2026-09-06 12:00:00.000', NULL),
 (X'11111111000000000000000000000002', 'user0002@modupli.com', '서도윤', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhi5vN9SqQwq1Iw8bJz2X8vP0qzq3aXG', NULL, 'USER', 0, NULL, NULL, '2025-10-14 12:00:00.000', '2025-10-15 12:00:00.000', NULL),
@@ -401,7 +401,7 @@ VALUES
 (X'1111111100000000000000000000018f', 'user0399@modupli.com', '윤지우', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhi5vN9SqQwq1Iw8bJz2X8vP0qzq3aXG', NULL, 'USER', 0, NULL, NULL, '2025-08-08 12:00:00.000', '2025-08-09 12:00:00.000', NULL),
 (X'11111111000000000000000000000190', 'user0400@modupli.com', '한건우', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhi5vN9SqQwq1Iw8bJz2X8vP0qzq3aXG', NULL, 'USER', 0, NULL, NULL, '2026-03-31 12:00:00.000', '2026-04-01 12:00:00.000', NULL);
 
-INSERT INTO users (id, email, name, password, profile_image_url, role, locked, temp_password, temp_password_expires_at, created_at, updated_at, deleted_at)
+INSERT INTO users (id, email, username, password, profile_image_url, role, locked, temp_password, temp_password_expires_at, created_at, updated_at, deleted_at)
 VALUES
 (X'11111111000000000000000000000191', 'user0401@modupli.com', '최다은', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhi5vN9SqQwq1Iw8bJz2X8vP0qzq3aXG', NULL, 'USER', 0, NULL, NULL, '2024-11-04 12:00:00.000', '2024-11-05 12:00:00.000', NULL),
 (X'11111111000000000000000000000192', 'user0402@modupli.com', '박채원', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhi5vN9SqQwq1Iw8bJz2X8vP0qzq3aXG', NULL, 'USER', 0, NULL, NULL, '2025-12-23 12:00:00.000', '2025-12-24 12:00:00.000', NULL),
@@ -503,4 +503,9 @@ VALUES
 (X'111111110000000000000000000001f2', 'user0498@modupli.com', '조채원', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhi5vN9SqQwq1Iw8bJz2X8vP0qzq3aXG', NULL, 'USER', 0, NULL, NULL, '2026-01-01 12:00:00.000', '2026-01-02 12:00:00.000', NULL),
 (X'111111110000000000000000000001f3', 'user0499@modupli.com', '윤서연', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhi5vN9SqQwq1Iw8bJz2X8vP0qzq3aXG', NULL, 'USER', 0, NULL, NULL, '2025-12-16 12:00:00.000', '2025-12-17 12:00:00.000', NULL),
 (X'111111110000000000000000000001f4', 'user0500@modupli.com', '윤수아', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhi5vN9SqQwq1Iw8bJz2X8vP0qzq3aXG', NULL, 'USER', 0, NULL, NULL, '2025-04-06 12:00:00.000', '2025-04-07 12:00:00.000', NULL);
+
+-- AI 챗봇 시스템 계정 (고정 ID, 로그인 불가)
+INSERT INTO users (id, email, username, password, profile_image_url, role, locked, temp_password, temp_password_expires_at, created_at, updated_at, deleted_at)
+VALUES
+(X'00000000000000000000000000000000', 'ai-bot@modupli.com', 'AI 어시스턴트', NULL, NULL, 'BOT', 1, NULL, NULL, '2026-09-09 00:00:00.000', '2026-09-09 00:00:00.000', NULL);
 
