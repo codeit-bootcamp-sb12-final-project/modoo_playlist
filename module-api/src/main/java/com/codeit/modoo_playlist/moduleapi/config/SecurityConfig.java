@@ -60,7 +60,7 @@ public class SecurityConfig {
         // 1) URL별 인가 설정
         .authorizeHttpRequests(auth -> auth
             .requestMatchers(
-                "/api/auth/login",
+                "/api/auth/sign-in",
                 "/ws/**",
                 "/error",
                 "/",
@@ -81,21 +81,21 @@ public class SecurityConfig {
 
         // 2) CSRF 설정 (Cookie 방식)
         .csrf(csrf -> csrf
-            .ignoringRequestMatchers("/api/auth/logout")
+            .ignoringRequestMatchers("/api/auth/sign-out")
             .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
             .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler())
         )
 
         // 3) form login 사용 (JWT 발급용 로그인 엔드포인트)
         .formLogin(login -> login
-            .loginProcessingUrl("/api/auth/login")
+            .loginProcessingUrl("/api/auth/sign-in")
             .successHandler(jwtLoginSuccessHandler)
             .failureHandler(loginFailureHandler)
         )
 
         // 4) JWT 기반 로그아웃
         .logout(logout -> logout
-            .logoutUrl("/api/auth/logout")
+            .logoutUrl("/api/auth/sign-out")
             .addLogoutHandler(jwtLogoutHandler)
             .logoutSuccessHandler(
                 new HttpStatusReturningLogoutSuccessHandler(HttpStatus.NO_CONTENT))
