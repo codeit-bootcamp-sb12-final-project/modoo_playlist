@@ -13,6 +13,7 @@ public interface UserService {
   UserDto getUser(UUID userId);
 
   UserDto updateUser(
+      UUID actorId,
       UUID userId,
       UserProfileUpdateRequest request,
       MultipartFile image

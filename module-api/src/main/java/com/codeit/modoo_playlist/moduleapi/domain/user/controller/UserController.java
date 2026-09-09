@@ -7,11 +7,13 @@ import com.codeit.modoo_playlist.moduleapi.dto.request.UserLockUpdateRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.request.UserProfileUpdateRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.request.UserRoleUpdateRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.response.CursorResponseUserDto;
+import com.codeit.modoo_playlist.moduleapi.security.UserDetails;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -56,9 +58,16 @@ public class UserController {
   public ResponseEntity<UserDto> updateUser(
       @PathVariable("userId") UUID userId,
       @Valid @RequestPart("request") UserProfileUpdateRequest request,
-      @RequestPart(value = "image", required = false) MultipartFile image
+      @RequestPart(value = "image", required = false) MultipartFile image,
+      @AuthenticationPrincipal UserDetails principal
   ) {
-    return ResponseEntity.ok(userService.updateUser(userId, request, image));
+    return ResponseEntity.ok(userService.updateUser(
+            principal.getUserDto().id(),
+            userId,
+            request,
+            image
+        )
+    );
   }
 
   @PatchMapping(

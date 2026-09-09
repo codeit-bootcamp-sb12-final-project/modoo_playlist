@@ -1,12 +1,15 @@
 package com.codeit.modoo_playlist.moduleapi.domain.user.service.impl;
 
 import com.codeit.modoo_playlist.core.domain.user.entity.User;
+import com.codeit.modoo_playlist.core.global.exception.BaseException;
+import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.user.service.UserService;
 import com.codeit.modoo_playlist.moduleapi.dto.UserDto;
 import com.codeit.modoo_playlist.moduleapi.dto.request.UserCreateRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.request.UserProfileUpdateRequest;
 import com.codeit.modoo_playlist.moduleapi.mapper.UserMapper;
+import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -25,23 +28,44 @@ public class UserServiceImpl implements UserService {
   @Transactional
   @Override
   public UserDto create(UserCreateRequest request) {
-    throw new UnsupportedOperationException("구현 예정");
+//    TODO: 유저 동시 저장시 DB에서 블록을 거는데, 반환값이 같은지 확인 필요.
+    if (userRepository.existsByEmail(request.email())) {
+//      TODO: 이 부분도 base 상속해서 UserException 만들어야 함.
+      throw new BaseException(ErrorCode.USER_ALREADY_EXISTS);
+    }
+
+    String encodedPassword = passwordEncoder.encode(request.password());
+
+    User user = User.create(
+        request.email(),
+        request.name(),
+        encodedPassword
+    );
+
+    User savedUser = userRepository.save(user);
+
+    return userMapper.toDto(savedUser);
   }
 
   @Transactional(readOnly = true)
   @Override
   public UserDto getUser(UUID userId) {
-    throw new UnsupportedOperationException("구현 예정");
+
+    User user = userRepository.findById(userId).orElse(null);
+    //    TODO: UserNotFound 예외 정의 후 수정(orElse -> orElseThrow)
+
+    return userMapper.toDto(user);
   }
 
   @Transactional
   @Override
   public UserDto updateUser(
+      UUID actorId,
       UUID userId,
       UserProfileUpdateRequest request,
       MultipartFile image
   ) {
-//    본인 수정 권한 검증.
+    validateOwner(actorId, userId);
 
     User user = userRepository.findById(userId).orElse(null);
 //    TODO: UserNotFound 예외 정의 후 수정(orElse -> orElseThrow)
@@ -54,5 +78,12 @@ public class UserServiceImpl implements UserService {
 
     user.updateProfile(request.name(), imageUrl);
     return userMapper.toDto(user);
+  }
+
+  private void validateOwner(UUID actorId, UUID userId) {
+    if (!Objects.equals(actorId, userId)) {
+//      TODO: USER_NOT_FOUND가 아니라 ACCESS_DENIED로 바꿔야함.
+      throw new BaseException(ErrorCode.USER_NOT_FOUND);
+    }
   }
 }
