@@ -68,4 +68,22 @@ public class Content extends BaseUpdatableEntity {
 
     @Column(name = "deleted_at")
     private Instant deletedAt;
+
+    public void update(String title, String description, String thumbnailUrl) {
+        if (title != null) {
+            this.title = title;
+        }
+        if (description != null) {
+            this.description = description;
+        }
+        if (thumbnailUrl != null) {
+            this.thumbnailUrl = thumbnailUrl;
+        }
+    }
+
+    public void softDelete() {
+        if (deletedAt == null) {
+            deletedAt = Instant.now();
+        }
+    }
 }
