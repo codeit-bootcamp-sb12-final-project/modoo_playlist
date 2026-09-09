@@ -12,6 +12,7 @@ DROP TABLE IF EXISTS `notifications`;
 DROP TABLE IF EXISTS `messages`;
 DROP TABLE IF EXISTS `content_sports`;
 DROP TABLE IF EXISTS `conversations`;
+DROP TABLE IF EXISTS `conversation_participants`;
 DROP TABLE IF EXISTS `content_embeddings`;
 DROP TABLE IF EXISTS `content_tags`;
 DROP TABLE IF EXISTS `playlists`;
@@ -303,7 +304,6 @@ CREATE TABLE `user_similarities` (
 
 CREATE TABLE `conversations` (
 	`id`	BINARY(16)	NOT NULL,
-	`participant_ids`	JSON	NOT NULL,
 	`type`	VARCHAR(20)	NOT NULL,
 	`created_at`	DATETIME(6)	NOT NULL	DEFAULT CURRENT_TIMESTAMP(6),
 	`updated_at`	DATETIME(6)	NULL	DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
@@ -343,6 +343,18 @@ CREATE TABLE `notifications` (
 	PRIMARY KEY (`id`),
 	KEY `IDX_NOTIFICATIONS_RECEIVER` (`receiver_id`, `created_at` DESC)	COMMENT 'SSE 재연결 시 Last-Event-ID 이후 조회에도 사용'
 );
+
+-- 대화 참여자 테이블
+CREATE TABLE IF NOT EXISTS `conversation_participants` (
+    `id`    BINARY(16)  NOT NULL,
+    `conversation_id`   BINARY(16)  NOT NULL,
+    `user_id`   BINARY(16)  NOT NULL,
+    `created_at`    DATETIME(6) NOT NULL    DEFAULT CURRENT_TIMESTAMP(6),
+
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `UK_CONVERSATION_PARTICIPANTS_CONVERSATION_USER`
+        (`conversation_id`, `user_id`)
+    );
 
 
 -- =====================================================================
@@ -479,3 +491,12 @@ ALTER TABLE `messages` ADD CONSTRAINT `FK_users_TO_messages_2`
 ALTER TABLE `messages` ADD CONSTRAINT `FK_contents_TO_messages_1`
 	FOREIGN KEY (`content_id`) REFERENCES `contents` (`id`)
 	ON UPDATE RESTRICT ON DELETE SET NULL;
+
+-- 대화 참여자
+ALTER TABLE `conversation_participants` ADD CONSTRAINT `FK_conversations_TO_conv_participants`
+    FOREIGN KEY (`conversation_id`) REFERENCES `conversations` (`id`)
+        ON DELETE CASCADE;
+
+ALTER TABLE `conversation_participants` ADD CONSTRAINT `FK_users_TO_conv_participants`
+    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+        ON DELETE CASCADE;
