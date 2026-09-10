@@ -34,3 +34,7 @@ module-api:
       secret: ${JWT_REFRESH_SECRET:your-refresh-token-secret-key-here-make-it-different-and-long}
       expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000} # 7 days
     issuer: modoo-playlist
+
+external:
+  tmdb:
+    access-token: ${TMDB_ACCESS_TOKEN:업서여}
