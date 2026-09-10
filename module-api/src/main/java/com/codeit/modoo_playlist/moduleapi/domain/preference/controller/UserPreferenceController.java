@@ -26,7 +26,6 @@ public class UserPreferenceController {
 	public ResponseEntity<List<UserPreferenceTagDto>> getMyPreferenceTags(
 			@Valid @ModelAttribute UserPreferenceTagQuery query,
 			@AuthenticationPrincipal UserDetails user) {
-		UUID userId = UUID.fromString("11111111-0000-0000-0000-000000000002");
-		return ResponseEntity.ok(userPreferenceTagService.getMyPreferenceTags(userId, query.limit()));
+		return ResponseEntity.ok(userPreferenceTagService.getMyPreferenceTags(user.getUserDto().id(), query.limit()));
 	}
 }
