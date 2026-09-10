@@ -9,6 +9,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
@@ -84,6 +85,20 @@ public class ContentQueryRepositoryImpl implements ContentQueryRepository {
                 hasNext,
                 valueOrZero(totalCount)
         );
+    }
+
+    @Override
+    public long countCurrentWatchers(UUID contentId) {
+        Long watcherCount = queryFactory
+                .select(watchingSession.watcher.id.countDistinct())
+                .from(watchingSession)
+                .where(
+                        watchingSession.content.id.eq(contentId),
+                        watchingSession.endedAt.isNull()
+                )
+                .fetchOne();
+
+        return valueOrZero(watcherCount);
     }
 
     private BooleanBuilder createFilter(ContentListCondition condition) {

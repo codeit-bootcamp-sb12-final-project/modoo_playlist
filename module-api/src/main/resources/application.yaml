@@ -7,6 +7,10 @@ spring:
     url: ${DB_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
+  servlet:
+    multipart:
+      max-file-size: ${MULTIPART_MAX_FILE_SIZE:5MB}
+      max-request-size: ${MULTIPART_MAX_REQUEST_SIZE:6MB}
   data:
     redis:
       host: ${REDIS_HOST:localhost}
@@ -15,6 +19,9 @@ spring:
     google:
       genai:
         api-key: ${GEMINI_API_KEY}
+        chat:
+          model: gemini-3.8-flash
+          thinking-level: LOW
 
 module-api:
   jwt:
