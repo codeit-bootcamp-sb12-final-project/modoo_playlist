@@ -65,7 +65,7 @@ CREATE TABLE `contents` (
 	`embedding_source_hash`	CHAR(64)	NULL,
 
 	PRIMARY KEY (`id`),
-	UNIQUE KEY `UK_CONTENTS_SOURCE_SOURCE_ID` (`source`, `source_id`),
+	UNIQUE KEY `UK_CONTENTS_SOURCE_TYPE_SOURCE_ID` (`source`, `type`, `source_id`),
 	KEY `IDX_CONTENTS_LIVE_TYPE` (`deleted_at`, `type`)	COMMENT 'MySQL은 부분 인덱스가 없어 deleted_at을 선행 컬럼으로',
 	KEY `IDX_CONTENTS_RELEASE` (`release_date`)
 );
