@@ -22,6 +22,15 @@ public enum ErrorCode {
     FOLLOW_NOT_FOUND("팔로우 관계를 찾을 수 없습니다."),
     FOLLOW_ALREADY_EXISTS("이미 팔로우하고 있습니다."),
     SELF_FOLLOW_NOT_ALLOWED("자기 자신을 팔로우할 수 없습니다."),
+
+    // Playlist
+    PLAYLIST_NOT_FOUND("플레이리스트를 찾을 수 없습니다."),
+    PLAYLIST_ACCESS_DENIED("본인의 플레이리스트가 아닙니다."),
+    PLAYLIST_CONTENT_NOT_FOUND("플레이리스트에 등록된 콘텐츠를 찾을 수 없습니다."),
+    PLAYLIST_CONTENT_ALREADY_EXISTS("이미 플레이리스트에 등록된 콘텐츠입니다."),
+    PLAYLIST_SUBSCRIPTION_NOT_FOUND("구독 관계를 찾을 수 없습니다."),
+    PLAYLIST_SUBSCRIPTION_ALREADY_EXISTS("이미 구독 중인 플레이리스트입니다."),
+
     // Conversation
     CONVERSATION_NOT_FOUND("대화를 찾을 수 없습니다."),
     CONVERSATION_ACCESS_DENIED("해당 대화에 접근할 권한이 없습니다."),
