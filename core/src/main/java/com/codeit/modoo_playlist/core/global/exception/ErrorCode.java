@@ -22,6 +22,9 @@ public enum ErrorCode {
     FOLLOW_NOT_FOUND("팔로우 관계를 찾을 수 없습니다."),
     FOLLOW_ALREADY_EXISTS("이미 팔로우하고 있습니다."),
     SELF_FOLLOW_NOT_ALLOWED("자기 자신을 팔로우할 수 없습니다."),
+    // Conversation
+    CONVERSATION_NOT_FOUND("대화를 찾을 수 없습니다."),
+    CONVERSATION_ACCESS_DENIED("해당 대화에 접근할 권한이 없습니다."),
 
     // File
     FILE_SAVE_FAILED("파일 저장에 실패했습니다."),

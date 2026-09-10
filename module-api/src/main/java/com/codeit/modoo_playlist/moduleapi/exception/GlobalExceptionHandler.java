@@ -37,9 +37,10 @@ public class GlobalExceptionHandler {
     private HttpStatus parseHttpStatus(BaseException e) {
         ErrorCode code = e.getErrorCode();
         return switch (code) {
-            case USER_NOT_FOUND, POST_NOT_FOUND, COMMENT_NOT_FOUND, FOLLOW_NOT_FOUND -> HttpStatus.NOT_FOUND;
+            case USER_NOT_FOUND, POST_NOT_FOUND, COMMENT_NOT_FOUND, FOLLOW_NOT_FOUND, CONVERSATION_NOT_FOUND -> HttpStatus.NOT_FOUND;
             case USER_ALREADY_EXISTS, FOLLOW_ALREADY_EXISTS -> HttpStatus.CONFLICT;
             case INVALID_CREDENTIALS -> HttpStatus.UNAUTHORIZED;
+            case CONVERSATION_ACCESS_DENIED -> HttpStatus.FORBIDDEN;
             case INVALID_REQUEST, SELF_FOLLOW_NOT_ALLOWED -> HttpStatus.BAD_REQUEST;
             default -> HttpStatus.INTERNAL_SERVER_ERROR;
         };
