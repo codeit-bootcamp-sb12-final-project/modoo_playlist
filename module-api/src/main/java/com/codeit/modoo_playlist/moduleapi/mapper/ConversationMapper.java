@@ -4,12 +4,12 @@ import com.codeit.modoo_playlist.core.domain.conversation.entity.Conversation;
 import com.codeit.modoo_playlist.core.domain.message.entity.Message;
 import com.codeit.modoo_playlist.core.domain.user.entity.User;
 import com.codeit.modoo_playlist.moduleapi.dto.ConversationDto;
-import com.codeit.modoo_playlist.moduleapi.dto.conversation.response.CursorResponseConversationDto;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.springframework.data.domain.Pageable;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring",
+        uses = {UserMapper.class, MessageMapper.class}
+)
 public interface ConversationMapper {
 
     @Mapping(target = "id", source = "conversation.id")
@@ -22,6 +22,4 @@ public interface ConversationMapper {
             Message latestMessage,
             boolean hasUnread
     );
-
-    CursorResponseConversationDto toCursorDto(Conversation conversation, Pageable pageable);
 }
