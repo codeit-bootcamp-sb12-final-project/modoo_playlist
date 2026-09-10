@@ -22,6 +22,7 @@ public enum ErrorCode {
     FOLLOW_NOT_FOUND("팔로우 관계를 찾을 수 없습니다."),
     FOLLOW_ALREADY_EXISTS("이미 팔로우하고 있습니다."),
     SELF_FOLLOW_NOT_ALLOWED("자기 자신을 팔로우할 수 없습니다."),
+    FOLLOW_ACCESS_DENIED("본인의 팔로우 관계가 아닙니다."),
 
     // Review
     REVIEW_NOT_FOUND("리뷰를 찾을 수 없습니다."),
