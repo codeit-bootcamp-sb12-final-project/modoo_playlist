@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,14 +36,16 @@ public class TagServiceImpl implements TagService {
         tagRepository.findAllByNameIn(normalizedNames)
                 .forEach(tag -> tagsByName.put(tag.getName(), tag));
 
-        List<Tag> newTags = normalizedNames.stream()
+        normalizedNames.stream()
                 .filter(name -> !tagsByName.containsKey(name))
-                .<Tag>map(name -> Tag.builder()
-                        .name(name)
-                        .kind(TagKind.KEYWORD)
-                        .build())
-                .toList();
-        tagRepository.saveAll(newTags)
+                .forEach(name -> tagRepository.insertIfAbsent(
+                        UUID.randomUUID().toString(),
+                        name,
+                        TagKind.KEYWORD.name()
+                ));
+
+        tagsByName.clear();
+        tagRepository.findAllByNamesForUpdate(normalizedNames)
                 .forEach(tag -> tagsByName.put(tag.getName(), tag));
 
         return normalizedNames.stream()
