@@ -14,6 +14,9 @@ dependencies {
     // MVC, Interceptor, ExceptionHandler
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
 
+    // External API HTTP client
+    implementation 'org.springframework.boot:spring-boot-starter-restclient'
+
     // Jakarta Validation
     implementation 'org.springframework.boot:spring-boot-starter-validation'
 

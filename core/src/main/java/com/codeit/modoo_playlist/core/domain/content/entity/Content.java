@@ -16,8 +16,8 @@ import java.time.LocalDate;
 @Table(
         name = "contents",
         uniqueConstraints = @UniqueConstraint(
-                name = "UK_CONTENTS_SOURCE_SOURCE_ID",
-                columnNames = {"source", "source_id"}
+                name = "UK_CONTENTS_SOURCE_TYPE_SOURCE_ID",
+                columnNames = {"source", "type", "source_id"}
         ),
         indexes = {
                 @Index(name = "IDX_CONTENTS_LIVE_TYPE", columnList = "deleted_at,type"),

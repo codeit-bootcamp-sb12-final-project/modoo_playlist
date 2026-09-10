@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.codeit.modoo_playlist.modulebatch.tmdb.persistence.TmdbContentMapper">
+
+    <select id="findBySourceId"
+            resultType="com.codeit.modoo_playlist.modulebatch.tmdb.model.ExistingTmdbContent">
+        SELECT BIN_TO_UUID(c.id) AS id,
+               c.title,
+               c.description,
+               c.thumbnail_url AS thumbnailUrl,
+               c.deleted_at AS deletedAt,
+               c.release_date AS releaseDate,
+               c.origin_country AS originCountry,
+               v.runtime_minutes AS runtimeMinutes,
+               v.collection_name AS collectionName,
+               v.imdb_id AS imdbId,
+               v.release_status AS releaseStatus,
+               v.number_of_seasons AS numberOfSeasons,
+               v.number_of_episodes AS numberOfEpisodes,
+               v.original_language AS originalLanguage,
+               v.popularity,
+               v.external_rating AS externalRating,
+               v.external_rating_count AS externalRatingCount
+        FROM contents c
+        LEFT JOIN content_videos v ON v.content_id = c.id
+        WHERE c.source = 'TMDB'
+          AND c.type = #{type}
+          AND c.source_id = #{sourceId}
+        LIMIT 1
+    </select>
+
+    <select id="findContentIdBySourceId" resultType="java.lang.String">
+        SELECT BIN_TO_UUID(id)
+        FROM contents
+        WHERE source = 'TMDB'
+          AND type = #{type}
+          AND source_id = #{sourceId}
+        LIMIT 1
+    </select>
+
+    <select id="findExistingSourceIds" resultType="java.lang.String">
+        SELECT source_id
+        FROM contents
+        WHERE source = 'TMDB'
+          AND type = #{type}
+          AND source_id IN
+        <foreach collection="sourceIds" item="sourceId" open="(" close=")" separator=",">
+            #{sourceId}
+        </foreach>
+    </select>
+
+    <select id="findActiveMovieSourceIds" resultType="java.lang.String">
+        SELECT c.source_id
+        FROM contents c
+        WHERE c.source = 'TMDB'
+          AND c.type = 'MOVIE'
+          AND c.source_id IS NOT NULL
+          AND c.deleted_at IS NULL
+          AND c.release_date BETWEEN #{cutoffDate} AND #{today}
+    </select>
+
+    <select id="findActiveTvSourceIds" resultType="java.lang.String">
+        SELECT c.source_id
+        FROM contents c
+        JOIN content_videos v ON v.content_id = c.id
+        WHERE c.source = 'TMDB'
+          AND c.type = 'TV'
+          AND c.source_id IS NOT NULL
+          AND c.deleted_at IS NULL
+          AND v.release_status = 'ONGOING'
+    </select>
+
+    <select id="findPeopleByContentId"
+            resultType="com.codeit.modoo_playlist.modulebatch.tmdb.model.ExistingTmdbContent$Person">
+        SELECT role_type AS roleType,
+               person_name AS personName,
+               character_name AS characterName,
+               display_order AS displayOrder,
+               person_id AS personId,
+               person_img AS personImg
+        FROM content_people
+        WHERE content_id = UUID_TO_BIN(#{contentId})
+        ORDER BY display_order, person_id
+    </select>
+
+    <select id="findTagsByContentId"
+            resultType="com.codeit.modoo_playlist.modulebatch.tmdb.model.ExistingTmdbContent$Tag">
+        SELECT t.name,
+               ct.source
+        FROM content_tags ct
+        JOIN tags t ON t.id = ct.tag_id
+        WHERE ct.content_id = UUID_TO_BIN(#{contentId})
+        ORDER BY t.name
+    </select>
+
+    <insert id="upsertContent">
+        INSERT INTO contents (
+            id, type, title, description, thumbnail_url, source, source_id,
+            release_date, origin_country, average_rating, review_count, rating_sum,
+            created_at, updated_at
+        ) VALUES (
+            UUID_TO_BIN(#{id}), #{type}, #{title}, #{description}, #{thumbnailUrl}, 'TMDB', #{sourceId},
+            #{releaseDate}, #{originCountry}, 0.0, 0, 0.00,
+            CURRENT_TIMESTAMP(6), CURRENT_TIMESTAMP(6)
+        )
+        AS incoming
+        ON DUPLICATE KEY UPDATE
+            type = incoming.type,
+            title = incoming.title,
+            description = incoming.description,
+            thumbnail_url = incoming.thumbnail_url,
+            release_date = incoming.release_date,
+            origin_country = incoming.origin_country
+    </insert>
+
+    <insert id="upsertVideo">
+        INSERT INTO content_videos (
+            content_id, runtime_minutes, collection_name, imdb_id, release_status,
+            number_of_seasons, number_of_episodes, original_language,
+            popularity, external_rating, external_rating_count
+        ) VALUES (
+            UUID_TO_BIN(#{contentId}), #{video.runtimeMinutes}, #{video.collectionName},
+            #{video.imdbId}, #{video.releaseStatus}, #{video.numberOfSeasons},
+            #{video.numberOfEpisodes}, #{video.originalLanguage}, #{video.popularity},
+            #{video.externalRating}, #{video.externalRatingCount}
+        )
+        AS incoming
+        ON DUPLICATE KEY UPDATE
+            runtime_minutes = incoming.runtime_minutes,
+            collection_name = incoming.collection_name,
+            imdb_id = incoming.imdb_id,
+            release_status = incoming.release_status,
+            number_of_seasons = incoming.number_of_seasons,
+            number_of_episodes = incoming.number_of_episodes,
+            original_language = incoming.original_language,
+            popularity = incoming.popularity,
+            external_rating = incoming.external_rating,
+            external_rating_count = incoming.external_rating_count
+    </insert>
+
+    <delete id="deletePeople">
+        DELETE FROM content_people
+        WHERE content_id = UUID_TO_BIN(#{contentId})
+    </delete>
+
+    <insert id="insertPeople">
+        INSERT INTO content_people (
+            id, content_id, role_type, person_name, character_name,
+            display_order, person_id, person_img
+        ) VALUES
+        <foreach collection="people" item="person" separator=",">
+            (
+                UUID_TO_BIN(#{person.id}), UUID_TO_BIN(#{contentId}), #{person.roleType},
+                #{person.personName}, #{person.characterName}, #{person.displayOrder},
+                #{person.personId}, #{person.personImg}
+            )
+        </foreach>
+    </insert>
+
+    <insert id="insertTags">
+        INSERT IGNORE INTO tags (id, name, kind, created_at) VALUES
+        <foreach collection="tags" item="tag" separator=",">
+            (UUID_TO_BIN(#{tag.id}), #{tag.name}, #{tag.kind}, CURRENT_TIMESTAMP(6))
+        </foreach>
+    </insert>
+
+    <delete id="deleteMissingOpenApiTags">
+        DELETE FROM content_tags
+        WHERE content_id = UUID_TO_BIN(#{contentId})
+          AND source = 'OPENAPI'
+        <if test="tags != null and !tags.isEmpty()">
+          AND tag_id NOT IN (
+              SELECT id FROM tags
+              WHERE name IN
+              <foreach collection="tags" item="tag" open="(" close=")" separator=",">
+                  #{tag.name}
+              </foreach>
+          )
+        </if>
+    </delete>
+
+    <insert id="upsertContentTags">
+        INSERT IGNORE INTO content_tags (tag_id, content_id, source)
+        SELECT id, UUID_TO_BIN(#{contentId}), 'OPENAPI'
+        FROM tags
+        WHERE name IN
+        <foreach collection="tags" item="tag" open="(" close=")" separator=",">
+            #{tag.name}
+        </foreach>
+    </insert>
+</mapper>

@@ -1,3 +1,48 @@
 spring:
   application:
     name: module-batch
+  main:
+    web-application-type: none
+  config:
+    import:
+      - "optional:file:./.env[.properties]"
+      - "optional:file:../.env[.properties]"
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  batch:
+    job:
+      enabled: false
+    jdbc:
+      initialize-schema: ${BATCH_SCHEMA_INITIALIZE:always}
+
+mybatis:
+  mapper-locations: classpath*:mapper/**/*.xml
+
+external:
+  tmdb:
+    base-url: https://api.themoviedb.org/3
+    image-base-url: https://image.tmdb.org/t/p/w500
+    access-token: ${TMDB_ACCESS_TOKEN}
+    language: ko-KR
+    region: KR
+    connect-timeout: ${TMDB_CONNECT_TIMEOUT:3s}
+    read-timeout: ${TMDB_READ_TIMEOUT:10s}
+    retry-max-attempts: ${TMDB_RETRY_MAX_ATTEMPTS:3}
+    retry-initial-delay: ${TMDB_RETRY_INITIAL_DELAY:1s}
+    retry-max-delay: ${TMDB_RETRY_MAX_DELAY:4s}
+
+batch:
+  tmdb:
+    enabled: ${TMDB_BATCH_ENABLED:true}
+    cron: ${TMDB_BATCH_CRON:0 0 0,12 * * *}
+    zone: Asia/Seoul
+    active-max-pages: ${TMDB_ACTIVE_MAX_PAGES:5}
+    popular-max-pages: ${TMDB_POPULAR_MAX_PAGES:2}
+    chunk-size: ${TMDB_CHUNK_SIZE:10}
+    skip-limit: ${TMDB_SKIP_LIMIT:20}
+    excluded-tv-genre-ids:
+      - 10763
+      - 10764
+      - 10767
