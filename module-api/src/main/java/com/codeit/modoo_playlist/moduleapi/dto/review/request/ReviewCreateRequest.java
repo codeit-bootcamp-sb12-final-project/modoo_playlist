@@ -17,7 +17,7 @@ public record ReviewCreateRequest(
 
         @NotNull
         @DecimalMin("0.0")
-        @DecimalMax("9.9")
+        @DecimalMax("5.0")
         BigDecimal rating
 ) {
 }
