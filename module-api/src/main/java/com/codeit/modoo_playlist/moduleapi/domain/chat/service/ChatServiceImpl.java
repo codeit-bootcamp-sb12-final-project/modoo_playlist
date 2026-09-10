@@ -1,4 +1,4 @@
-package com.codeit.modoo_playlist.moduleapi.discovery.chat.service;
+package com.codeit.modoo_playlist.moduleapi.domain.chat.service;
 
 import com.codeit.modoo_playlist.core.domain.conversation.entity.Conversation;
 import com.codeit.modoo_playlist.core.domain.conversation.entity.ConversationParticipant;
@@ -6,9 +6,9 @@ import com.codeit.modoo_playlist.core.domain.conversation.entity.ConversationTyp
 import com.codeit.modoo_playlist.core.domain.message.entity.Message;
 import com.codeit.modoo_playlist.core.domain.message.entity.MessageType;
 import com.codeit.modoo_playlist.core.domain.user.entity.User;
-import com.codeit.modoo_playlist.moduleapi.discovery.chat.dto.response.ChatDoneEvent;
-import com.codeit.modoo_playlist.moduleapi.discovery.chat.exception.ChatAccessDeniedException;
-import com.codeit.modoo_playlist.moduleapi.discovery.chat.exception.ChatNotFoundException;
+import com.codeit.modoo_playlist.moduleapi.domain.chat.dto.response.ChatDoneEvent;
+import com.codeit.modoo_playlist.moduleapi.domain.chat.exception.ChatAccessDeniedException;
+import com.codeit.modoo_playlist.moduleapi.domain.chat.exception.ChatNotFoundException;
 import com.codeit.modoo_playlist.moduleapi.domain.conversation.repository.ConversationRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.message.repository.MessageRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;

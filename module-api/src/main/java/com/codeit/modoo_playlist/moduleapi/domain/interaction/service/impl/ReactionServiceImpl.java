@@ -1,4 +1,4 @@
-package com.codeit.modoo_playlist.moduleapi.interaction.service.impl;
+package com.codeit.modoo_playlist.moduleapi.domain.interaction.service.impl;
 
 import com.codeit.modoo_playlist.core.domain.content.entity.Content;
 import com.codeit.modoo_playlist.core.domain.interaction.entity.UserContentInteraction;
@@ -7,7 +7,7 @@ import com.codeit.modoo_playlist.core.domain.user.entity.User;
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.jpa.ContentRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.interaction.repository.UserContentInteractionRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
-import com.codeit.modoo_playlist.moduleapi.interaction.service.ReactionService;
+import com.codeit.modoo_playlist.moduleapi.domain.interaction.service.ReactionService;
 import java.util.EnumSet;
 import java.util.Set;
 import java.util.UUID;

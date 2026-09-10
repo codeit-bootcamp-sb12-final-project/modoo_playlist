@@ -1,4 +1,4 @@
-package com.codeit.modoo_playlist.moduleapi.discovery.chat.service;
+package com.codeit.modoo_playlist.moduleapi.domain.chat.service;
 
 import jakarta.validation.constraints.NotBlank;
 import java.util.UUID;

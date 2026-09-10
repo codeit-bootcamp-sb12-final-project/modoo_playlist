@@ -1,4 +1,4 @@
-package com.codeit.modoo_playlist.moduleapi.discovery.chat.exception;
+package com.codeit.modoo_playlist.moduleapi.domain.chat.exception;
 
 import com.codeit.modoo_playlist.core.global.exception.BaseException;
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;

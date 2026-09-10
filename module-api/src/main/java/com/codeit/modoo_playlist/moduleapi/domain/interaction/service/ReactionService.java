@@ -1,4 +1,4 @@
-package com.codeit.modoo_playlist.moduleapi.interaction.service;
+package com.codeit.modoo_playlist.moduleapi.domain.interaction.service;
 
 import com.codeit.modoo_playlist.core.domain.interaction.enums.InteractionType;
 import java.util.UUID;

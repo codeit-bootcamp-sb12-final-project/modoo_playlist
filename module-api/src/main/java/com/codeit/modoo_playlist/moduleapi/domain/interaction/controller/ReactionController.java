@@ -1,7 +1,7 @@
-package com.codeit.modoo_playlist.moduleapi.interaction.controller;
+package com.codeit.modoo_playlist.moduleapi.domain.interaction.controller;
 
-import com.codeit.modoo_playlist.moduleapi.interaction.dto.request.ReactionRequest;
-import com.codeit.modoo_playlist.moduleapi.interaction.service.ReactionService;
+import com.codeit.modoo_playlist.moduleapi.domain.interaction.dto.request.ReactionRequest;
+import com.codeit.modoo_playlist.moduleapi.domain.interaction.service.ReactionService;
 import com.codeit.modoo_playlist.moduleapi.security.UserDetails;
 import jakarta.validation.Valid;
 import java.util.UUID;

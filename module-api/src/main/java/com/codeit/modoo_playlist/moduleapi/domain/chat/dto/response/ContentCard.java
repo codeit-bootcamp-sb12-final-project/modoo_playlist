@@ -1,4 +1,4 @@
-package com.codeit.modoo_playlist.moduleapi.discovery.chat.dto.response;
+package com.codeit.modoo_playlist.moduleapi.domain.chat.dto.response;
 
 import java.util.UUID;
 
