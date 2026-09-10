@@ -1,13 +1,14 @@
 package com.codeit.modoo_playlist.moduleapi.domain.user.service.impl;
 
 import com.codeit.modoo_playlist.core.domain.user.entity.User;
-import com.codeit.modoo_playlist.core.global.exception.BaseException;
-import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.user.service.UserService;
 import com.codeit.modoo_playlist.moduleapi.dto.UserDto;
 import com.codeit.modoo_playlist.moduleapi.dto.request.UserCreateRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.request.UserProfileUpdateRequest;
+import com.codeit.modoo_playlist.moduleapi.exception.auth.ForbiddenException;
+import com.codeit.modoo_playlist.moduleapi.exception.user.EmailAlreadyExistsException;
+import com.codeit.modoo_playlist.moduleapi.exception.user.UserNotFoundException;
 import com.codeit.modoo_playlist.moduleapi.mapper.UserMapper;
 import java.util.Objects;
 import java.util.UUID;
@@ -29,9 +30,9 @@ public class UserServiceImpl implements UserService {
   @Override
   public UserDto create(UserCreateRequest request) {
 //    TODO: 유저 동시 저장시 DB에서 블록을 거는데, 반환값이 같은지 확인 필요.
+//    핸들러에서 409로 처리 중
     if (userRepository.existsByEmail(request.email())) {
-//      TODO: 이 부분도 base 상속해서 UserException 만들어야 함.
-      throw new BaseException(ErrorCode.USER_ALREADY_EXISTS);
+      throw EmailAlreadyExistsException.withEmail(request.email());
     }
 
     String encodedPassword = passwordEncoder.encode(request.password());
@@ -51,8 +52,8 @@ public class UserServiceImpl implements UserService {
   @Override
   public UserDto getUser(UUID userId) {
 
-    User user = userRepository.findById(userId).orElse(null);
-    //    TODO: UserNotFound 예외 정의 후 수정(orElse -> orElseThrow)
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> UserNotFoundException.withUserId(userId));
 
     return userMapper.toDto(user);
   }
@@ -67,8 +68,8 @@ public class UserServiceImpl implements UserService {
   ) {
     validateOwner(actorId, userId);
 
-    User user = userRepository.findById(userId).orElse(null);
-//    TODO: UserNotFound 예외 정의 후 수정(orElse -> orElseThrow)
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> UserNotFoundException.withUserId(userId));
 
     String imageUrl = null;
     if (image != null && !image.isEmpty()) {
@@ -82,8 +83,7 @@ public class UserServiceImpl implements UserService {
 
   private void validateOwner(UUID actorId, UUID userId) {
     if (!Objects.equals(actorId, userId)) {
-//      TODO: USER_NOT_FOUND가 아니라 ACCESS_DENIED로 바꿔야함.
-      throw new BaseException(ErrorCode.USER_NOT_FOUND);
+      throw new ForbiddenException();
     }
   }
 }
