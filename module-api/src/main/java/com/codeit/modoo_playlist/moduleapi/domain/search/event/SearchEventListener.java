@@ -13,7 +13,8 @@ public class SearchEventListener {
 
   private final PopularSearchRedisRepository popularSearchRedisRepository;
 
-  // 검색 실행 이벤트 수신 → 검색어 정규화 및 유효성 확인 → 인기 검색어 점수 반영  @Async("searchAsyncExecutor")
+  // 검색어 정규화 및 유효성 확인 → 인기 검색어 점수 반영
+  @Async("searchAsyncExecutor")
   @EventListener
   public void handle(SearchExecutedEvent event) {
     String normalized = KeywordNormalizer.normalize(event.rawKeyword());
