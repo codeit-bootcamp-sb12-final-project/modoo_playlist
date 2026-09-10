@@ -18,6 +18,10 @@ public enum ErrorCode {
     // Comment
     COMMENT_NOT_FOUND("댓글을 찾을 수 없습니다."),
 
+    // Conversation
+    CONVERSATION_NOT_FOUND("대화를 찾을 수 없습니다."),
+    CONVERSATION_ACCESS_DENIED("해당 대화에 접근할 권한이 없습니다."),
+
     // File
     FILE_SAVE_FAILED("파일 저장에 실패했습니다."),
     FILE_DELETE_FAILED("파일 삭제에 실패했습니다."),
