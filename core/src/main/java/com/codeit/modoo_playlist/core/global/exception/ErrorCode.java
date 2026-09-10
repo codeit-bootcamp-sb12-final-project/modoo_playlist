@@ -18,6 +18,11 @@ public enum ErrorCode {
     // Comment
     COMMENT_NOT_FOUND("댓글을 찾을 수 없습니다."),
 
+    // Review
+    REVIEW_NOT_FOUND("리뷰를 찾을 수 없습니다."),
+    REVIEW_ALREADY_EXISTS("이미 이 콘텐츠에 리뷰를 작성했습니다."),
+    REVIEW_ACCESS_DENIED("본인이 작성한 리뷰가 아닙니다."),
+
     // Playlist
     PLAYLIST_NOT_FOUND("플레이리스트를 찾을 수 없습니다."),
     PLAYLIST_ACCESS_DENIED("본인의 플레이리스트가 아닙니다."),
