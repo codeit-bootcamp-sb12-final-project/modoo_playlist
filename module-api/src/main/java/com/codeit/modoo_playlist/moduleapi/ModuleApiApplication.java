@@ -8,8 +8,10 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
-@SpringBootApplication
-@EnableJpaAuditing
+@SpringBootApplication(scanBasePackages = {
+    "com.codeit.modoo_playlist.moduleapi",
+    "com.codeit.modoo_playlist.infra"
+})
 @EntityScan(basePackages = {
     "com.codeit.modoo_playlist.core",
 })
