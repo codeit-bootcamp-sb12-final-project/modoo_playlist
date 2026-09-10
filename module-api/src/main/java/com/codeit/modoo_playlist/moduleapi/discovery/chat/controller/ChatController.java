@@ -21,7 +21,7 @@ public class ChatController {
 
 	private final ChatService chatService;
 
-	@PostMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+	@PostMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
 	public Flux<ServerSentEvent<Object>> stream(@Valid @RequestBody ChatMessageRequest request,
 	                                            @AuthenticationPrincipal UserDetails user
 	) {
