@@ -31,4 +31,9 @@ public class Playlist extends BaseUpdatableEntity {
     @Column(name = "generated_by", nullable = false, length = 20)
     private GeneratedBy generatedBy;
 
+    public void update(String title, String description) {
+        this.title = title;
+        this.description = description;
+    }
+
 }
