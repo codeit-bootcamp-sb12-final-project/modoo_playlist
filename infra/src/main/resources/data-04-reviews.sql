@@ -1,3 +1,5 @@
+SET NAMES utf8mb4;
+
 INSERT INTO reviews (id, content_id, author_id, text, rating, created_at, updated_at, status)
 VALUES
 (X'55555555000000000000000000000001', X'222222220000000000000000000007c5', X'1111111100000000000000000000008a', '스토리가 늘어져서 집중이 안 됐어요.', 1.0, '2026-09-07 07:00:00.000', '2026-09-07 07:00:00.000', 'ACTIVE'),

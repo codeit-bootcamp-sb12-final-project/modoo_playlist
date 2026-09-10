@@ -4,10 +4,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
-import jakarta.persistence.LockModeType;
-
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,10 +14,6 @@ import com.codeit.modoo_playlist.core.domain.tag.entity.Tag;
 public interface TagRepository extends JpaRepository<Tag, UUID> {
 
     List<Tag> findAllByNameIn(Collection<String> names);
-
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT t FROM Tag t WHERE t.name IN :names")
-    List<Tag> findAllByNamesForUpdate(@Param("names") Collection<String> names);
 
     @Modifying
     @Query(value = """

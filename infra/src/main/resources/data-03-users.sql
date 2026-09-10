@@ -1,3 +1,5 @@
+SET NAMES utf8mb4;
+
 INSERT INTO users (id, email, username, password, profile_image_url, role, locked, temp_password, temp_password_expires_at, created_at, updated_at, deleted_at)
 VALUES
 (X'11111111000000000000000000000001', 'admin@modupli.com', '관리자', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhi5vN9SqQwq1Iw8bJz2X8vP0qzq3aXG', NULL, 'ADMIN', 0, NULL, NULL, '2025-04-25 12:00:00.000', '2026-09-06 12:00:00.000', NULL),
@@ -508,4 +510,3 @@ VALUES
 INSERT INTO users (id, email, username, password, profile_image_url, role, locked, temp_password, temp_password_expires_at, created_at, updated_at, deleted_at)
 VALUES
 (X'00000000000000000000000000000000', 'ai-bot@modupli.com', 'AI 어시스턴트', NULL, NULL, 'BOT', 1, NULL, NULL, '2026-09-09 00:00:00.000', '2026-09-09 00:00:00.000', NULL);
-

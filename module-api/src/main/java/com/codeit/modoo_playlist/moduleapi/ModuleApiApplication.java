@@ -3,11 +3,12 @@ package com.codeit.modoo_playlist.moduleapi;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.persistence.autoconfigure.EntityScan;
-import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
-@SpringBootApplication
-@EnableJpaAuditing
+@SpringBootApplication(scanBasePackages = {
+    "com.codeit.modoo_playlist.moduleapi",
+    "com.codeit.modoo_playlist.infra"
+})
 @EntityScan(basePackages = {
     "com.codeit.modoo_playlist.core",
 })
