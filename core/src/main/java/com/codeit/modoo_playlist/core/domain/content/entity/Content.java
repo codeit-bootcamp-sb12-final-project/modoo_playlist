@@ -70,6 +70,24 @@ public class Content extends BaseUpdatableEntity {
     @Column(name = "deleted_at")
     private Instant deletedAt;
 
+    public void update(String title, String description, String thumbnailUrl) {
+        if (title != null) {
+            this.title = title;
+        }
+        if (description != null) {
+            this.description = description;
+        }
+        if (thumbnailUrl != null) {
+            this.thumbnailUrl = thumbnailUrl;
+        }
+    }
+
+    public void softDelete() {
+        if (deletedAt == null) {
+            deletedAt = Instant.now();
+        }
+    }
+
     public void addReview(BigDecimal rating) {
         this.reviewCount += 1;
         this.ratingSum = this.ratingSum.add(rating);
@@ -92,5 +110,4 @@ public class Content extends BaseUpdatableEntity {
                 ? BigDecimal.ZERO
                 : this.ratingSum.divide(BigDecimal.valueOf(this.reviewCount), 1, RoundingMode.HALF_UP);
     }
-
 }
