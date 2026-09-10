@@ -3,7 +3,6 @@ package com.codeit.modoo_playlist.moduleapi.security;
 import com.codeit.modoo_playlist.core.domain.user.entity.User;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
 import com.codeit.modoo_playlist.moduleapi.dto.UserDto;
-import com.codeit.modoo_playlist.moduleapi.exception.user.UserNotFoundException;
 import com.codeit.modoo_playlist.moduleapi.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -25,8 +24,7 @@ public class UserDetailsService implements
   public org.springframework.security.core.userdetails.UserDetails loadUserByUsername(String email)
       throws UsernameNotFoundException {
     User user = userRepository.findByEmail(email)
-        .orElseThrow(() -> UserNotFoundException.withUserEmail(email));
-//        .orElseThrow(() -> new UsernameNotFoundException(username));
+        .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
     UserDto userDto = userMapper.toDto(user);
 
     return new UserDetails(
