@@ -43,4 +43,9 @@ public class Review extends BaseUpdatableEntity {
 	@Column(name = "status", length = 20, nullable = false)
 	private ReviewStatus status;
 
+	public void update(String text, BigDecimal rating) {
+		this.text = text;
+		this.rating = rating;
+	}
+
 }
