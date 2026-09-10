@@ -18,6 +18,14 @@ public enum ErrorCode {
     // Comment
     COMMENT_NOT_FOUND("댓글을 찾을 수 없습니다."),
 
+    // Playlist
+    PLAYLIST_NOT_FOUND("플레이리스트를 찾을 수 없습니다."),
+    PLAYLIST_ACCESS_DENIED("본인의 플레이리스트가 아닙니다."),
+    PLAYLIST_CONTENT_NOT_FOUND("플레이리스트에 등록된 콘텐츠를 찾을 수 없습니다."),
+    PLAYLIST_CONTENT_ALREADY_EXISTS("이미 플레이리스트에 등록된 콘텐츠입니다."),
+    PLAYLIST_SUBSCRIPTION_NOT_FOUND("구독 관계를 찾을 수 없습니다."),
+    PLAYLIST_SUBSCRIPTION_ALREADY_EXISTS("이미 구독 중인 플레이리스트입니다."),
+
     // File
     FILE_SAVE_FAILED("파일 저장에 실패했습니다."),
     FILE_DELETE_FAILED("파일 삭제에 실패했습니다."),
