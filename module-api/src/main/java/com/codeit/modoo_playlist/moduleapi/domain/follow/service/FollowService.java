@@ -1,14 +1,16 @@
 package com.codeit.modoo_playlist.moduleapi.domain.follow.service;
 
+import com.codeit.modoo_playlist.core.domain.follow.entity.Follow;
+
 import java.util.UUID;
 
 public interface FollowService {
 
-    void follow(UUID followerId, UUID followeeId);
+    Follow follow(UUID followerId, UUID followeeId);
 
-    void unfollow(UUID followerId, UUID followeeId);
+    void unfollow(UUID followId, UUID requesterId);
 
-    boolean isFollowedByMe(UUID followerId, UUID followeeId);
+    Follow getFollowStatus(UUID followerId, UUID followeeId);
 
     long countFollowers(UUID followeeId);
 

@@ -66,4 +66,7 @@ public class UserContentInteraction extends BaseUpdatableEntity
 	@Builder.Default
 	private Integer occurrenceCount = 1;
 
+	public void changeReactionType(InteractionType type) {
+		this.type = type;
+	}
 }
