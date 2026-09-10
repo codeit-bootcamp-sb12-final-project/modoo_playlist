@@ -18,6 +18,7 @@ import com.codeit.modoo_playlist.infra.client.tmdb.dto.TmdbGenreResponse;
 import com.codeit.modoo_playlist.infra.client.tmdb.dto.TmdbKeywordResponse;
 import com.codeit.modoo_playlist.infra.client.tmdb.dto.TmdbMovieDetailResponse;
 import com.codeit.modoo_playlist.infra.client.tmdb.dto.TmdbTvDetailResponse;
+import com.codeit.modoo_playlist.modulebatch.tmdb.config.TmdbBatchProperties;
 import com.codeit.modoo_playlist.modulebatch.tmdb.exception.TmdbInvalidContentException;
 import com.codeit.modoo_playlist.modulebatch.tmdb.model.ExistingTmdbContent;
 import com.codeit.modoo_playlist.modulebatch.tmdb.model.TmdbSyncContent;
@@ -34,6 +35,7 @@ public class TmdbSyncConverter {
     private static final int MAX_CHARACTER_NAME_LENGTH = 100;
 
     private final TmdbClient tmdbClient;
+    private final TmdbBatchProperties properties;
 
     public TmdbSyncContent fromMovie(
             TmdbMovieDetailResponse detail,
@@ -220,14 +222,16 @@ public class TmdbSyncConverter {
     }
 
     private boolean tagSnapshotComplete(List<TmdbGenreResponse> genres, TmdbKeywordResponse keywords) {
-        return genres != null && keywords != null;
+        return genres != null
+                && keywords != null
+                && (keywords.keywords() != null || keywords.results() != null);
     }
 
     private VideoReleaseStatus movieStatus(String status, LocalDate releaseDate) {
         if ("Canceled".equalsIgnoreCase(status)) {
             return VideoReleaseStatus.CANCELED;
         }
-        if (releaseDate != null && releaseDate.isAfter(LocalDate.now())) {
+        if (releaseDate != null && releaseDate.isAfter(today())) {
             return VideoReleaseStatus.UPCOMING;
         }
         return "Released".equalsIgnoreCase(status)
@@ -247,7 +251,7 @@ public class TmdbSyncConverter {
                 || "Pilot".equalsIgnoreCase(status)) {
             return VideoReleaseStatus.UPCOMING;
         }
-        if (firstAirDate != null && firstAirDate.isAfter(LocalDate.now())) {
+        if (firstAirDate != null && firstAirDate.isAfter(today())) {
             return VideoReleaseStatus.UPCOMING;
         }
         return "Returning Series".equalsIgnoreCase(status)
@@ -261,6 +265,10 @@ public class TmdbSyncConverter {
 
     private String newId() {
         return Generators.timeBasedEpochGenerator().generate().toString();
+    }
+
+    private LocalDate today() {
+        return LocalDate.now(java.time.ZoneId.of(properties.getZone()));
     }
 
     private String first(List<String> values) {

@@ -17,6 +17,11 @@ public interface TmdbContentMapper {
             @Param("sourceId") String sourceId
     );
 
+    String findContentIdBySourceId(
+            @Param("type") String type,
+            @Param("sourceId") String sourceId
+    );
+
     List<ExistingTmdbContent.Person> findPeopleByContentId(@Param("contentId") String contentId);
 
     List<ExistingTmdbContent.Tag> findTagsByContentId(@Param("contentId") String contentId);

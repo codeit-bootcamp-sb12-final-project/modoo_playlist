@@ -31,6 +31,15 @@
         LIMIT 1
     </select>
 
+    <select id="findContentIdBySourceId" resultType="java.lang.String">
+        SELECT BIN_TO_UUID(id)
+        FROM contents
+        WHERE source = 'TMDB'
+          AND type = #{type}
+          AND source_id = #{sourceId}
+        LIMIT 1
+    </select>
+
     <select id="findExistingSourceIds" resultType="java.lang.String">
         SELECT source_id
         FROM contents

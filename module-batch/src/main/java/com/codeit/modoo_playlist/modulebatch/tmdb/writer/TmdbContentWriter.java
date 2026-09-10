@@ -19,12 +19,16 @@ public class TmdbContentWriter implements ItemWriter<TmdbSyncContent> {
     public void write(Chunk<? extends TmdbSyncContent> chunk) {
         for (TmdbSyncContent content : chunk) {
             contentMapper.upsertContent(content);
-            contentMapper.upsertVideo(content.id(), content.video());
+            String contentId = contentMapper.findContentIdBySourceId(content.type(), content.sourceId());
+            if (contentId == null) {
+                throw new IllegalStateException("저장된 TMDB 콘텐츠 ID를 찾을 수 없습니다: " + content.sourceId());
+            }
+            contentMapper.upsertVideo(contentId, content.video());
 
             if (content.replacePeople()) {
-                contentMapper.deletePeople(content.id());
+                contentMapper.deletePeople(contentId);
                 if (!content.people().isEmpty()) {
-                    contentMapper.insertPeople(content.id(), content.people());
+                    contentMapper.insertPeople(contentId, content.people());
                 }
             }
 
@@ -32,9 +36,9 @@ public class TmdbContentWriter implements ItemWriter<TmdbSyncContent> {
                 if (!content.tags().isEmpty()) {
                     contentMapper.insertTags(content.tags());
                 }
-                contentMapper.deleteMissingOpenApiTags(content.id(), content.tags());
+                contentMapper.deleteMissingOpenApiTags(contentId, content.tags());
                 if (!content.tags().isEmpty()) {
-                    contentMapper.upsertContentTags(content.id(), content.tags());
+                    contentMapper.upsertContentTags(contentId, content.tags());
                 }
             }
         }

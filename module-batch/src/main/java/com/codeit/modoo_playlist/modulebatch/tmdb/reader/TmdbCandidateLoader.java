@@ -1,6 +1,7 @@
 package com.codeit.modoo_playlist.modulebatch.tmdb.reader;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -46,7 +47,7 @@ public class TmdbCandidateLoader {
             ));
         }
 
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(ZoneId.of(properties.getZone()));
         contentMapper.findActiveMovieSourceIds(today.minusWeeks(MOVIE_ACTIVE_WEEKS), today).stream()
                 .map(this::parseSourceId)
                 .forEach(ids::add);
