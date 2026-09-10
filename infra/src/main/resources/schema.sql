@@ -481,7 +481,7 @@ ALTER TABLE `messages` ADD CONSTRAINT `FK_conversations_TO_messages_1`
 	ON UPDATE RESTRICT ON DELETE CASCADE;
 
 ALTER TABLE `messages` ADD CONSTRAINT `FK_users_TO_messages_1`
-	FOREIGN KEY (`sender`) REFERENCES `users` (`id`)
+	FOREIGN KEY (`sender_id`) REFERENCES `users` (`id`)
 	ON UPDATE RESTRICT ON DELETE RESTRICT;
 
 ALTER TABLE `messages` ADD CONSTRAINT `FK_users_TO_messages_2`
