@@ -27,8 +27,9 @@ public class UserDetails implements org.springframework.security.core.userdetail
     return password;
   }
 
+  //  내부만 email로 변경
   @Override
   public String getUsername() {
-    return userDto.name();
+    return userDto.email();
   }
 }
