@@ -18,6 +18,11 @@ public enum ErrorCode {
     // Comment
     COMMENT_NOT_FOUND("댓글을 찾을 수 없습니다."),
 
+    // Follow
+    FOLLOW_NOT_FOUND("팔로우 관계를 찾을 수 없습니다."),
+    FOLLOW_ALREADY_EXISTS("이미 팔로우하고 있습니다."),
+    SELF_FOLLOW_NOT_ALLOWED("자기 자신을 팔로우할 수 없습니다."),
+
     // File
     FILE_SAVE_FAILED("파일 저장에 실패했습니다."),
     FILE_DELETE_FAILED("파일 삭제에 실패했습니다."),
