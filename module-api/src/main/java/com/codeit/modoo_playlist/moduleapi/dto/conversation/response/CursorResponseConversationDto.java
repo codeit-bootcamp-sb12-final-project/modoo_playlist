@@ -1,5 +1,6 @@
 package com.codeit.modoo_playlist.moduleapi.dto.conversation.response;
 
+import com.codeit.modoo_playlist.core.domain.conversation.entity.SortDirection;
 import com.codeit.modoo_playlist.moduleapi.dto.ConversationDto;
 import com.querydsl.core.types.Order;
 
@@ -12,7 +13,8 @@ public record CursorResponseConversationDto(
         String nextCursor,
         UUID nextIdAfter,
         boolean hasNext,
+        long totalCount,
         String sortBy,
-        Order sortDirection
+        SortDirection sortDirection
 ) {
 }
