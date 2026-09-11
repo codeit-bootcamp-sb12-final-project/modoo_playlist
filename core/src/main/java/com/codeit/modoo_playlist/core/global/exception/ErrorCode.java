@@ -19,6 +19,10 @@ public enum ErrorCode {
   REFRESH_TOKEN_EXPIRED(401, "로그인 유지 기간이 만료되었습니다. 다시 로그인해 주세요."),
   LOGIN_SESSION_INVALIDATED(401, "로그인이 만료되었거나 해제되었습니다."),
   INVALID_CSRF_TOKEN(403, "요청 검증에 실패했습니다."),
+  LOGIN_SESSION_ID_MISMATCH(409, "저장된 로그인 세션의 ID가 일치하지 않습니다."),
+  LOGIN_SESSION_CREATION_FAILED(500, "로그인 세션을 생성하지 못했습니다."),
+  TOKEN_GENERATION_FAILED(500, "토큰 생성 중 오류가 발생했습니다."),
+  LOGIN_SESSION_UPDATE_FAILED(500, "로그인 세션을 갱신하지 못했습니다."),
 
   // User
   USER_NOT_FOUND(404, "사용자를 찾을 수 없습니다."),
@@ -32,30 +36,30 @@ public enum ErrorCode {
   // Comment
   COMMENT_NOT_FOUND(404, "댓글을 찾을 수 없습니다."),
 
-    // Follow
-    FOLLOW_NOT_FOUND(404, "팔로우 관계를 찾을 수 없습니다."),
-    FOLLOW_ALREADY_EXISTS(409, "이미 팔로우하고 있습니다."),
-    SELF_FOLLOW_NOT_ALLOWED(400, "자기 자신을 팔로우할 수 없습니다."),
+  // Follow
+  FOLLOW_NOT_FOUND(404, "팔로우 관계를 찾을 수 없습니다."),
+  FOLLOW_ALREADY_EXISTS(409, "이미 팔로우하고 있습니다."),
+  SELF_FOLLOW_NOT_ALLOWED(400, "자기 자신을 팔로우할 수 없습니다."),
 
-    // Review
-    REVIEW_NOT_FOUND(404, "리뷰를 찾을 수 없습니다."),
-    REVIEW_ALREADY_EXISTS(409, "이미 이 콘텐츠에 리뷰를 작성했습니다."),
-    REVIEW_ACCESS_DENIED(403, "본인이 작성한 리뷰가 아닙니다."),
+  // Review
+  REVIEW_NOT_FOUND(404, "리뷰를 찾을 수 없습니다."),
+  REVIEW_ALREADY_EXISTS(409, "이미 이 콘텐츠에 리뷰를 작성했습니다."),
+  REVIEW_ACCESS_DENIED(403, "본인이 작성한 리뷰가 아닙니다."),
 
-    // Playlist
-    PLAYLIST_NOT_FOUND(404, "플레이리스트를 찾을 수 없습니다."),
-    PLAYLIST_ACCESS_DENIED(403, "본인의 플레이리스트가 아닙니다."),
-    PLAYLIST_CONTENT_NOT_FOUND(404, "플레이리스트에 등록된 콘텐츠를 찾을 수 없습니다."),
-    PLAYLIST_CONTENT_ALREADY_EXISTS(409, "이미 플레이리스트에 등록된 콘텐츠입니다."),
-    PLAYLIST_SUBSCRIPTION_NOT_FOUND(404, "구독 관계를 찾을 수 없습니다."),
-    PLAYLIST_SUBSCRIPTION_ALREADY_EXISTS(409, "이미 구독 중인 플레이리스트입니다."),
+  // Playlist
+  PLAYLIST_NOT_FOUND(404, "플레이리스트를 찾을 수 없습니다."),
+  PLAYLIST_ACCESS_DENIED(403, "본인의 플레이리스트가 아닙니다."),
+  PLAYLIST_CONTENT_NOT_FOUND(404, "플레이리스트에 등록된 콘텐츠를 찾을 수 없습니다."),
+  PLAYLIST_CONTENT_ALREADY_EXISTS(409, "이미 플레이리스트에 등록된 콘텐츠입니다."),
+  PLAYLIST_SUBSCRIPTION_NOT_FOUND(404, "구독 관계를 찾을 수 없습니다."),
+  PLAYLIST_SUBSCRIPTION_ALREADY_EXISTS(409, "이미 구독 중인 플레이리스트입니다."),
 
-    // Conversation
-    CONVERSATION_NOT_FOUND(404, "대화를 찾을 수 없습니다."),
-    CONVERSATION_ACCESS_DENIED(403, "해당 대화에 접근할 권한이 없습니다."),
+  // Conversation
+  CONVERSATION_NOT_FOUND(404, "대화를 찾을 수 없습니다."),
+  CONVERSATION_ACCESS_DENIED(403, "해당 대화에 접근할 권한이 없습니다."),
 
-    // File
-    FILE_SAVE_FAILED(500, "파일 저장에 실패했습니다."),
+  // File
+  FILE_SAVE_FAILED(500, "파일 저장에 실패했습니다."),
   FILE_DELETE_FAILED(500, "파일 삭제에 실패했습니다."),
   PAYLOAD_TOO_LARGE(413, "업로드 가능한 파일 크기를 초과했습니다."),
 
