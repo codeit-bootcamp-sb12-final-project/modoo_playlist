@@ -1,6 +1,7 @@
 package com.codeit.modoo_playlist.infra.client.tmdb;
 
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.retry.RetryPolicy;
@@ -45,9 +46,9 @@ public class TmdbClientConfig {
 
     @Bean
     TmdbClient tmdbClient(
-            RestClient tmdbRestClient,
+            @Qualifier("tmdbRestClient") RestClient tmdbRestClient,
             TmdbClientProperties properties,
-            RetryTemplate tmdbRetryTemplate
+            @Qualifier("tmdbRetryTemplate") RetryTemplate tmdbRetryTemplate
     ) {
         return new TmdbClient(tmdbRestClient, properties, tmdbRetryTemplate);
     }

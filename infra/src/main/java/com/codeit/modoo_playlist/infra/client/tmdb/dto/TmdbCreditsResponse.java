@@ -23,7 +23,6 @@ public record TmdbCreditsResponse(List<Cast> cast, List<Crew> crew) {
             long id,
             String name,
             String job,
-            String department,
             @JsonProperty("profile_path") String profilePath
     ) {
     }

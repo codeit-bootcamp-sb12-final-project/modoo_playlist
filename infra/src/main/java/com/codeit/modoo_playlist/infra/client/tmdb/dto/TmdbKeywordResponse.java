@@ -12,6 +12,6 @@ public record TmdbKeywordResponse(List<Keyword> keywords, List<Keyword> results)
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record Keyword(long id, String name) {
+    public record Keyword(String name) {
     }
 }
