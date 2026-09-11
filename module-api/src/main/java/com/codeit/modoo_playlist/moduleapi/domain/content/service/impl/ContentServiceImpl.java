@@ -282,7 +282,11 @@ public class ContentServiceImpl implements ContentService {
         }
 
         List<String> displayTags = new ArrayList<>();
-        addDisplayTag(displayTags, genres.isEmpty() ? sports.getSportType() : genres.get(0));
+        String sportType = sports.getSportType();
+        if ((sportType == null || sportType.isBlank()) && !genres.isEmpty()) {
+            sportType = genres.get(0);
+        }
+        addDisplayTag(displayTags, sportType);
         addDisplayTag(displayTags, sports.getLeague());
         addDisplayTag(displayTags, sports.getHomeTeam());
         addDisplayTag(displayTags, sports.getAwayTeam());
