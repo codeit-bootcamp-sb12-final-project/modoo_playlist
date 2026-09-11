@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 
 @RestController
-@RequestMapping("/api/discovery/chat")
+@RequestMapping("/api/chat")
 @RequiredArgsConstructor
 public class ChatController {
 

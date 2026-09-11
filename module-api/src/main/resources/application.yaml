@@ -22,7 +22,7 @@ spring:
       genai:
         api-key: ${GEMINI_API_KEY}
         chat:
-          model: gemini-3.8-flash
+          model: gemini-3.7-flash
           thinking-level: LOW
 
 module-api:

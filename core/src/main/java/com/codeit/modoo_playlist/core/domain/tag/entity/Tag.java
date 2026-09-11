@@ -4,6 +4,7 @@ import com.codeit.modoo_playlist.core.domain.tag.type.TagKind;
 import com.codeit.modoo_playlist.core.global.common.entity.baseentity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -26,4 +27,8 @@ public class Tag extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private TagKind kind;
+
+    @Column(name = "content_count", nullable = false)
+    @Builder.Default
+    private int contentCount = 0;
 }

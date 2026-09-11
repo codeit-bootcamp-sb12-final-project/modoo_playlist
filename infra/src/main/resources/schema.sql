@@ -139,6 +139,7 @@ CREATE TABLE `tags` (
 	`id`	BINARY(16)	NOT NULL,
 	`name`	VARCHAR(50)	NOT NULL	COMMENT 'LLM 표기 흔들림(SF/공상과학/sci-fi)을 정규화하는 지점',
 	`kind`	VARCHAR(20)	NOT NULL	COMMENT 'GENRE / THEME / MOOD / KEYWORD. 추천 점수 계수 분기',
+	`content_count`	INT	NOT NULL	DEFAULT 0	COMMENT '이 태그가 붙은 콘텐츠 수',
 	`created_at`	DATETIME(6)	NOT NULL	DEFAULT CURRENT_TIMESTAMP(6),
 
 	PRIMARY KEY (`id`),
