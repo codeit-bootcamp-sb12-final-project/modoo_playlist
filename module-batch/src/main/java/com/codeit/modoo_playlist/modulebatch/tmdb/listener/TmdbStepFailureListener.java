@@ -5,7 +5,8 @@ import org.springframework.batch.core.listener.StepExecutionListener;
 import org.springframework.batch.core.step.StepExecution;
 import org.springframework.stereotype.Component;
 
-import com.codeit.modoo_playlist.modulebatch.tmdb.exception.TmdbFatalIntegrationException;
+import com.codeit.modoo_playlist.core.global.exception.BaseException;
+import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 
 @Component
 public class TmdbStepFailureListener implements StepExecutionListener {
@@ -21,7 +22,8 @@ public class TmdbStepFailureListener implements StepExecutionListener {
     private boolean containsFatalCause(Throwable throwable) {
         Throwable current = throwable;
         while (current != null) {
-            if (current instanceof TmdbFatalIntegrationException) {
+            if (current instanceof BaseException baseException
+                    && baseException.getErrorCode() == ErrorCode.TMDB_AUTHENTICATION_FAILED) {
                 return true;
             }
             current = current.getCause();

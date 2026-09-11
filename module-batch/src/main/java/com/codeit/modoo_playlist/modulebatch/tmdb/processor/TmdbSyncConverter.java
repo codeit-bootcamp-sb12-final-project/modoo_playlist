@@ -12,6 +12,8 @@ import org.springframework.stereotype.Component;
 import com.codeit.modoo_playlist.core.domain.content.type.ContentType;
 import com.codeit.modoo_playlist.core.domain.content.type.VideoReleaseStatus;
 import com.codeit.modoo_playlist.core.domain.tag.type.TagKind;
+import com.codeit.modoo_playlist.core.global.exception.BaseException;
+import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import com.codeit.modoo_playlist.infra.client.tmdb.TmdbClient;
 import com.codeit.modoo_playlist.infra.client.tmdb.dto.TmdbCreditsResponse;
 import com.codeit.modoo_playlist.infra.client.tmdb.dto.TmdbGenreResponse;
@@ -19,7 +21,6 @@ import com.codeit.modoo_playlist.infra.client.tmdb.dto.TmdbKeywordResponse;
 import com.codeit.modoo_playlist.infra.client.tmdb.dto.TmdbMovieDetailResponse;
 import com.codeit.modoo_playlist.infra.client.tmdb.dto.TmdbTvDetailResponse;
 import com.codeit.modoo_playlist.modulebatch.tmdb.config.TmdbBatchProperties;
-import com.codeit.modoo_playlist.modulebatch.tmdb.exception.TmdbInvalidContentException;
 import com.codeit.modoo_playlist.modulebatch.tmdb.model.ExistingTmdbContent;
 import com.codeit.modoo_playlist.modulebatch.tmdb.model.TmdbSyncContent;
 import com.fasterxml.uuid.Generators;
@@ -121,11 +122,17 @@ public class TmdbSyncConverter {
 
     private void validateRequired(String title, String posterPath, ExistingTmdbContent existing) {
         if (title == null || title.isBlank()) {
-            throw new TmdbInvalidContentException("TMDB 콘텐츠 제목이 없습니다.");
+            throw invalidContent("title");
         }
         if (existing == null && (posterPath == null || posterPath.isBlank())) {
-            throw new TmdbInvalidContentException("신규 TMDB 콘텐츠 포스터가 없습니다.");
+            throw invalidContent("posterPath");
         }
+    }
+
+    private BaseException invalidContent(String field) {
+        BaseException exception = new BaseException(ErrorCode.TMDB_CONTENT_INVALID);
+        exception.addDetail("field", field);
+        return exception;
     }
 
     private void addMovieDirector(List<TmdbSyncContent.Person> people, TmdbCreditsResponse credits) {
