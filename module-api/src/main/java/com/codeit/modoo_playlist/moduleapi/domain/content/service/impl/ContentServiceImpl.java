@@ -191,6 +191,9 @@ public class ContentServiceImpl implements ContentService {
                 .filter(contentTag -> !desiredTagIds.contains(contentTag.getTag().getId()))
                 .toList();
         contentTagRepository.deleteAll(removedContentTags);
+        contentTagRepository.decreaseTagContentCounts(removedContentTags.stream()
+                .map(contentTag -> contentTag.getTag().getId())
+                .toList());
 
         List<ContentTag> addedContentTags = new ArrayList<>();
         for (Tag tag : desiredTags) {
@@ -204,6 +207,10 @@ public class ContentServiceImpl implements ContentService {
             }
         }
         contentTagRepository.saveAll(addedContentTags);
+        contentTagRepository.increaseTagContentCounts(addedContentTags.stream()
+                .map(contentTag -> contentTag.getTag().getId())
+                .toList());
+        contentTagRepository.flush();
     }
 
     private String storeThumbnailIfPresent(MultipartFile thumbnail) {
@@ -251,6 +258,12 @@ public class ContentServiceImpl implements ContentService {
     }
 
     private List<String> displayTags(Content content, List<Tag> tags, ContentSports sports) {
+        if (content.getSource() == null) {
+            return tags.stream()
+                    .map(Tag::getName)
+                    .toList();
+        }
+
         List<String> genres = tags.stream()
                 .filter(tag -> tag.getKind() == TagKind.GENRE)
                 .map(Tag::getName)
