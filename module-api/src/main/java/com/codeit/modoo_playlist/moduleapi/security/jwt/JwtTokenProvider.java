@@ -31,6 +31,7 @@ import org.springframework.stereotype.Component;
 public class JwtTokenProvider {
 
   public static final String REFRESH_TOKEN_COOKIE_NAME = "REFRESH_TOKEN";
+  private static final Duration ISSUED_AT_CLOCK_SKEW = Duration.ofSeconds(30);
 
   // 만료시간 조회 (RedisJwtRegistry의 TTL 설정용)
   @Getter
@@ -203,7 +204,7 @@ public class JwtTokenProvider {
       }
 
       if (issuedAt == null
-          || issuedAt.toInstant().isAfter(now)
+          || issuedAt.toInstant().isAfter(now.plus(ISSUED_AT_CLOCK_SKEW))
           || !issuedAt.before(expiration)) {
         return false;
       }
