@@ -23,14 +23,19 @@ public class AsyncConfig implements WebMvcConfigurer {
     return executor;
   }
 
-  @Override
-  public void configureAsyncSupport(AsyncSupportConfigurer configurer){
+  @Bean(name = "sseAsyncExecutor")
+  public ThreadPoolTaskExecutor sseAsyncExecutor() {
     ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
     executor.setCorePoolSize(10);
     executor.setMaxPoolSize(50);
     executor.setQueueCapacity(100);
     executor.setThreadNamePrefix("sse-async-");
     executor.initialize();
-    configurer.setTaskExecutor(executor);
+    return executor;
+  }
+
+  @Override
+  public void configureAsyncSupport(AsyncSupportConfigurer configurer) {
+    configurer.setTaskExecutor(sseAsyncExecutor());
   }
 }
