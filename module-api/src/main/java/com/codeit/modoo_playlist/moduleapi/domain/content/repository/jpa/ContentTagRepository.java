@@ -30,7 +30,7 @@ public interface ContentTagRepository extends JpaRepository<ContentTag, ContentT
       join Content c on c.id = ct2.content.id
       where ct1.content.id = :contentId
       group by c.id, c.title, c.thumbnailUrl
-      order by count(ct2) desc
+      order by count(ct2) desc, c.id asc
       """)
   List<SimilarContentDto> findSimilarContents(@Param("contentId") UUID contentId,
       Pageable pageable);
