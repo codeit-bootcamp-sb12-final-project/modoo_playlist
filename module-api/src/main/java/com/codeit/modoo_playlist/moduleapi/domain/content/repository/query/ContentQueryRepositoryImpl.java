@@ -21,6 +21,8 @@ import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
+import com.codeit.modoo_playlist.core.global.exception.BaseException;
+import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.query.ContentListCondition.SortDirection;
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.query.ContentListCondition.SortType;
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.query.ContentQueryPage.ContentItem;
@@ -194,7 +196,7 @@ public class ContentQueryRepositoryImpl implements ContentQueryRepository {
         try {
             return Instant.parse(cursor);
         } catch (RuntimeException exception) {
-            throw new IllegalArgumentException("createdAt 커서 형식이 올바르지 않습니다.", exception);
+            throw invalidCursor("createdAt", cursor, exception);
         }
     }
 
@@ -202,7 +204,7 @@ public class ContentQueryRepositoryImpl implements ContentQueryRepository {
         try {
             return new BigDecimal(cursor);
         } catch (NumberFormatException exception) {
-            throw new IllegalArgumentException("averageRating 커서 형식이 올바르지 않습니다.", exception);
+            throw invalidCursor("averageRating", cursor, exception);
         }
     }
 
@@ -210,8 +212,15 @@ public class ContentQueryRepositoryImpl implements ContentQueryRepository {
         try {
             return Long.parseLong(cursor);
         } catch (NumberFormatException exception) {
-            throw new IllegalArgumentException("watcherCount 커서 형식이 올바르지 않습니다.", exception);
+            throw invalidCursor("watcherCount", cursor, exception);
         }
+    }
+
+    private BaseException invalidCursor(String sortBy, String cursor, RuntimeException cause) {
+        BaseException exception = new BaseException(ErrorCode.CONTENT_CURSOR_INVALID, cause);
+        exception.addDetail("sortBy", sortBy);
+        exception.addDetail("cursor", cursor);
+        return exception;
     }
 
     private long valueOrZero(Long value) {

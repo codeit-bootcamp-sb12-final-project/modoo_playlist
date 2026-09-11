@@ -67,7 +67,7 @@ CREATE TABLE `contents` (
 	`embedding_source_hash`	CHAR(64)	NULL,
 
 	PRIMARY KEY (`id`),
-	UNIQUE KEY `UK_CONTENTS_SOURCE_SOURCE_ID` (`source`, `source_id`),
+	UNIQUE KEY `UK_CONTENTS_SOURCE_TYPE_SOURCE_ID` (`source`, `type`, `source_id`),
 	KEY `IDX_CONTENTS_LIVE_TYPE` (`deleted_at`, `type`)	COMMENT 'MySQL은 부분 인덱스가 없어 deleted_at을 선행 컬럼으로',
 	KEY `IDX_CONTENTS_RELEASE` (`release_date`)
 );
@@ -139,6 +139,7 @@ CREATE TABLE `tags` (
 	`id`	BINARY(16)	NOT NULL,
 	`name`	VARCHAR(50)	NOT NULL	COMMENT 'LLM 표기 흔들림(SF/공상과학/sci-fi)을 정규화하는 지점',
 	`kind`	VARCHAR(20)	NOT NULL	COMMENT 'GENRE / THEME / MOOD / KEYWORD. 추천 점수 계수 분기',
+	`content_count`	INT	NOT NULL	DEFAULT 0	COMMENT '이 태그가 붙은 콘텐츠 수',
 	`created_at`	DATETIME(6)	NOT NULL	DEFAULT CURRENT_TIMESTAMP(6),
 
 	PRIMARY KEY (`id`),
@@ -483,7 +484,7 @@ ALTER TABLE `messages` ADD CONSTRAINT `FK_conversations_TO_messages_1`
 	ON UPDATE RESTRICT ON DELETE CASCADE;
 
 ALTER TABLE `messages` ADD CONSTRAINT `FK_users_TO_messages_1`
-	FOREIGN KEY (`sender`) REFERENCES `users` (`id`)
+	FOREIGN KEY (`sender_id`) REFERENCES `users` (`id`)
 	ON UPDATE RESTRICT ON DELETE RESTRICT;
 
 ALTER TABLE `messages` ADD CONSTRAINT `FK_users_TO_messages_2`

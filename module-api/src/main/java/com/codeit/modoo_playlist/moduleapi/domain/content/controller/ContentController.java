@@ -1,6 +1,5 @@
 package com.codeit.modoo_playlist.moduleapi.domain.content.controller;
 
-import java.io.IOException;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -56,7 +55,7 @@ public class ContentController {
     public ResponseEntity<ContentDetailResponse> createContent(
             @Valid @RequestPart("request") ContentCreateRequest request,
             @RequestPart(value = "thumbnail", required = false) MultipartFile thumbnail
-    ) throws IOException {
+    ) {
         ContentDetailResponse response = contentService.createContent(request, thumbnail);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -70,7 +69,7 @@ public class ContentController {
             @PathVariable UUID contentId,
             @Valid @RequestPart("request") ContentUpdateRequest request,
             @RequestPart(value = "thumbnail", required = false) MultipartFile thumbnail
-    ) throws IOException {
+    ) {
         return ResponseEntity.ok(contentService.updateContent(contentId, request, thumbnail));
     }
 

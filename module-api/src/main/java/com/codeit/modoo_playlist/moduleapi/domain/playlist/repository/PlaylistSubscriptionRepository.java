@@ -4,10 +4,13 @@ import com.codeit.modoo_playlist.core.domain.playlist.entity.PlaylistSubscriptio
 import com.codeit.modoo_playlist.core.domain.playlist.entity.PlaylistSubscriptionId;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface PlaylistSubscriptionRepository extends JpaRepository<PlaylistSubscription, PlaylistSubscriptionId> {
 
     long countById_PlaylistId(UUID playlistId);
+
+    List<PlaylistSubscription> findAllById_PlaylistIdIn(List<UUID> playlistIds);
 
 }

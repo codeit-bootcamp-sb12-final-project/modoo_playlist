@@ -1,10 +1,11 @@
 package com.codeit.modoo_playlist.moduleapi.domain.content.repository.query;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 
 import com.codeit.modoo_playlist.core.domain.content.type.ContentType;
+import com.codeit.modoo_playlist.core.global.exception.BaseException;
+import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 
 public record ContentListCondition(
         ContentType type,
@@ -27,15 +28,16 @@ public record ContentListCondition(
                         .distinct()
                         .toList();
         cursor = normalize(cursor);
-        sortBy = Objects.requireNonNull(sortBy, "sortBy는 필수입니다.");
-        sortDirection = Objects.requireNonNull(sortDirection, "sortDirection은 필수입니다.");
+        if (sortBy == null || sortDirection == null) {
+            throw invalidQuery("sort", null);
+        }
 
         if (limit < 1 || limit > 100) {
-            throw new IllegalArgumentException("limit은 1 이상 100 이하여야 합니다.");
+            throw invalidQuery("limit", limit);
         }
 
         if ((cursor == null) != (idAfter == null)) {
-            throw new IllegalArgumentException("cursor와 idAfter는 함께 전달해야 합니다.");
+            throw invalidQuery("cursor", cursor);
         }
     }
 
@@ -44,6 +46,13 @@ public record ContentListCondition(
             return null;
         }
         return value.trim();
+    }
+
+    private static BaseException invalidQuery(String field, Object value) {
+        BaseException exception = new BaseException(ErrorCode.CONTENT_QUERY_INVALID);
+        exception.addDetail("field", field);
+        exception.addDetail("value", value);
+        return exception;
     }
 
     public enum SortType {

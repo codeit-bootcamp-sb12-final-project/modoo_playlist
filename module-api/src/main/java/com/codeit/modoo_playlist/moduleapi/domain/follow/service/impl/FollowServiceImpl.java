@@ -18,7 +18,7 @@ public class FollowServiceImpl implements FollowService {
 
     @Override
     @Transactional
-    public void follow(UUID followerId, UUID followeeId) {
+    public Follow follow(UUID followerId, UUID followeeId) {
         if (followerId.equals(followeeId)) {
             throw new BaseException(ErrorCode.SELF_FOLLOW_NOT_ALLOWED);
         }
@@ -32,21 +32,26 @@ public class FollowServiceImpl implements FollowService {
                 .followeeId(followeeId)
                 .build();
 
-        followRepository.save(follow);
+        return followRepository.save(follow);
     }
 
     @Override
     @Transactional
-    public void unfollow(UUID followerId, UUID followeeId) {
-        Follow follow = followRepository.findByFollowerIdAndFolloweeId(followerId, followeeId)
+    public void unfollow(UUID followId, UUID requesterId) {
+        Follow follow = followRepository.findById(followId)
                 .orElseThrow(() -> new BaseException(ErrorCode.FOLLOW_NOT_FOUND));
+
+        if (!follow.getFollowerId().equals(requesterId)) {
+            throw new BaseException(ErrorCode.FOLLOW_ACCESS_DENIED);
+        }
 
         followRepository.delete(follow);
     }
 
     @Override
-    public boolean isFollowedByMe(UUID followerId, UUID followeeId) {
-        return followRepository.existsByFollowerIdAndFolloweeId(followerId, followeeId);
+    public Follow getFollowStatus(UUID followerId, UUID followeeId) {
+        return followRepository.findByFollowerIdAndFolloweeId(followerId, followeeId)
+                .orElseThrow(() -> new BaseException(ErrorCode.FOLLOW_NOT_FOUND));
     }
 
     @Override
