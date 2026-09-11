@@ -3,10 +3,9 @@ package com.codeit.modoo_playlist.moduleapi.domain.recommendation.service.impl;
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.jpa.ContentRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.jpa.ContentTagRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.SimilarContentDto;
-import com.codeit.modoo_playlist.moduleapi.domain.recommendation.service.recommendationService;
+import com.codeit.modoo_playlist.moduleapi.domain.recommendation.service.RecommendationService;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -21,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class RecommendationServiceImpl implements recommendationService {
+public class RecommendationServiceImpl implements RecommendationService {
 
   private static final int CANDIDATE_POOL_SIZE = 50;
 

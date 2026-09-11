@@ -4,7 +4,7 @@ import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.SimilarCont
 import java.util.List;
 import java.util.UUID;
 
-public interface recommendationService {
+public interface RecommendationService {
 
   List<SimilarContentDto> getSimilarContents(UUID contentId, Integer limit);
 }
