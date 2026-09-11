@@ -17,6 +17,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.codeit.modoo_playlist.core.global.exception.BaseException;
+import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import com.codeit.modoo_playlist.infra.config.FileConfig;
 import com.codeit.modoo_playlist.moduleapi.domain.content.storage.ThumbnailStorage;
 
@@ -55,20 +57,20 @@ public class LocalThumbnailStorage implements ThumbnailStorage {
 
     private String validateImage(MultipartFile thumbnail) throws IOException {
         if (thumbnail == null || thumbnail.isEmpty()) {
-            throw new IllegalArgumentException("썸네일 파일이 비어 있습니다.");
+            throw invalidThumbnail("empty");
         }
         if (thumbnail.getSize() > MAX_FILE_SIZE) {
-            throw new IllegalArgumentException("썸네일 파일은 5MB 이하여야 합니다.");
+            throw new BaseException(ErrorCode.PAYLOAD_TOO_LARGE);
         }
 
         String contentType = thumbnail.getContentType();
         if (contentType == null || !contentType.startsWith("image/")) {
-            throw new IllegalArgumentException("이미지 파일만 썸네일로 등록할 수 있습니다.");
+            throw invalidThumbnail("contentType");
         }
 
         String extension = resolveExtension(thumbnail.getOriginalFilename());
         if (!ALLOWED_EXTENSIONS.contains(extension)) {
-            throw new IllegalArgumentException("jpg, jpeg, png, gif 형식만 등록할 수 있습니다.");
+            throw invalidThumbnail("extension");
         }
 
         validateImageContent(thumbnail, extension);
@@ -80,12 +82,12 @@ public class LocalThumbnailStorage implements ThumbnailStorage {
         try (var inputStream = thumbnail.getInputStream();
              ImageInputStream imageInputStream = ImageIO.createImageInputStream(inputStream)) {
             if (imageInputStream == null) {
-                throw new IllegalArgumentException("올바른 이미지 파일이 아닙니다.");
+                throw invalidThumbnail("content");
             }
 
             Iterator<ImageReader> readers = ImageIO.getImageReaders(imageInputStream);
             if (!readers.hasNext()) {
-                throw new IllegalArgumentException("올바른 이미지 파일이 아닙니다.");
+                throw invalidThumbnail("content");
             }
 
             ImageReader reader = readers.next();
@@ -98,20 +100,26 @@ public class LocalThumbnailStorage implements ThumbnailStorage {
                 if (width <= 0 || height <= 0
                         || width > MAX_WIDTH || height > MAX_HEIGHT
                         || pixels > MAX_PIXELS) {
-                    throw new IllegalArgumentException("썸네일 해상도가 허용 범위를 초과했습니다.");
+                    throw invalidThumbnail("dimensions");
                 }
                 if (!matchesExtension(extension, reader.getFormatName())) {
-                    throw new IllegalArgumentException("파일 확장자와 실제 이미지 형식이 일치하지 않습니다.");
+                    throw invalidThumbnail("formatMismatch");
                 }
                 if (reader.read(0) == null) {
-                    throw new IllegalArgumentException("올바른 이미지 파일이 아닙니다.");
+                    throw invalidThumbnail("content");
                 }
             } finally {
                 reader.dispose();
             }
         } catch (IOException exception) {
-            throw new IllegalArgumentException("올바른 이미지 파일이 아닙니다.", exception);
+            throw new BaseException(ErrorCode.THUMBNAIL_INVALID, exception);
         }
+    }
+
+    private BaseException invalidThumbnail(String reason) {
+        BaseException exception = new BaseException(ErrorCode.THUMBNAIL_INVALID);
+        exception.addDetail("reason", reason);
+        return exception;
     }
 
     private boolean matchesExtension(String extension, String formatName) {
