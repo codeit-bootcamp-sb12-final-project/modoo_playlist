@@ -20,6 +20,7 @@ import com.codeit.modoo_playlist.core.domain.content.entity.ContentTagId;
 import com.codeit.modoo_playlist.core.domain.content.entity.ContentVideo;
 import com.codeit.modoo_playlist.core.domain.content.type.ContentType;
 import com.codeit.modoo_playlist.core.domain.tag.entity.Tag;
+import com.codeit.modoo_playlist.core.domain.tag.type.TagKind;
 import com.codeit.modoo_playlist.core.global.exception.BaseException;
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import com.codeit.modoo_playlist.moduleapi.domain.content.mapper.ContentMapper;
@@ -51,6 +52,8 @@ import lombok.RequiredArgsConstructor;
 public class ContentServiceImpl implements ContentService {
 
     private static final int DEFAULT_LIMIT = 20;
+    private static final int MOVIE_GENRE_LIMIT = 4;
+    private static final int TV_GENRE_LIMIT = 3;
     private static final String DEFAULT_SORT_BY = "watcherCount";
     private static final String DEFAULT_SORT_DIRECTION = "DESCENDING";
 
@@ -67,12 +70,10 @@ public class ContentServiceImpl implements ContentService {
     public ContentCursorResponse getContents(ContentListRequest request) {
         ResolvedQuery resolvedQuery = resolveQuery(request);
         ContentQueryPage page = contentRepository.findAllByCondition(resolvedQuery.condition());
-        Map<UUID, List<String>> tagsByContentId = loadTagsByContentId(
-                page.contents().stream()
-                        .map(ContentItem::content)
-                        .map(Content::getId)
-                        .toList()
-        );
+        List<Content> contents = page.contents().stream()
+                .map(ContentItem::content)
+                .toList();
+        Map<UUID, List<String>> tagsByContentId = loadDisplayTagsByContentId(contents);
 
         List<ContentListItemResponse> data = page.contents().stream()
                 .map(item -> contentMapper.toListItem(
@@ -148,7 +149,7 @@ public class ContentServiceImpl implements ContentService {
 
     private ContentDetailResponse createDetailResponse(Content content) {
         UUID contentId = content.getId();
-        List<String> tags = loadTagsByContentId(List.of(contentId))
+        List<String> tags = loadDisplayTagsByContentId(List.of(content))
                 .getOrDefault(contentId, List.of());
         long watcherCount = contentRepository.countCurrentWatchers(contentId);
         List<ContentPerson> people = contentPersonRepository
@@ -216,22 +217,94 @@ public class ContentServiceImpl implements ContentService {
         }
     }
 
-    private Map<UUID, List<String>> loadTagsByContentId(List<UUID> contentIds) {
-        if (contentIds.isEmpty()) {
+    private Map<UUID, List<String>> loadDisplayTagsByContentId(List<Content> contents) {
+        if (contents.isEmpty()) {
             return Map.of();
         }
 
-        return contentTagRepository.findAllWithTagByContentIds(contentIds).stream()
+        List<UUID> contentIds = contents.stream()
+                .map(Content::getId)
+                .toList();
+        Map<UUID, List<Tag>> tagsByContentId = contentTagRepository
+                .findAllWithTagByContentIds(contentIds).stream()
                 .collect(Collectors.groupingBy(
                         contentTag -> contentTag.getId().getContentId(),
-                        Collectors.mapping(
-                                contentTag -> contentTag.getTag().getName(),
-                                Collectors.collectingAndThen(
-                                        Collectors.toList(),
-                                        names -> names.stream().sorted().toList()
-                                )
+                        Collectors.mapping(ContentTag::getTag, Collectors.toList())
+                ));
+        Map<UUID, ContentSports> sportsByContentId = contentSportsRepository
+                .findAllById(contents.stream()
+                        .filter(content -> content.getType() == ContentType.SPORT)
+                        .map(Content::getId)
+                        .toList())
+                .stream()
+                .collect(Collectors.toMap(ContentSports::getContentId, sports -> sports));
+
+        return contents.stream()
+                .collect(Collectors.toMap(
+                        Content::getId,
+                        content -> displayTags(
+                                content,
+                                tagsByContentId.getOrDefault(content.getId(), List.of()),
+                                sportsByContentId.get(content.getId())
                         )
                 ));
+    }
+
+    private List<String> displayTags(Content content, List<Tag> tags, ContentSports sports) {
+        List<String> genres = tags.stream()
+                .filter(tag -> tag.getKind() == TagKind.GENRE)
+                .map(Tag::getName)
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .toList();
+
+        return switch (content.getType()) {
+            case MOVIE -> genres.stream().limit(MOVIE_GENRE_LIMIT).toList();
+            case TV -> tvDisplayTags(genres);
+            case SPORT -> sportsDisplayTags(genres, sports);
+        };
+    }
+
+    private List<String> tvDisplayTags(List<String> genres) {
+        boolean animation = genres.stream().anyMatch(this::isAnimationGenre);
+        String subtype = animation ? "애니메이션" : "드라마";
+        List<String> displayTags = new ArrayList<>();
+        displayTags.add(subtype);
+        genres.stream()
+                .filter(genre -> animation ? !isAnimationGenre(genre) : !isDramaGenre(genre))
+                .limit(TV_GENRE_LIMIT)
+                .forEach(displayTags::add);
+        return List.copyOf(displayTags);
+    }
+
+    private List<String> sportsDisplayTags(List<String> genres, ContentSports sports) {
+        if (sports == null) {
+            return genres.stream().limit(MOVIE_GENRE_LIMIT).toList();
+        }
+
+        List<String> displayTags = new ArrayList<>();
+        addDisplayTag(displayTags, genres.isEmpty() ? sports.getSportType() : genres.get(0));
+        addDisplayTag(displayTags, sports.getLeague());
+        addDisplayTag(displayTags, sports.getHomeTeam());
+        addDisplayTag(displayTags, sports.getAwayTeam());
+        return List.copyOf(displayTags);
+    }
+
+    private void addDisplayTag(List<String> displayTags, String value) {
+        if (value == null || value.isBlank()) {
+            return;
+        }
+        boolean duplicated = displayTags.stream().anyMatch(value::equalsIgnoreCase);
+        if (!duplicated) {
+            displayTags.add(value);
+        }
+    }
+
+    private boolean isAnimationGenre(String genre) {
+        return "animation".equalsIgnoreCase(genre) || "애니메이션".equals(genre);
+    }
+
+    private boolean isDramaGenre(String genre) {
+        return "drama".equalsIgnoreCase(genre) || "드라마".equals(genre);
     }
 
     private ResolvedQuery resolveQuery(ContentListRequest request) {
