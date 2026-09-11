@@ -2,6 +2,7 @@ package com.codeit.modoo_playlist.moduleapi.domain.content.mapper;
 
 import java.util.List;
 
+import com.codeit.modoo_playlist.moduleapi.dto.content.response.*;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -11,12 +12,6 @@ import com.codeit.modoo_playlist.core.domain.content.entity.ContentSports;
 import com.codeit.modoo_playlist.core.domain.content.entity.ContentVideo;
 import com.codeit.modoo_playlist.core.domain.content.type.ContentType;
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.query.ContentQueryPage;
-import com.codeit.modoo_playlist.moduleapi.dto.content.response.ContentCursorResponse;
-import com.codeit.modoo_playlist.moduleapi.dto.content.response.ContentDetailResponse;
-import com.codeit.modoo_playlist.moduleapi.dto.content.response.ContentListItemResponse;
-import com.codeit.modoo_playlist.moduleapi.dto.content.response.ContentPersonResponse;
-import com.codeit.modoo_playlist.moduleapi.dto.content.response.ContentSportsResponse;
-import com.codeit.modoo_playlist.moduleapi.dto.content.response.ContentVideoResponse;
 
 @Mapper(componentModel = "spring")
 public interface ContentMapper {
@@ -26,6 +21,8 @@ public interface ContentMapper {
             List<String> tags,
             long watcherCount
     );
+
+    ContentSummaryResponse toSummary(Content content, List<String> tags);
 
     ContentDetailResponse toDetail(
             Content content,
