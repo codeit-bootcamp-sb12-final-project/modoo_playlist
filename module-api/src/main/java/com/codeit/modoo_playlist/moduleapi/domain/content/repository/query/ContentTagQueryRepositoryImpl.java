@@ -59,6 +59,7 @@ public class ContentTagQueryRepositoryImpl implements ContentTagQueryRepository 
                 .join(content)
                 .on(content.id.eq(candidateContentTag.content.id))
                 .where(targetContentTag.content.id.eq(contentId))
+                .where(content.deletedAt.isNull())
                 .groupBy(content.id, content.title, content.thumbnailUrl)
                 .orderBy(candidateContentTag.count().desc(), content.id.asc())
                 .offset(pageable.getOffset())
