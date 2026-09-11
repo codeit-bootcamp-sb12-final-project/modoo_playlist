@@ -50,9 +50,9 @@ public class JwtTokenProvider {
 
   public JwtTokenProvider(
       @Value("${module-api.jwt.access-token.secret}") String accessTokenSecret,
-      @Value("${module-api.jwt.access-token.expiration-ms}") int accessTokenExpirationMs,
+      @Value("${module-api.jwt.access-token.expiration-ms}") long accessTokenExpirationMs,
       @Value("${module-api.jwt.refresh-token.secret}") String refreshTokenSecret,
-      @Value("${module-api.jwt.refresh-token.expiration-ms}") int refreshTokenExpirationMs,
+      @Value("${module-api.jwt.refresh-token.expiration-ms}") long refreshTokenExpirationMs,
       @Value("${module-api.jwt.issuer}") String issuer,
       AuthCookieProperties cookieProperties
   ) throws JOSEException {

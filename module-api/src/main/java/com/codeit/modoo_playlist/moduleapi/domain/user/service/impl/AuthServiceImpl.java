@@ -29,7 +29,7 @@ public class AuthServiceImpl implements AuthService {
   private final RefreshTokenHasher refreshTokenHasher;
 
   @Value("${module-api.jwt.refresh-token.expiration-ms}")
-  private int refreshTokenExpirationMs;
+  private long refreshTokenExpirationMs;
 
   @Value("${module-api.jwt.refresh-token.max-expiration-ms}")
   private long maxRefreshTokenExpirationMs;
