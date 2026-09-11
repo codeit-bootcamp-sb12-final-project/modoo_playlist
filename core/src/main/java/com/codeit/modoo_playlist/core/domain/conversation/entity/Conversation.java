@@ -17,9 +17,14 @@ import java.util.List;
 public class Conversation extends BaseUpdatableEntity {
 
     @OneToMany(mappedBy = "conversation", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @Builder.Default
     private List<ConversationParticipant> participants = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
     @Column(name = "type", nullable = false, length = 20)
     private ConversationType type;
+
+    public static Conversation create() {
+        return new Conversation();
+    }
 }
