@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -21,6 +20,9 @@ import com.codeit.modoo_playlist.core.domain.content.entity.ContentTagId;
 import com.codeit.modoo_playlist.core.domain.content.entity.ContentVideo;
 import com.codeit.modoo_playlist.core.domain.content.type.ContentType;
 import com.codeit.modoo_playlist.core.domain.tag.entity.Tag;
+import com.codeit.modoo_playlist.core.domain.tag.type.TagKind;
+import com.codeit.modoo_playlist.core.global.exception.BaseException;
+import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import com.codeit.modoo_playlist.moduleapi.domain.content.mapper.ContentMapper;
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.jpa.ContentPersonRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.jpa.ContentRepository;
@@ -50,6 +52,8 @@ import lombok.RequiredArgsConstructor;
 public class ContentServiceImpl implements ContentService {
 
     private static final int DEFAULT_LIMIT = 20;
+    private static final int MOVIE_GENRE_LIMIT = 4;
+    private static final int TV_GENRE_LIMIT = 3;
     private static final String DEFAULT_SORT_BY = "watcherCount";
     private static final String DEFAULT_SORT_DIRECTION = "DESCENDING";
 
@@ -66,12 +70,10 @@ public class ContentServiceImpl implements ContentService {
     public ContentCursorResponse getContents(ContentListRequest request) {
         ResolvedQuery resolvedQuery = resolveQuery(request);
         ContentQueryPage page = contentRepository.findAllByCondition(resolvedQuery.condition());
-        Map<UUID, List<String>> tagsByContentId = loadTagsByContentId(
-                page.contents().stream()
-                        .map(ContentItem::content)
-                        .map(Content::getId)
-                        .toList()
-        );
+        List<Content> contents = page.contents().stream()
+                .map(ContentItem::content)
+                .toList();
+        Map<UUID, List<String>> tagsByContentId = loadDisplayTagsByContentId(contents);
 
         List<ContentListItemResponse> data = page.contents().stream()
                 .map(item -> contentMapper.toListItem(
@@ -92,7 +94,7 @@ public class ContentServiceImpl implements ContentService {
     @Override
     public ContentDetailResponse getContent(UUID contentId) {
         Content content = contentRepository.findByIdAndDeletedAtIsNull(contentId)
-                .orElseThrow(() -> new NoSuchElementException("콘텐츠를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BaseException(ErrorCode.CONTENT_NOT_FOUND));
 
         return createDetailResponse(content);
     }
@@ -102,7 +104,7 @@ public class ContentServiceImpl implements ContentService {
     public ContentDetailResponse createContent(
             ContentCreateRequest request,
             MultipartFile thumbnail
-    ) throws IOException {
+    ) {
         Content content = Content.builder()
                 .type(toContentType(request.type()))
                 .title(request.title())
@@ -121,9 +123,9 @@ public class ContentServiceImpl implements ContentService {
             UUID contentId,
             ContentUpdateRequest request,
             MultipartFile thumbnail
-    ) throws IOException {
+    ) {
         Content content = contentRepository.findByIdAndDeletedAtIsNull(contentId)
-                .orElseThrow(() -> new NoSuchElementException("콘텐츠를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BaseException(ErrorCode.CONTENT_NOT_FOUND));
 
         content.update(
                 request.title(),
@@ -141,13 +143,13 @@ public class ContentServiceImpl implements ContentService {
     @Transactional
     public void deleteContent(UUID contentId) {
         Content content = contentRepository.findByIdAndDeletedAtIsNull(contentId)
-                .orElseThrow(() -> new NoSuchElementException("콘텐츠를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BaseException(ErrorCode.CONTENT_NOT_FOUND));
         content.softDelete();
     }
 
     private ContentDetailResponse createDetailResponse(Content content) {
         UUID contentId = content.getId();
-        List<String> tags = loadTagsByContentId(List.of(contentId))
+        List<String> tags = loadDisplayTagsByContentId(List.of(content))
                 .getOrDefault(contentId, List.of());
         long watcherCount = contentRepository.countCurrentWatchers(contentId);
         List<ContentPerson> people = contentPersonRepository
@@ -204,29 +206,109 @@ public class ContentServiceImpl implements ContentService {
         contentTagRepository.saveAll(addedContentTags);
     }
 
-    private String storeThumbnailIfPresent(MultipartFile thumbnail) throws IOException {
+    private String storeThumbnailIfPresent(MultipartFile thumbnail) {
         if (thumbnail == null || thumbnail.isEmpty()) {
             return null;
         }
-        return thumbnailStorage.store(thumbnail);
+        try {
+            return thumbnailStorage.store(thumbnail);
+        } catch (IOException exception) {
+            throw new BaseException(ErrorCode.FILE_SAVE_FAILED, exception);
+        }
     }
 
-    private Map<UUID, List<String>> loadTagsByContentId(List<UUID> contentIds) {
-        if (contentIds.isEmpty()) {
+    private Map<UUID, List<String>> loadDisplayTagsByContentId(List<Content> contents) {
+        if (contents.isEmpty()) {
             return Map.of();
         }
 
-        return contentTagRepository.findAllWithTagByContentIds(contentIds).stream()
+        List<UUID> contentIds = contents.stream()
+                .map(Content::getId)
+                .toList();
+        Map<UUID, List<Tag>> tagsByContentId = contentTagRepository
+                .findAllWithTagByContentIds(contentIds).stream()
                 .collect(Collectors.groupingBy(
                         contentTag -> contentTag.getId().getContentId(),
-                        Collectors.mapping(
-                                contentTag -> contentTag.getTag().getName(),
-                                Collectors.collectingAndThen(
-                                        Collectors.toList(),
-                                        names -> names.stream().sorted().toList()
-                                )
+                        Collectors.mapping(ContentTag::getTag, Collectors.toList())
+                ));
+        Map<UUID, ContentSports> sportsByContentId = contentSportsRepository
+                .findAllById(contents.stream()
+                        .filter(content -> content.getType() == ContentType.SPORT)
+                        .map(Content::getId)
+                        .toList())
+                .stream()
+                .collect(Collectors.toMap(ContentSports::getContentId, sports -> sports));
+
+        return contents.stream()
+                .collect(Collectors.toMap(
+                        Content::getId,
+                        content -> displayTags(
+                                content,
+                                tagsByContentId.getOrDefault(content.getId(), List.of()),
+                                sportsByContentId.get(content.getId())
                         )
                 ));
+    }
+
+    private List<String> displayTags(Content content, List<Tag> tags, ContentSports sports) {
+        List<String> genres = tags.stream()
+                .filter(tag -> tag.getKind() == TagKind.GENRE)
+                .map(Tag::getName)
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .toList();
+
+        return switch (content.getType()) {
+            case MOVIE -> genres.stream().limit(MOVIE_GENRE_LIMIT).toList();
+            case TV -> tvDisplayTags(genres);
+            case SPORT -> sportsDisplayTags(genres, sports);
+        };
+    }
+
+    private List<String> tvDisplayTags(List<String> genres) {
+        boolean animation = genres.stream().anyMatch(this::isAnimationGenre);
+        String subtype = animation ? "애니메이션" : "드라마";
+        List<String> displayTags = new ArrayList<>();
+        displayTags.add(subtype);
+        genres.stream()
+                .filter(genre -> animation ? !isAnimationGenre(genre) : !isDramaGenre(genre))
+                .limit(TV_GENRE_LIMIT)
+                .forEach(displayTags::add);
+        return List.copyOf(displayTags);
+    }
+
+    private List<String> sportsDisplayTags(List<String> genres, ContentSports sports) {
+        if (sports == null) {
+            return genres.stream().limit(MOVIE_GENRE_LIMIT).toList();
+        }
+
+        List<String> displayTags = new ArrayList<>();
+        String sportType = sports.getSportType();
+        if ((sportType == null || sportType.isBlank()) && !genres.isEmpty()) {
+            sportType = genres.get(0);
+        }
+        addDisplayTag(displayTags, sportType);
+        addDisplayTag(displayTags, sports.getLeague());
+        addDisplayTag(displayTags, sports.getHomeTeam());
+        addDisplayTag(displayTags, sports.getAwayTeam());
+        return List.copyOf(displayTags);
+    }
+
+    private void addDisplayTag(List<String> displayTags, String value) {
+        if (value == null || value.isBlank()) {
+            return;
+        }
+        boolean duplicated = displayTags.stream().anyMatch(value::equalsIgnoreCase);
+        if (!duplicated) {
+            displayTags.add(value);
+        }
+    }
+
+    private boolean isAnimationGenre(String genre) {
+        return "animation".equalsIgnoreCase(genre) || "애니메이션".equals(genre);
+    }
+
+    private boolean isDramaGenre(String genre) {
+        return "drama".equalsIgnoreCase(genre) || "드라마".equals(genre);
     }
 
     private ResolvedQuery resolveQuery(ContentListRequest request) {
@@ -238,7 +320,7 @@ public class ContentServiceImpl implements ContentService {
             case "createdAt" -> SortType.CREATED_AT;
             case "rate", "averageRating" -> SortType.AVERAGE_RATING;
             case "recommended" -> SortType.WATCHER_COUNT;
-            default -> throw new IllegalArgumentException("지원하지 않는 sortBy 값입니다.");
+            default -> throw invalidValue(ErrorCode.CONTENT_SORT_INVALID, "sortBy", requestedSortBy);
         };
 
         String effectiveSortBy = "recommended".equals(requestedSortBy)
@@ -268,7 +350,7 @@ public class ContentServiceImpl implements ContentService {
             case "movie" -> ContentType.MOVIE;
             case "tvSeries" -> ContentType.TV;
             case "sport" -> ContentType.SPORT;
-            default -> throw new IllegalArgumentException("지원하지 않는 콘텐츠 타입입니다.");
+            default -> throw invalidValue(ErrorCode.CONTENT_TYPE_INVALID, "type", type);
         };
     }
 
@@ -276,8 +358,14 @@ public class ContentServiceImpl implements ContentService {
         return switch (direction) {
             case "ASCENDING" -> SortDirection.ASCENDING;
             case "DESCENDING" -> SortDirection.DESCENDING;
-            default -> throw new IllegalArgumentException("지원하지 않는 정렬 방향입니다.");
+            default -> throw invalidValue(ErrorCode.CONTENT_SORT_DIRECTION_INVALID, "sortDirection", direction);
         };
+    }
+
+    private BaseException invalidValue(ErrorCode errorCode, String field, Object value) {
+        BaseException exception = new BaseException(errorCode);
+        exception.addDetail(field, value);
+        return exception;
     }
 
     private String defaultIfBlank(String value, String defaultValue) {

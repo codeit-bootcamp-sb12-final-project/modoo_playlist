@@ -1,14 +1,12 @@
 package com.codeit.modoo_playlist.core.domain.user.entity;
 
-import java.time.Instant;
-
 import com.codeit.modoo_playlist.core.global.common.entity.baseentity.BaseUpdatableEntity;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
+import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -51,4 +49,25 @@ public class User extends BaseUpdatableEntity {
   @Column(name = "deleted_at", nullable = true)
   Instant deletedAt;
 
+  public static User create(
+      String email,
+      String username,
+      String encodedPassword
+  ) {
+    User user = new User();
+    user.email = email;
+    user.username = username;
+    user.password = encodedPassword;
+    user.role = UserRole.USER;
+    user.locked = false;
+    return user;
+  }
+
+  public void updateProfile(String username, String profileImageUrl) {
+    this.username = username;
+
+    if (profileImageUrl != null) {
+      this.profileImageUrl = profileImageUrl;
+    }
+  }
 }
