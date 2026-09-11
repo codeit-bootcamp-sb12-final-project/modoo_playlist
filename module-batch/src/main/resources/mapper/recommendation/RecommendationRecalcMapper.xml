@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.codeit.modoo_playlist.modulebatch.recommendation.persistence.RecommendationRecalcMapper">
+
+    <select id="findInteractionTagSignals"
+            resultType="com.codeit.modoo_playlist.modulebatch.recommendation.model.InteractionTagSignal">
+        SELECT BIN_TO_UUID(i.user_id) AS userId,
+               BIN_TO_UUID(ct.tag_id) AS tagId,
+               i.type                 AS type,
+               i.value                AS value,
+               i.occurrence_count     AS occurrenceCount,
+               i.updated_at           AS updatedAt
+        FROM user_content_interactions i
+        JOIN content_tags ct ON ct.content_id = i.content_id
+        JOIN users u ON u.id = i.user_id
+        WHERE u.deleted_at IS NULL
+          AND u.role != 'BOT'
+          AND i.type != 'VIEW'
+    </select>
+
+    <select id="findTagContentCounts"
+            resultType="com.codeit.modoo_playlist.modulebatch.recommendation.model.TagContentCount">
+        SELECT BIN_TO_UUID(id) AS tagId, content_count AS contentCount
+        FROM tags
+    </select>
+
+    <select id="countActiveContents" resultType="long">
+        SELECT COUNT(*) FROM contents WHERE deleted_at IS NULL
+    </select>
+
+    <insert id="upsertPreferenceTags">
+        INSERT INTO user_preference_tags (user_id, tag_id, score, raw_score, last_signal_at, created_at, updated_at)
+        VALUES
+        <foreach collection="rows" item="row" separator=",">
+            (
+                UUID_TO_BIN(#{row.userId}), UUID_TO_BIN(#{row.tagId}), #{row.score}, #{row.rawScore},
+                #{row.lastSignalAt}, CURRENT_TIMESTAMP(6), CURRENT_TIMESTAMP(6)
+            )
+        </foreach>
+        AS incoming
+        ON DUPLICATE KEY UPDATE
+            score = incoming.score,
+            raw_score = incoming.raw_score,
+            last_signal_at = incoming.last_signal_at
+    </insert>
+
+</mapper>

@@ -34,6 +34,10 @@ external:
     retry-max-delay: ${TMDB_RETRY_MAX_DELAY:4s}
 
 batch:
+  recommendation:
+    enabled: ${RECOMMENDATION_BATCH_ENABLED:true}
+    cron: ${RECOMMENDATION_BATCH_CRON:0 30 0 * * *}
+    zone: Asia/Seoul
   tmdb:
     enabled: ${TMDB_BATCH_ENABLED:true}
     cron: ${TMDB_BATCH_CRON:0 0 0,12 * * *}
