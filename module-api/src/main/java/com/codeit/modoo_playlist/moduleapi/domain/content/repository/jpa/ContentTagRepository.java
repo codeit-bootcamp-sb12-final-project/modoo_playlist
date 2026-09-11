@@ -9,6 +9,8 @@ import java.util.UUID;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.query.ContentTagQueryRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface ContentTagRepository extends JpaRepository<ContentTag, ContentTagId>, ContentTagQueryRepository {
 
