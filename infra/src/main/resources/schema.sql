@@ -99,8 +99,8 @@ CREATE TABLE `content_sports` (
 	`home_team`	VARCHAR(100)	NULL,
 	`away_team`	VARCHAR(100)	NULL,
 	`venue`	VARCHAR(100)	NULL,
-	`status`	VARCHAR(20)	NOT NULL	DEFAULT 'SCHEDULED'	COMMENT 'SCHEDULED / LIVE / FINISHED. LIVE여야 같이보기가 의미가 있다 CANCELED 추가정도',
-	`kickoff_at`	DATETIME(6)	NOT NULL	COMMENT 'dateEvent + strTime. contents.release_date는 날짜만 담는다',
+	`status`	VARCHAR(20)	NOT NULL	DEFAULT 'SCHEDULED'	COMMENT 'SCHEDULED / LIVE / FINISHED / CANCELED / POSTPONED',
+	`kickoff_at`	DATETIME(6)	NOT NULL	COMMENT 'strTimestamp를 UTC Instant로 변환. contents.release_date는 날짜만 담는다',
 
 	PRIMARY KEY (`content_id`),
 	KEY `IDX_SPORTS_KICKOFF` (`status`, `kickoff_at`)	COMMENT '오늘 경기 / 곧 시작 질의용'

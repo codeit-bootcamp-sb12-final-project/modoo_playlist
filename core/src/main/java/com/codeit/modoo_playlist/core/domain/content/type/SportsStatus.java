@@ -4,5 +4,6 @@ public enum SportsStatus {
     SCHEDULED,
     LIVE,
     FINISHED,
-    CANCELED
+    CANCELED,
+    POSTPONED
 }

@@ -32,6 +32,15 @@ external:
     retry-max-attempts: ${TMDB_RETRY_MAX_ATTEMPTS:3}
     retry-initial-delay: ${TMDB_RETRY_INITIAL_DELAY:1s}
     retry-max-delay: ${TMDB_RETRY_MAX_DELAY:4s}
+  sports-db:
+    base-url: https://www.thesportsdb.com/api/v1/json
+    api-key: ${THESPORTSDB_API_KEY}
+    requests-per-minute: ${SPORTSDB_REQUESTS_PER_MINUTE:12}
+    connect-timeout: ${SPORTSDB_CONNECT_TIMEOUT:3s}
+    read-timeout: ${SPORTSDB_READ_TIMEOUT:10s}
+    retry-max-attempts: ${SPORTSDB_RETRY_MAX_ATTEMPTS:3}
+    retry-initial-delay: ${SPORTSDB_RETRY_INITIAL_DELAY:1s}
+    retry-max-delay: ${SPORTSDB_RETRY_MAX_DELAY:4s}
 
 batch:
   tmdb:
@@ -46,3 +55,34 @@ batch:
       - 10763
       - 10764
       - 10767
+  sports:
+    enabled: ${SPORTSDB_BATCH_ENABLED:true}
+    cron: ${SPORTSDB_BATCH_CRON:0 0 6,18 * * *}
+    zone: Asia/Seoul
+    discovery-days: ${SPORTSDB_DISCOVERY_DAYS:3}
+    chunk-size: ${SPORTSDB_CHUNK_SIZE:10}
+    skip-limit: ${SPORTSDB_SKIP_LIMIT:20}
+    status-update-enabled: ${SPORTS_STATUS_UPDATE_ENABLED:true}
+    status-cron: ${SPORTS_STATUS_CRON:0 */15 * * * *}
+    soccer-duration-minutes: ${SPORTS_SOCCER_DURATION_MINUTES:150}
+    basketball-duration-minutes: ${SPORTS_BASKETBALL_DURATION_MINUTES:180}
+    baseball-duration-minutes: ${SPORTS_BASEBALL_DURATION_MINUTES:240}
+    default-duration-minutes: ${SPORTS_DEFAULT_DURATION_MINUTES:180}
+    # TheSportsDB에서 조회할 주요 리그. 운영 중 리그를 추가하거나 교체할 수 있습니다.
+    leagues:
+      - id: "4328"
+        name: English Premier League
+      - id: "4335"
+        name: Spanish La Liga
+      - id: "4332"
+        name: Italian Serie A
+      - id: "4331"
+        name: German Bundesliga
+      - id: "4480"
+        name: UEFA Champions League
+      - id: "4387"
+        name: NBA
+      - id: "4424"
+        name: MLB
+      - id: "4830"
+        name: Korean KBO League

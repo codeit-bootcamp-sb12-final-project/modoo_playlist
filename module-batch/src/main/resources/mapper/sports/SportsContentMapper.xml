@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.codeit.modoo_playlist.modulebatch.sports.persistence.SportsContentMapper">
+
+    <select id="findBySourceId"
+            resultType="com.codeit.modoo_playlist.modulebatch.sports.model.ExistingSportsContent">
+        SELECT BIN_TO_UUID(c.id) AS id,
+               c.title,
+               c.description,
+               c.thumbnail_url AS thumbnailUrl,
+               c.deleted_at AS deletedAt,
+               c.release_date AS releaseDate,
+               c.origin_country AS originCountry,
+               s.sport_type AS sportType,
+               s.league,
+               s.season,
+               s.home_team AS homeTeam,
+               s.away_team AS awayTeam,
+               s.venue,
+               s.status,
+               s.kickoff_at AS kickoffAt
+        FROM contents c
+        LEFT JOIN content_sports s ON s.content_id = c.id
+        WHERE c.source = 'SPORTS_DB'
+          AND c.type = 'SPORT'
+          AND c.source_id = #{sourceId}
+        LIMIT 1
+    </select>
+
+    <select id="findContentIdBySourceId" resultType="java.lang.String">
+        SELECT BIN_TO_UUID(id)
+        FROM contents
+        WHERE source = 'SPORTS_DB'
+          AND type = 'SPORT'
+          AND source_id = #{sourceId}
+        LIMIT 1
+    </select>
+
+    <select id="findTagsByContentId"
+            resultType="com.codeit.modoo_playlist.modulebatch.sports.model.ExistingSportsContent$Tag">
+        SELECT t.name,
+               ct.source
+        FROM content_tags ct
+        JOIN tags t ON t.id = ct.tag_id
+        WHERE ct.content_id = UUID_TO_BIN(#{contentId})
+        ORDER BY t.name
+    </select>
+
+    <select id="findRefreshSourceIds" resultType="java.lang.String">
+        SELECT c.source_id
+        FROM contents c
+        JOIN content_sports s ON s.content_id = c.id
+        WHERE c.source = 'SPORTS_DB'
+          AND c.type = 'SPORT'
+          AND c.deleted_at IS NULL
+          AND c.source_id IS NOT NULL
+          AND s.status &lt;&gt; 'CANCELED'
+          AND (
+              (s.kickoff_at &gt;= #{windowStart} AND s.kickoff_at &lt; #{windowEnd})
+              OR s.status = 'POSTPONED'
+              OR (
+                  s.status &lt;&gt; 'FINISHED'
+                  AND TIMESTAMPADD(
+                      MINUTE,
+                      CASE
+                          WHEN LOWER(s.sport_type) LIKE '%soccer%'
+                               OR LOWER(s.sport_type) LIKE '%football%'
+                              THEN #{soccerDurationMinutes}
+                          WHEN LOWER(s.sport_type) LIKE '%basketball%'
+                              THEN #{basketballDurationMinutes}
+                          WHEN LOWER(s.sport_type) LIKE '%baseball%'
+                              THEN #{baseballDurationMinutes}
+                          ELSE #{defaultDurationMinutes}
+                      END,
+                      s.kickoff_at
+                  ) &gt; #{now}
+              )
+          )
+    </select>
+
+    <insert id="upsertContent">
+        INSERT INTO contents (
+            id, type, title, description, thumbnail_url, source, source_id,
+            release_date, origin_country, average_rating, review_count, rating_sum,
+            created_at, updated_at
+        ) VALUES (
+            UUID_TO_BIN(#{id}), 'SPORT', #{title}, #{description}, #{thumbnailUrl},
+            'SPORTS_DB', #{sourceId}, #{releaseDate}, #{originCountry},
+            0.0, 0, 0.00, CURRENT_TIMESTAMP(6), CURRENT_TIMESTAMP(6)
+        )
+        AS incoming
+        ON DUPLICATE KEY UPDATE
+            title = incoming.title,
+            description = incoming.description,
+            thumbnail_url = incoming.thumbnail_url,
+            release_date = incoming.release_date,
+            origin_country = incoming.origin_country,
+            updated_at = CURRENT_TIMESTAMP(6)
+    </insert>
+
+    <insert id="upsertSports">
+        INSERT INTO content_sports (
+            content_id, sport_type, league, season, home_team,
+            away_team, venue, status, kickoff_at
+        ) VALUES (
+            UUID_TO_BIN(#{contentId}), #{sports.sportType}, #{sports.league},
+            #{sports.season}, #{sports.homeTeam}, #{sports.awayTeam},
+            #{sports.venue}, #{sports.status}, #{sports.kickoffAt}
+        )
+        AS incoming
+        ON DUPLICATE KEY UPDATE
+            sport_type = incoming.sport_type,
+            league = incoming.league,
+            season = incoming.season,
+            home_team = incoming.home_team,
+            away_team = incoming.away_team,
+            venue = incoming.venue,
+            status = incoming.status,
+            kickoff_at = incoming.kickoff_at
+    </insert>
+
+    <insert id="insertTags">
+        INSERT IGNORE INTO tags (id, name, kind, created_at) VALUES
+        <foreach collection="tags" item="tag" separator=",">
+            (UUID_TO_BIN(#{tag.id}), #{tag.name}, #{tag.kind}, CURRENT_TIMESTAMP(6))
+        </foreach>
+    </insert>
+
+    <delete id="deleteMissingOpenApiTags">
+        DELETE FROM content_tags
+        WHERE content_id = UUID_TO_BIN(#{contentId})
+          AND source = 'OPENAPI'
+        <if test="tags != null and !tags.isEmpty()">
+            AND tag_id NOT IN (
+                SELECT id
+                FROM tags
+                WHERE name IN
+                <foreach collection="tags" item="tag" open="(" close=")" separator=",">
+                    #{tag.name}
+                </foreach>
+            )
+        </if>
+    </delete>
+
+    <insert id="upsertContentTags">
+        INSERT IGNORE INTO content_tags (tag_id, content_id, source)
+        SELECT id, UUID_TO_BIN(#{contentId}), 'OPENAPI'
+        FROM tags
+        WHERE name IN
+        <foreach collection="tags" item="tag" open="(" close=")" separator=",">
+            #{tag.name}
+        </foreach>
+    </insert>
+
+    <update id="updateCalculatedStatuses">
+        UPDATE content_sports
+        SET status = CASE
+            WHEN #{now} &gt;= TIMESTAMPADD(
+                MINUTE,
+                CASE
+                    WHEN LOWER(sport_type) LIKE '%soccer%'
+                         OR LOWER(sport_type) LIKE '%football%'
+                        THEN #{soccerDurationMinutes}
+                    WHEN LOWER(sport_type) LIKE '%basketball%'
+                        THEN #{basketballDurationMinutes}
+                    WHEN LOWER(sport_type) LIKE '%baseball%'
+                        THEN #{baseballDurationMinutes}
+                    ELSE #{defaultDurationMinutes}
+                END,
+                kickoff_at
+            ) THEN 'FINISHED'
+            ELSE 'LIVE'
+        END
+        WHERE status IN ('SCHEDULED', 'LIVE')
+          AND kickoff_at &lt;= #{now}
+          AND (
+              status = 'SCHEDULED'
+              OR #{now} &gt;= TIMESTAMPADD(
+                  MINUTE,
+                  CASE
+                      WHEN LOWER(sport_type) LIKE '%soccer%'
+                           OR LOWER(sport_type) LIKE '%football%'
+                          THEN #{soccerDurationMinutes}
+                      WHEN LOWER(sport_type) LIKE '%basketball%'
+                          THEN #{basketballDurationMinutes}
+                      WHEN LOWER(sport_type) LIKE '%baseball%'
+                          THEN #{baseballDurationMinutes}
+                      ELSE #{defaultDurationMinutes}
+                  END,
+                  kickoff_at
+              )
+          )
+    </update>
+</mapper>
