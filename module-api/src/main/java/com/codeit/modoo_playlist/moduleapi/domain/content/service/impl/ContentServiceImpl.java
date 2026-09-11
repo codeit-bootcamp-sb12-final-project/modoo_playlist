@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -21,6 +20,8 @@ import com.codeit.modoo_playlist.core.domain.content.entity.ContentTagId;
 import com.codeit.modoo_playlist.core.domain.content.entity.ContentVideo;
 import com.codeit.modoo_playlist.core.domain.content.type.ContentType;
 import com.codeit.modoo_playlist.core.domain.tag.entity.Tag;
+import com.codeit.modoo_playlist.core.global.exception.BaseException;
+import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import com.codeit.modoo_playlist.moduleapi.domain.content.mapper.ContentMapper;
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.jpa.ContentPersonRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.jpa.ContentRepository;
@@ -92,7 +93,7 @@ public class ContentServiceImpl implements ContentService {
     @Override
     public ContentDetailResponse getContent(UUID contentId) {
         Content content = contentRepository.findByIdAndDeletedAtIsNull(contentId)
-                .orElseThrow(() -> new NoSuchElementException("콘텐츠를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BaseException(ErrorCode.CONTENT_NOT_FOUND));
 
         return createDetailResponse(content);
     }
@@ -102,7 +103,7 @@ public class ContentServiceImpl implements ContentService {
     public ContentDetailResponse createContent(
             ContentCreateRequest request,
             MultipartFile thumbnail
-    ) throws IOException {
+    ) {
         Content content = Content.builder()
                 .type(toContentType(request.type()))
                 .title(request.title())
@@ -121,9 +122,9 @@ public class ContentServiceImpl implements ContentService {
             UUID contentId,
             ContentUpdateRequest request,
             MultipartFile thumbnail
-    ) throws IOException {
+    ) {
         Content content = contentRepository.findByIdAndDeletedAtIsNull(contentId)
-                .orElseThrow(() -> new NoSuchElementException("콘텐츠를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BaseException(ErrorCode.CONTENT_NOT_FOUND));
 
         content.update(
                 request.title(),
@@ -141,7 +142,7 @@ public class ContentServiceImpl implements ContentService {
     @Transactional
     public void deleteContent(UUID contentId) {
         Content content = contentRepository.findByIdAndDeletedAtIsNull(contentId)
-                .orElseThrow(() -> new NoSuchElementException("콘텐츠를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BaseException(ErrorCode.CONTENT_NOT_FOUND));
         content.softDelete();
     }
 
@@ -204,11 +205,15 @@ public class ContentServiceImpl implements ContentService {
         contentTagRepository.saveAll(addedContentTags);
     }
 
-    private String storeThumbnailIfPresent(MultipartFile thumbnail) throws IOException {
+    private String storeThumbnailIfPresent(MultipartFile thumbnail) {
         if (thumbnail == null || thumbnail.isEmpty()) {
             return null;
         }
-        return thumbnailStorage.store(thumbnail);
+        try {
+            return thumbnailStorage.store(thumbnail);
+        } catch (IOException exception) {
+            throw new BaseException(ErrorCode.FILE_SAVE_FAILED, exception);
+        }
     }
 
     private Map<UUID, List<String>> loadTagsByContentId(List<UUID> contentIds) {
@@ -238,7 +243,7 @@ public class ContentServiceImpl implements ContentService {
             case "createdAt" -> SortType.CREATED_AT;
             case "rate", "averageRating" -> SortType.AVERAGE_RATING;
             case "recommended" -> SortType.WATCHER_COUNT;
-            default -> throw new IllegalArgumentException("지원하지 않는 sortBy 값입니다.");
+            default -> throw invalidValue(ErrorCode.CONTENT_SORT_INVALID, "sortBy", requestedSortBy);
         };
 
         String effectiveSortBy = "recommended".equals(requestedSortBy)
@@ -268,7 +273,7 @@ public class ContentServiceImpl implements ContentService {
             case "movie" -> ContentType.MOVIE;
             case "tvSeries" -> ContentType.TV;
             case "sport" -> ContentType.SPORT;
-            default -> throw new IllegalArgumentException("지원하지 않는 콘텐츠 타입입니다.");
+            default -> throw invalidValue(ErrorCode.CONTENT_TYPE_INVALID, "type", type);
         };
     }
 
@@ -276,8 +281,14 @@ public class ContentServiceImpl implements ContentService {
         return switch (direction) {
             case "ASCENDING" -> SortDirection.ASCENDING;
             case "DESCENDING" -> SortDirection.DESCENDING;
-            default -> throw new IllegalArgumentException("지원하지 않는 정렬 방향입니다.");
+            default -> throw invalidValue(ErrorCode.CONTENT_SORT_DIRECTION_INVALID, "sortDirection", direction);
         };
+    }
+
+    private BaseException invalidValue(ErrorCode errorCode, String field, Object value) {
+        BaseException exception = new BaseException(errorCode);
+        exception.addDetail(field, value);
+        return exception;
     }
 
     private String defaultIfBlank(String value, String defaultValue) {

@@ -1,6 +1,5 @@
 package com.codeit.modoo_playlist.moduleapi.domain.content.service;
 
-import java.io.IOException;
 import java.util.UUID;
 
 import org.springframework.web.multipart.MultipartFile;
@@ -20,13 +19,13 @@ public interface ContentService {
     ContentDetailResponse createContent(
             ContentCreateRequest request,
             MultipartFile thumbnail
-    ) throws IOException;
+    );
 
     ContentDetailResponse updateContent(
             UUID contentId,
             ContentUpdateRequest request,
             MultipartFile thumbnail
-    ) throws IOException;
+    );
 
     void deleteContent(UUID contentId);
 }

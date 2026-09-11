@@ -60,6 +60,19 @@ public enum ErrorCode {
   FILE_DELETE_FAILED(500, "파일 삭제에 실패했습니다."),
   PAYLOAD_TOO_LARGE(413, "업로드 가능한 파일 크기를 초과했습니다."),
 
+  // Content
+  CONTENT_NOT_FOUND(404, "콘텐츠를 찾을 수 없습니다."),
+  CONTENT_TYPE_INVALID(400, "지원하지 않는 콘텐츠 타입입니다."),
+  CONTENT_SORT_INVALID(400, "지원하지 않는 콘텐츠 정렬 기준입니다."),
+  CONTENT_SORT_DIRECTION_INVALID(400, "지원하지 않는 정렬 방향입니다."),
+  CONTENT_QUERY_INVALID(400, "콘텐츠 조회 조건이 올바르지 않습니다."),
+  CONTENT_CURSOR_INVALID(400, "콘텐츠 커서 형식이 올바르지 않습니다."),
+  THUMBNAIL_INVALID(400, "올바른 썸네일 이미지가 아닙니다."),
+
+  // Tag
+  TAG_NAME_INVALID(400, "태그 이름이 올바르지 않습니다."),
+  TAG_SYNC_FAILED(500, "태그 저장 결과를 확인하지 못했습니다."),
+
   // Common
   INVALID_REQUEST(400, "잘못된 요청입니다."),
   CONFLICT(409, "이미 존재하는 데이터입니다."),
