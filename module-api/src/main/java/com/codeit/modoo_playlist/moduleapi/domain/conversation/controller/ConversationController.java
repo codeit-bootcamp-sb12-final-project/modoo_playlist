@@ -37,18 +37,20 @@ public class ConversationController {
                         requesterId,
                         request
                 );
-        return ResponseEntity.status(HttpStatus.CREATED).body(conversation);
+        return ResponseEntity.status(HttpStatus.OK).body(conversation);
     }
 
     // 대화 목록 조회
     @GetMapping()
     public ResponseEntity<CursorResponseConversationDto> findConversations (
             @AuthenticationPrincipal UserDetails userDetails,
-            @ModelAttribute SliceCursorRequest request
+            String keywordLike,
+            @Valid @ModelAttribute SliceCursorRequest request
     ){
         CursorResponseConversationDto response =
                 conversationService.findConversations(
                         userDetails.getUserDto().id(),
+                        keywordLike,
                         request
                 );
         return ResponseEntity.status(HttpStatus.OK).body(response);
@@ -83,7 +85,7 @@ public class ConversationController {
     public ResponseEntity<CursorResponseMessageDto> findDirectMessages(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable UUID conversationId,
-            @ModelAttribute SliceCursorRequest request
+            @Valid @ModelAttribute SliceCursorRequest request
     ){
         UUID requesterId = userDetails.getUserDto().id();
         CursorResponseMessageDto response =
@@ -106,7 +108,7 @@ public class ConversationController {
                 userDetails.getUserDto().id(),
                 conversationId,
                 messageId);
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
+        return ResponseEntity.status(HttpStatus.OK).body(null);
     }
 
 

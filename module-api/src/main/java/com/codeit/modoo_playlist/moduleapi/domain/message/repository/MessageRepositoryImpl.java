@@ -1,5 +1,6 @@
 package com.codeit.modoo_playlist.moduleapi.domain.message.repository;
 
+import com.codeit.modoo_playlist.core.domain.conversation.entity.SortDirection;
 import com.codeit.modoo_playlist.core.domain.message.entity.Message;
 import com.codeit.modoo_playlist.core.domain.message.entity.QMessage;
 import com.codeit.modoo_playlist.core.domain.user.entity.QUser;
@@ -7,7 +8,6 @@ import com.codeit.modoo_playlist.moduleapi.dto.MessageDto;
 import com.codeit.modoo_playlist.moduleapi.dto.conversation.request.SliceCursorRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.conversation.response.CursorResponseMessageDto;
 import com.codeit.modoo_playlist.moduleapi.mapper.MessageMapper;
-import com.querydsl.core.types.Order;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -72,13 +72,22 @@ public class MessageRepositoryImpl implements MessageRepositoryCustom {
             nextIdAfter = lastMessage.getId();
         }
 
+        Long count = queryFactory
+                .select(m.count())
+                .from(m)
+                .where(m.conversation.id.eq(conversationId))
+                .fetchOne();
+
+        long totalCount = count != null ? count : 0L;
+
         return new CursorResponseMessageDto(
                 data,
                 nextCursor,
                 nextIdAfter,
                 hasNext,
+                totalCount,
                 "createdAt",
-                ascending ? Order.ASC : Order.DESC
+                ascending ? SortDirection.ASCENDING : SortDirection.DESCENDING
         );
     }
 
@@ -103,7 +112,8 @@ public class MessageRepositoryImpl implements MessageRepositoryCustom {
             SliceCursorRequest request,
             boolean ascending
     ) {
-        if (request.cursor() == null || request.cursor().isBlank()) {
+        if (request.cursor() == null
+                || request.cursor().isBlank()) {
             return null;
         }
 
@@ -135,7 +145,7 @@ public class MessageRepositoryImpl implements MessageRepositoryCustom {
                 && !request.sortBy().isBlank()
                 && !"createdAt".equals(request.sortBy())) {
             throw new IllegalArgumentException(
-                    "cratedAt 정렬만 지원합니다."
+                    "createdAt 정렬만 지원합니다."
             );
         }
         String direction = request.sortDirection();

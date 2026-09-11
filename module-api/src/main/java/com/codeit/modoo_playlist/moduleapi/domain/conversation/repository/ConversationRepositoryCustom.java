@@ -12,6 +12,7 @@ public interface ConversationRepositoryCustom{
     // 내가 참여중인 DM 목록
     CursorResponseConversationDto findConversations(
             UUID requesterId,
+            String keywordLike,
             SliceCursorRequest request
     );
 
