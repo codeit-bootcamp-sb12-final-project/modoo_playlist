@@ -30,8 +30,10 @@ public class SportsContentWriter implements ItemWriter<SportsSyncContent> {
             if (!content.tags().isEmpty()) {
                 contentMapper.insertTags(content.tags());
             }
+            contentMapper.decreaseMissingOpenApiTagCounts(contentId, content.tags());
             contentMapper.deleteMissingOpenApiTags(contentId, content.tags());
             if (!content.tags().isEmpty()) {
+                contentMapper.increaseNewContentTagCounts(contentId, content.tags());
                 contentMapper.upsertContentTags(contentId, content.tags());
             }
         }

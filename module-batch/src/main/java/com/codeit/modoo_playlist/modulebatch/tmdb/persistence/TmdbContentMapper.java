@@ -53,6 +53,16 @@ public interface TmdbContentMapper {
             @Param("tags") List<TmdbSyncContent.Tag> tags
     );
 
+    void decreaseMissingOpenApiTagCounts(
+            @Param("contentId") String contentId,
+            @Param("tags") List<TmdbSyncContent.Tag> tags
+    );
+
+    void increaseNewContentTagCounts(
+            @Param("contentId") String contentId,
+            @Param("tags") List<TmdbSyncContent.Tag> tags
+    );
+
     void upsertContentTags(
             @Param("contentId") String contentId,
             @Param("tags") List<TmdbSyncContent.Tag> tags

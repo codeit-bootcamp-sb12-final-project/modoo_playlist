@@ -42,6 +42,16 @@ public interface SportsContentMapper {
             @Param("tags") List<SportsSyncContent.Tag> tags
     );
 
+    void decreaseMissingOpenApiTagCounts(
+            @Param("contentId") String contentId,
+            @Param("tags") List<SportsSyncContent.Tag> tags
+    );
+
+    void increaseNewContentTagCounts(
+            @Param("contentId") String contentId,
+            @Param("tags") List<SportsSyncContent.Tag> tags
+    );
+
     void upsertContentTags(
             @Param("contentId") String contentId,
             @Param("tags") List<SportsSyncContent.Tag> tags
