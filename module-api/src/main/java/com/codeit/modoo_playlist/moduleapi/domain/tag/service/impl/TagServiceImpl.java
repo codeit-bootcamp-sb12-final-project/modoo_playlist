@@ -13,6 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.codeit.modoo_playlist.core.domain.tag.entity.Tag;
 import com.codeit.modoo_playlist.core.domain.tag.type.TagKind;
+import com.codeit.modoo_playlist.core.global.exception.BaseException;
+import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import com.codeit.modoo_playlist.moduleapi.domain.tag.repository.jpa.TagRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.tag.service.TagService;
 
@@ -46,7 +48,7 @@ public class TagServiceImpl implements TagService {
                 .forEach(tag -> tagsByName.put(tag.getName(), tag));
 
         if (tagsByName.size() != normalizedNames.size()) {
-            throw new IllegalStateException("태그 생성 결과를 조회하지 못했습니다.");
+            throw new BaseException(ErrorCode.TAG_SYNC_FAILED);
         }
 
         return normalizedNames.stream()
@@ -62,14 +64,21 @@ public class TagServiceImpl implements TagService {
         Set<String> normalizedNames = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
         for (String tagName : tagNames) {
             if (tagName == null || tagName.isBlank()) {
-                throw new IllegalArgumentException("태그 이름은 비어 있을 수 없습니다.");
+                throw invalidTagName(tagName, "blank");
             }
             String normalizedName = tagName.trim();
             if (normalizedName.length() > MAX_TAG_NAME_LENGTH) {
-                throw new IllegalArgumentException("태그 이름은 50자 이하여야 합니다.");
+                throw invalidTagName(normalizedName, "tooLong");
             }
             normalizedNames.add(normalizedName);
         }
         return List.copyOf(normalizedNames);
+    }
+
+    private BaseException invalidTagName(String tagName, String reason) {
+        BaseException exception = new BaseException(ErrorCode.TAG_NAME_INVALID);
+        exception.addDetail("tagName", tagName);
+        exception.addDetail("reason", reason);
+        return exception;
     }
 }
