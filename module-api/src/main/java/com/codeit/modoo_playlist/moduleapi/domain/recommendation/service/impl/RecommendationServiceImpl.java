@@ -1,5 +1,6 @@
 package com.codeit.modoo_playlist.moduleapi.domain.recommendation.service.impl;
 
+import com.codeit.modoo_playlist.core.global.common.util.CosineSimilarity;
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.jpa.ContentRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.jpa.ContentTagRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.SimilarContentDto;
