@@ -21,6 +21,8 @@ import org.springframework.batch.infrastructure.repeat.RepeatStatus;
 @RequiredArgsConstructor
 public class PreferenceRecalcTasklet implements Tasklet {
 
+	private static final int UPSERT_CHUNK_SIZE = 1000;
+
 	private final RecommendationRecalcMapper mapper;
 
 	@Override
@@ -42,7 +44,9 @@ public class PreferenceRecalcTasklet implements Tasklet {
 				.map(group -> toRow(group, tagContentCounts, totalContentCount, now))
 				.toList();
 
-		mapper.upsertPreferenceTags(rows);
+		for (int i = 0; i < rows.size(); i += UPSERT_CHUNK_SIZE) {
+			mapper.upsertPreferenceTags(rows.subList(i, Math.min(i + UPSERT_CHUNK_SIZE, rows.size())));
+		}
 		log.info("취향 재계산 완료: {}건", rows.size());
 		return RepeatStatus.FINISHED;
 	}
