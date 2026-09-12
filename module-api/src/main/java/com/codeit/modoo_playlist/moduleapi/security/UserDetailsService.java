@@ -21,7 +21,7 @@ public class UserDetailsService implements
 //  내부는 email 조회로 변경
   @Transactional(readOnly = true)
   @Override
-  public org.springframework.security.core.userdetails.UserDetails loadUserByUsername(String email)
+  public UserDetails loadUserByUsername(String email)
       throws UsernameNotFoundException {
     User user = userRepository.findByEmail(email)
         .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));

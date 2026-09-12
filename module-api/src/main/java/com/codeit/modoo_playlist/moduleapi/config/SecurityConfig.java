@@ -59,29 +59,38 @@ public class SecurityConfig {
     http
         // 1) URL별 인가 설정
         .authorizeHttpRequests(auth -> auth
+            // 정적 리소스
+            .requestMatchers(
+                "/",
+                "/index.html",
+                "/assets/**",
+                "/favicon.svg",
+                "/error"
+            ).permitAll()
+
+            // WebSocket
+            .requestMatchers(
+                "/ws/**"
+            ).permitAll()
+
+            // 인증 시작 및 복원
             .requestMatchers(
                 "/api/auth/sign-in",
-                "/ws/**",
-                "/error",
-                "/",
-                "/index.html"
+                "/api/auth/refresh",
+                "/api/auth/csrf-token"
             ).permitAll()
+
+            // 회원가입
+            .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
 
             // 사용자 수정
             .requestMatchers(HttpMethod.PATCH, "/api/users/*").authenticated()
-
-            .requestMatchers("/api/auth/csrf-token").permitAll()
-            .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
-            .requestMatchers(HttpMethod.POST, "/api/auth/refresh")
-            .permitAll()
-
             // 그 외 요청은 현재는 개발 편의를 위해 모두 허용
             .anyRequest().permitAll()
         )
 
         // 2) CSRF 설정 (Cookie 방식)
         .csrf(csrf -> csrf
-            .ignoringRequestMatchers("/api/auth/sign-out")
             .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
             .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler())
         )

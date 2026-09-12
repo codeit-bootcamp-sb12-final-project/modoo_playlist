@@ -1,0 +1,14 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+module-api:
+  jwt:
+    access-token:
+      secret: ${JWT_ACCESS_SECRET}
+    refresh-token:
+      secret: ${JWT_REFRESH_SECRET}
+  auth:
+    cookie:
+      secure: true
