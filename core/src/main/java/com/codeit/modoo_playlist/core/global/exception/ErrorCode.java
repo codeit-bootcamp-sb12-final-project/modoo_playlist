@@ -54,6 +54,11 @@ public enum ErrorCode {
   // Conversation
   CONVERSATION_NOT_FOUND(404, "대화를 찾을 수 없습니다."),
   CONVERSATION_ACCESS_DENIED(403, "해당 대화에 접근할 권한이 없습니다."),
+    SELF_CONVERSATION_NOT_ALLOWED(400,"생성될 수 없는 대화 형식입니다."),
+    REQUIRED_WITH_USER(400,"상대 사용자 ID는 필수입니다."),
+
+    // Message
+    MESSAGE_NOT_FOUND(404,"메시지를 찾을 수 없습니다."),
 
   // File
   FILE_SAVE_FAILED(500, "파일 저장에 실패했습니다."),

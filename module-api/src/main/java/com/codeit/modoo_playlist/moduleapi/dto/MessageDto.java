@@ -7,8 +7,8 @@ public record MessageDto (
         UUID id,
         UUID conversationId,
         Instant createdAt,
-        UserDto sender,
-        UserDto receiver,
+        UserSummary sender,
+        UserSummary receiver,
         String content
 ){
 }

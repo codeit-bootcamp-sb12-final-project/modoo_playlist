@@ -4,8 +4,8 @@ import java.util.UUID;
 
 public record ConversationDto (
         UUID id,
-        UserDto with,
-        MessageDto latestMessage,
+        UserSummary with,
+        MessageDto lastestMessage,
         boolean hasUnread
 ){
 }

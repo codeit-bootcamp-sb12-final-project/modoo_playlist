@@ -14,12 +14,12 @@ public interface ConversationMapper {
 
     @Mapping(target = "id", source = "conversation.id")
     @Mapping(target = "with", source = "withUser")
-    @Mapping(target = "latestMessage", source = "latestMessage")
+    @Mapping(target = "lastestMessage", source = "lastestMessage")
     @Mapping(target = "hasUnread", source = "hasUnread")
     ConversationDto toDto(
             Conversation conversation,
             User withUser,
-            Message latestMessage,
+            Message lastestMessage,
             boolean hasUnread
     );
 }

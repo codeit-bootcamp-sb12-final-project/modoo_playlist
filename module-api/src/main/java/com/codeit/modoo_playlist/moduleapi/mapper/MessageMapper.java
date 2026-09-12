@@ -5,7 +5,8 @@ import com.codeit.modoo_playlist.moduleapi.dto.MessageDto;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring",
+        uses = UserMapper.class)
 public interface MessageMapper {
 
     @Mapping(target = "conversationId", source = "conversation.id")
