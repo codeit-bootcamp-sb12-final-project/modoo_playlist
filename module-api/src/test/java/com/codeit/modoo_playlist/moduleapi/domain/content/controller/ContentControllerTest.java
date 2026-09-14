@@ -23,6 +23,9 @@ import com.codeit.modoo_playlist.moduleapi.dto.content.request.ContentListReques
 import com.codeit.modoo_playlist.moduleapi.dto.content.request.ContentUpdateRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.content.response.ContentCursorResponse;
 import com.codeit.modoo_playlist.moduleapi.dto.content.response.ContentDetailResponse;
+import com.codeit.modoo_playlist.moduleapi.dto.UserDto;
+import com.codeit.modoo_playlist.moduleapi.security.UserDetails;
+import com.codeit.modoo_playlist.core.domain.user.entity.UserRole;
 
 @ExtendWith(MockitoExtension.class)
 class ContentControllerTest {
@@ -35,9 +38,14 @@ class ContentControllerTest {
         ContentListRequest request = new ContentListRequest(null, null, null, null, null, null, null, null);
         ContentCursorResponse expected = new ContentCursorResponse(List.of(), null, null, false, 0,
                 "watcherCount", "DESCENDING");
-        when(contentService.getContents(request)).thenReturn(expected);
+        UUID userId = UUID.randomUUID();
+        UserDetails user = new UserDetails(
+                new UserDto(userId, "user@test.com", "user", null, UserRole.USER, false, null),
+                "password"
+        );
+        when(contentService.getContents(request, userId)).thenReturn(expected);
 
-        ResponseEntity<ContentCursorResponse> response = controller.getContents(request);
+        ResponseEntity<ContentCursorResponse> response = controller.getContents(request, user);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isSameAs(expected);
@@ -69,7 +77,8 @@ class ContentControllerTest {
 
     @Test
     void 조회는_USER_쓰기작업은_ADMIN_권한을_요구한다() throws Exception {
-        assertThat(authority("getContents", ContentListRequest.class)).isEqualTo("hasRole('USER')");
+        assertThat(authority("getContents", ContentListRequest.class, UserDetails.class))
+                .isEqualTo("hasRole('USER')");
         assertThat(authority("getContent", UUID.class)).isEqualTo("hasRole('USER')");
         assertThat(authority("createContent", ContentCreateRequest.class,
                 org.springframework.web.multipart.MultipartFile.class)).isEqualTo("hasRole('ADMIN')");

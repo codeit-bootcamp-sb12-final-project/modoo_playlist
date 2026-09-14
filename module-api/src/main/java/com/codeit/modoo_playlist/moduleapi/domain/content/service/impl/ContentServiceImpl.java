@@ -67,9 +67,9 @@ public class ContentServiceImpl implements ContentService {
     private final ThumbnailStorage thumbnailStorage;
 
     @Override
-    public ContentCursorResponse getContents(ContentListRequest request) {
+    public ContentCursorResponse getContents(ContentListRequest request, UUID userId) {
         ResolvedQuery resolvedQuery = resolveQuery(request);
-        ContentQueryPage page = contentRepository.findAllByCondition(resolvedQuery.condition());
+        ContentQueryPage page = contentRepository.findAllByCondition(resolvedQuery.condition(), userId);
         List<Content> contents = page.contents().stream()
                 .map(ContentItem::content)
                 .toList();
@@ -332,13 +332,9 @@ public class ContentServiceImpl implements ContentService {
             case "watcherCount" -> SortType.WATCHER_COUNT;
             case "createdAt" -> SortType.CREATED_AT;
             case "rate", "averageRating" -> SortType.AVERAGE_RATING;
-            case "recommended" -> SortType.WATCHER_COUNT;
+            case "recommended" -> SortType.RECOMMENDED;
             default -> throw invalidValue(ErrorCode.CONTENT_SORT_INVALID, "sortBy", requestedSortBy);
         };
-
-        String effectiveSortBy = "recommended".equals(requestedSortBy)
-                ? DEFAULT_SORT_BY
-                : requestedSortBy;
 
         ContentListCondition condition = new ContentListCondition(
                 toContentType(request.typeEqual()),
@@ -351,7 +347,7 @@ public class ContentServiceImpl implements ContentService {
                 toSortDirection(sortDirection)
         );
 
-        return new ResolvedQuery(condition, effectiveSortBy, sortDirection);
+        return new ResolvedQuery(condition, requestedSortBy, sortDirection);
     }
 
     private ContentType toContentType(String type) {

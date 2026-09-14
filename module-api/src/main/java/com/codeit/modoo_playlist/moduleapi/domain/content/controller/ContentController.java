@@ -23,9 +23,11 @@ import com.codeit.modoo_playlist.moduleapi.dto.content.request.ContentListReques
 import com.codeit.modoo_playlist.moduleapi.dto.content.request.ContentUpdateRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.content.response.ContentCursorResponse;
 import com.codeit.modoo_playlist.moduleapi.dto.content.response.ContentDetailResponse;
+import com.codeit.modoo_playlist.moduleapi.security.UserDetails;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 @RestController
 @RequestMapping("/api/contents")
@@ -37,9 +39,10 @@ public class ContentController {
     @PreAuthorize("hasRole('USER')")
     @GetMapping
     public ResponseEntity<ContentCursorResponse> getContents(
-            @Valid @ModelAttribute ContentListRequest request
+            @Valid @ModelAttribute ContentListRequest request,
+            @AuthenticationPrincipal UserDetails user
     ) {
-        return ResponseEntity.ok(contentService.getContents(request));
+        return ResponseEntity.ok(contentService.getContents(request, user.getUserDto().id()));
     }
 
     @PreAuthorize("hasRole('USER')")

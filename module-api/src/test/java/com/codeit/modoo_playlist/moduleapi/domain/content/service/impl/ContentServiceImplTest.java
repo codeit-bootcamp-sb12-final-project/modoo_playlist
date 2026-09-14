@@ -56,6 +56,8 @@ import com.codeit.modoo_playlist.moduleapi.dto.content.response.ContentListItemR
 @ExtendWith(MockitoExtension.class)
 class ContentServiceImplTest {
 
+    private final UUID userId = UUID.randomUUID();
+
     @Mock private ContentRepository contentRepository;
     @Mock private ContentTagRepository contentTagRepository;
     @Mock private ContentVideoRepository contentVideoRepository;
@@ -73,20 +75,44 @@ class ContentServiceImplTest {
                 List.of(), null, null, false, 0, "watcherCount", "DESCENDING"
         );
         ArgumentCaptor<ContentListCondition> captor = ArgumentCaptor.forClass(ContentListCondition.class);
-        when(contentRepository.findAllByCondition(any(ContentListCondition.class))).thenReturn(page);
+        when(contentRepository.findAllByCondition(any(ContentListCondition.class), eq(userId))).thenReturn(page);
         when(contentMapper.toCursorResponse(page, List.of(), "watcherCount", "DESCENDING"))
                 .thenReturn(expected);
 
         ContentCursorResponse result = contentService.getContents(
-                new ContentListRequest(null, null, null, null, null, null, null, null)
+                new ContentListRequest(null, null, null, null, null, null, null, null), userId
         );
 
         assertThat(result).isSameAs(expected);
-        verify(contentRepository).findAllByCondition(captor.capture());
+        verify(contentRepository).findAllByCondition(captor.capture(), eq(userId));
         assertThat(captor.getValue().limit()).isEqualTo(20);
         assertThat(captor.getValue().sortBy()).isEqualTo(ContentListCondition.SortType.WATCHER_COUNT);
         assertThat(captor.getValue().sortDirection())
                 .isEqualTo(ContentListCondition.SortDirection.DESCENDING);
+    }
+
+    @Test
+    void 추천순은_로그인사용자와_RECOMMENDED_조건을_Repository에_전달한다() {
+        ContentQueryPage page = new ContentQueryPage(List.of(), null, null, false, 0);
+        ContentCursorResponse expected = new ContentCursorResponse(
+                List.of(), null, null, false, 0, "recommended", "DESCENDING"
+        );
+        ArgumentCaptor<ContentListCondition> captor = ArgumentCaptor.forClass(ContentListCondition.class);
+        when(contentRepository.findAllByCondition(any(ContentListCondition.class), eq(userId)))
+                .thenReturn(page);
+        when(contentMapper.toCursorResponse(page, List.of(), "recommended", "DESCENDING"))
+                .thenReturn(expected);
+
+        ContentCursorResponse result = contentService.getContents(
+                new ContentListRequest(
+                        null, null, null, null, null, 20, "DESCENDING", "recommended"
+                ),
+                userId
+        );
+
+        assertThat(result).isSameAs(expected);
+        verify(contentRepository).findAllByCondition(captor.capture(), eq(userId));
+        assertThat(captor.getValue().sortBy()).isEqualTo(ContentListCondition.SortType.RECOMMENDED);
     }
 
     @Test
@@ -106,7 +132,7 @@ class ContentServiceImplTest {
         ContentCursorResponse expected = new ContentCursorResponse(
                 List.of(item), null, null, false, 1, "watcherCount", "DESCENDING"
         );
-        when(contentRepository.findAllByCondition(any())).thenReturn(page);
+        when(contentRepository.findAllByCondition(any(), eq(userId))).thenReturn(page);
         when(contentTagRepository.findAllWithTagByContentIds(List.of(content.getId())))
                 .thenReturn(tags.stream().map(tag -> contentTag(content, tag)).toList());
         when(contentSportsRepository.findAllById(List.of())).thenReturn(List.of());
@@ -115,7 +141,7 @@ class ContentServiceImplTest {
                 .thenReturn(expected);
 
         assertThat(contentService.getContents(
-                new ContentListRequest(null, null, null, null, null, null, null, null)
+                new ContentListRequest(null, null, null, null, null, null, null, null), userId
         )).isSameAs(expected);
     }
 
@@ -276,10 +302,10 @@ class ContentServiceImplTest {
                 null, null, null, null, null, 20, "DOWN", "createdAt"
         );
 
-        assertThatThrownBy(() -> contentService.getContents(invalidSort))
+        assertThatThrownBy(() -> contentService.getContents(invalidSort, userId))
                 .isInstanceOfSatisfying(BaseException.class, exception ->
                         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.CONTENT_SORT_INVALID));
-        assertThatThrownBy(() -> contentService.getContents(invalidDirection))
+        assertThatThrownBy(() -> contentService.getContents(invalidDirection, userId))
                 .isInstanceOfSatisfying(BaseException.class, exception ->
                         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.CONTENT_SORT_DIRECTION_INVALID));
     }
@@ -324,7 +350,7 @@ class ContentServiceImplTest {
                 content.getId(), "type", "제목", null, null, null,
                 expectedTags, BigDecimal.ZERO, 0, 0
         );
-        when(contentRepository.findAllByCondition(any())).thenReturn(page);
+        when(contentRepository.findAllByCondition(any(), eq(userId))).thenReturn(page);
         when(contentTagRepository.findAllWithTagByContentIds(List.of(content.getId())))
                 .thenReturn(tags.stream().map(tag -> contentTag(content, tag)).toList());
         when(contentSportsRepository.findAllById(
@@ -337,7 +363,7 @@ class ContentServiceImplTest {
                 ));
 
         ContentCursorResponse response = contentService.getContents(
-                new ContentListRequest(null, null, null, null, null, null, null, null)
+                new ContentListRequest(null, null, null, null, null, null, null, null), userId
         );
         assertThat(response.data().get(0).tags()).containsExactlyElementsOf(expectedTags);
     }
