@@ -74,4 +74,7 @@
         computed_at = incoming.computed_at
     </insert>
 
+    <delete id="deleteAllSimilarities">
+        DELETE FROM user_similarities
+    </delete>
 </mapper>

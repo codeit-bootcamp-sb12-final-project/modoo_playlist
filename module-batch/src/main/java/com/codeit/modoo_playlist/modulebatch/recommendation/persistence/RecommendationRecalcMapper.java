@@ -26,4 +26,6 @@ public interface RecommendationRecalcMapper {
 	List<TagName> findTagNames();
 
 	void upsertSimilarities(@Param("rows") List<SimilarityRow> rows);
+
+	void deleteAllSimilarities();
 }

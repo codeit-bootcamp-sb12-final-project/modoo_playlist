@@ -33,6 +33,7 @@ public class SimilarUserTasklet implements Tasklet {
   @Override
   public @Nullable RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext)
       throws Exception {
+    mapper.deleteAllSimilarities();
     Map<String, Map<String, Double>> vectorsByUser = mapper.findAllPreferenceScores().stream()
         .collect(Collectors.groupingBy(
             UserTagScore::userId,
@@ -53,9 +54,10 @@ public class SimilarUserTasklet implements Tasklet {
       Map<String, Double> vector = vectorsByUser.get(userId);
       List<Map.Entry<String, Double>> topNeighbors = userIds.stream()
           .filter(otherId -> !otherId.equals(userId))
-          .map(otherId -> Map.entry(otherId, CosineSimilarity.compute(vector, vectorsByUser.get(otherId))))
+          .map(otherId -> Map.entry(otherId,
+              CosineSimilarity.compute(vector, vectorsByUser.get(otherId))))
           .filter(entry -> entry.getValue() > 0)
-          .sorted(Map.Entry.<String, Double>comparingByValue().reversed())
+          .sorted(Map.Entry.<String, Double>comparingByValue().reversed().thenComparing(Map.Entry::getKey))
           .limit(TOP_K)
           .toList();
 
@@ -64,8 +66,10 @@ public class SimilarUserTasklet implements Tasklet {
         double score = neighbor.getValue();
         String sharedTags = sharedTagNames(vector, vectorsByUser.get(otherId), tagNames);
 
-        rowsByKey.put(userId + ":" + otherId, new SimilarityRow(userId, otherId, score, sharedTags, now));
-        rowsByKey.put(otherId + ":" + userId, new SimilarityRow(otherId, userId, score, sharedTags, now));
+        rowsByKey.put(userId + ":" + otherId,
+            new SimilarityRow(userId, otherId, score, sharedTags, now));
+        rowsByKey.put(otherId + ":" + userId,
+            new SimilarityRow(otherId, userId, score, sharedTags, now));
       }
     }
     List<SimilarityRow> rows = new ArrayList<>(rowsByKey.values());
@@ -81,7 +85,8 @@ public class SimilarUserTasklet implements Tasklet {
     return a.entrySet().stream()
         .filter(entry -> b.containsKey(entry.getKey()))
         .sorted(Comparator.<Map.Entry<String, Double>>comparingDouble(
-                entry -> entry.getValue() * b.get(entry.getKey())).reversed())
+                entry -> entry.getValue() * b.get(entry.getKey())).reversed()
+            .thenComparing(Map.Entry::getKey))
         .limit(SHARED_TAG_LIMIT)
         .map(entry -> tagNames.getOrDefault(entry.getKey(), entry.getKey()))
         .collect(Collectors.joining(", "));
