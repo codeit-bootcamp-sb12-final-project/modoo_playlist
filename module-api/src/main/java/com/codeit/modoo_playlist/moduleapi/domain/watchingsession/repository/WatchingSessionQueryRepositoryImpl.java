@@ -7,7 +7,7 @@ import com.codeit.modoo_playlist.core.domain.watchingSession.entity.QWatchingSes
 import com.codeit.modoo_playlist.core.domain.watchingSession.entity.WatchingSession;
 import com.codeit.modoo_playlist.moduleapi.dto.WatchingSessionDto;
 import com.codeit.modoo_playlist.moduleapi.dto.conversation.request.SliceCursorRequest;
-import com.codeit.modoo_playlist.moduleapi.dto.watchingsession.CursorResponseWatchingSessionDto;
+import com.codeit.modoo_playlist.moduleapi.dto.watchingsession.response.CursorResponseWatchingSessionDto;
 import com.codeit.modoo_playlist.moduleapi.mapper.WatchingSessionMapper;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.dsl.BooleanExpression;
