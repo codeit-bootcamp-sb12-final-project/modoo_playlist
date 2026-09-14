@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -81,8 +83,8 @@ class ContentRepositoryMySqlTest {
     @Test
     void 평점_커서_페이지는_중복과_누락_없이_다음_페이지를_조회한다() {
         Content first = persistContent("first", ContentType.MOVIE, "5.0", 1);
-        Content second = persistContent("second", ContentType.MOVIE, "4.0", 2);
-        Content third = persistContent("third", ContentType.MOVIE, "3.0", 3);
+        Content second = persistContent("second", ContentType.MOVIE, "5.0", 2);
+        Content third = persistContent("third", ContentType.MOVIE, "5.0", 3);
         flushAndClear();
 
         ContentQueryPage firstPage = contentRepository.findAllByCondition(condition(
@@ -93,10 +95,17 @@ class ContentRepositoryMySqlTest {
                 SortType.AVERAGE_RATING, SortDirection.DESCENDING
         ));
 
-        assertThat(firstPage.contents()).extracting(item -> item.content().getId())
-                .containsExactly(first.getId(), second.getId());
-        assertThat(secondPage.contents()).extracting(item -> item.content().getId())
-                .containsExactly(third.getId());
+        List<UUID> allIds = Stream.concat(
+                        firstPage.contents().stream(), secondPage.contents().stream()
+                )
+                .map(item -> item.content().getId())
+                .toList();
+
+        assertThat(firstPage.contents()).hasSize(2);
+        assertThat(secondPage.contents()).hasSize(1);
+        assertThat(allIds)
+                .containsExactlyInAnyOrder(first.getId(), second.getId(), third.getId())
+                .doesNotHaveDuplicates();
         assertThat(firstPage.hasNext()).isTrue();
         assertThat(secondPage.hasNext()).isFalse();
     }
@@ -109,14 +118,22 @@ class ContentRepositoryMySqlTest {
         flushAndClear();
 
         List<ContentTag> links = contentTagRepository.findAllWithTagByContentIds(List.of(content.getId()));
-        contentTagRepository.increaseTagContentCounts(List.of(tag.getId()));
-        contentTagRepository.decreaseTagContentCounts(List.of(tag.getId()));
-        contentTagRepository.decreaseTagContentCounts(List.of(tag.getId()));
+        UUID tagId = tag.getId();
+
+        contentTagRepository.increaseTagContentCounts(List.of(tagId));
+        flushAndClear();
+        assertThat(entityManager.find(Tag.class, tagId).getContentCount()).isEqualTo(1);
+
+        contentTagRepository.decreaseTagContentCounts(List.of(tagId));
+        flushAndClear();
+        assertThat(entityManager.find(Tag.class, tagId).getContentCount()).isZero();
+
+        contentTagRepository.decreaseTagContentCounts(List.of(tagId));
         flushAndClear();
 
         assertThat(links).singleElement().satisfies(link ->
                 assertThat(link.getTag().getName()).isEqualTo("Action"));
-        assertThat(entityManager.find(Tag.class, tag.getId()).getContentCount()).isZero();
+        assertThat(entityManager.find(Tag.class, tagId).getContentCount()).isZero();
     }
 
     @Test
