@@ -19,6 +19,10 @@ public enum ErrorCode {
   REFRESH_TOKEN_EXPIRED(401, "로그인 유지 기간이 만료되었습니다. 다시 로그인해 주세요."),
   LOGIN_SESSION_INVALIDATED(401, "로그인이 만료되었거나 해제되었습니다."),
   INVALID_CSRF_TOKEN(403, "요청 검증에 실패했습니다."),
+  LOGIN_SESSION_ID_MISMATCH(409, "저장된 로그인 세션의 ID가 일치하지 않습니다."),
+  LOGIN_SESSION_CREATION_FAILED(500, "로그인 세션을 생성하지 못했습니다."),
+  TOKEN_GENERATION_FAILED(500, "토큰 생성 중 오류가 발생했습니다."),
+  LOGIN_SESSION_UPDATE_FAILED(500, "로그인 세션을 갱신하지 못했습니다."),
 
   // User
   USER_NOT_FOUND(404, "사용자를 찾을 수 없습니다."),
