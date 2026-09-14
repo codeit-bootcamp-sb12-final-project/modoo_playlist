@@ -133,8 +133,11 @@ public class SportsSyncConverter {
         if (contains(raw, "NS", "TBD", "NOT_STARTED", "SCHEDULED")) {
             return calculatedStatus(sportType, kickoffAt);
         }
-        if (blank(raw) && existing != null && SportsStatus.POSTPONED.name().equals(existing.status())) {
-            return SportsStatus.POSTPONED;
+        if (blank(raw) && existing != null) {
+            if (SportsStatus.POSTPONED.name().equals(existing.status())
+                    || SportsStatus.CANCELED.name().equals(existing.status())) {
+                return SportsStatus.valueOf(existing.status());
+            }
         }
 
         return calculatedStatus(sportType, kickoffAt);

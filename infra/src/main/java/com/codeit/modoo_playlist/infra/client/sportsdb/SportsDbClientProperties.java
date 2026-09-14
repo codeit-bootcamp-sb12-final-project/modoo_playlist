@@ -10,6 +10,7 @@ import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -26,7 +27,9 @@ public class SportsDbClientProperties {
     @Min(1)
     @Max(29)
     private int requestsPerMinute = 12;
+    @NotNull
     private Duration connectTimeout = Duration.ofSeconds(3);
+    @NotNull
     private Duration readTimeout = Duration.ofSeconds(10);
     @Min(1)
     private int retryMaxAttempts = 3;
@@ -46,5 +49,15 @@ public class SportsDbClientProperties {
         } catch (IllegalArgumentException exception) {
             return false;
         }
+    }
+
+    @AssertTrue(message = "TheSportsDB connect-timeout은 0초보다 커야 합니다.")
+    public boolean isConnectTimeoutPositive() {
+        return connectTimeout == null || !connectTimeout.isZero() && !connectTimeout.isNegative();
+    }
+
+    @AssertTrue(message = "TheSportsDB read-timeout은 0초보다 커야 합니다.")
+    public boolean isReadTimeoutPositive() {
+        return readTimeout == null || !readTimeout.isZero() && !readTimeout.isNegative();
     }
 }

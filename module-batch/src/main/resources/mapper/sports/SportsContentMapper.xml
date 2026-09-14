@@ -59,9 +59,13 @@
           AND s.status &lt;&gt; 'CANCELED'
           AND (
               (s.kickoff_at &gt;= #{windowStart} AND s.kickoff_at &lt; #{windowEnd})
-              OR s.status = 'POSTPONED'
               OR (
-                  s.status &lt;&gt; 'FINISHED'
+                  s.status = 'POSTPONED'
+                  AND s.kickoff_at &gt;= #{windowStart}
+                  AND s.kickoff_at &lt; #{windowEnd}
+              )
+              OR (
+                  s.status IN ('SCHEDULED', 'LIVE')
                   AND TIMESTAMPADD(
                       MINUTE,
                       CASE

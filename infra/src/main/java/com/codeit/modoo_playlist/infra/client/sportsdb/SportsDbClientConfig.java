@@ -1,5 +1,8 @@
 package com.codeit.modoo_playlist.infra.client.sportsdb;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
+
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -20,7 +23,13 @@ public class SportsDbClientConfig {
 
     @Bean
     RestClient sportsDbRestClient(RestClient.Builder builder, SportsDbClientProperties properties) {
-        var requestFactory = new SimpleClientHttpRequestFactory();
+        var requestFactory = new SimpleClientHttpRequestFactory() {
+            @Override
+            protected void prepareConnection(HttpURLConnection connection, String httpMethod) throws IOException {
+                super.prepareConnection(connection, httpMethod);
+                connection.setInstanceFollowRedirects(false);
+            }
+        };
         requestFactory.setConnectTimeout(properties.getConnectTimeout());
         requestFactory.setReadTimeout(properties.getReadTimeout());
 
