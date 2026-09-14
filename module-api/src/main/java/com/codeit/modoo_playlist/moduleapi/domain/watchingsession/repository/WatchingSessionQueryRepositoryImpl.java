@@ -1,6 +1,5 @@
 package com.codeit.modoo_playlist.moduleapi.domain.watchingsession.repository;
 
-import com.codeit.modoo_playlist.core.domain.content.entity.QContent;
 import com.codeit.modoo_playlist.core.domain.conversation.entity.SortDirection;
 import com.codeit.modoo_playlist.core.domain.user.entity.QUser;
 import com.codeit.modoo_playlist.core.domain.watchingSession.entity.QWatchingSession;
@@ -27,7 +26,6 @@ public class WatchingSessionQueryRepositoryImpl implements WatchingSessionReposi
 
     private static final QWatchingSession ws = QWatchingSession.watchingSession;
     private static final QUser u =  QUser.user;
-    private static final QContent c = QContent.content;
 
     @Override
     public Optional<WatchingSession> findActiveByWatcherId(UUID watcherId) {
@@ -98,8 +96,7 @@ public class WatchingSessionQueryRepositoryImpl implements WatchingSessionReposi
                 .join(ws.watcher).fetchJoin()
                 .join(ws.content).fetchJoin()
                 .where(
-                        filter(contentId, watcherNameLike),
-                        cursorCondition(request, ascending)
+                        filter(contentId, watcherNameLike)
                 )
                 .fetchOne();
 
@@ -114,6 +111,25 @@ public class WatchingSessionQueryRepositoryImpl implements WatchingSessionReposi
                 "createdAt",
                 ascending ? SortDirection.ASCENDING : SortDirection.DESCENDING
         );
+    }
+
+    @Override
+    public void touchActiveSessions(
+            Collection<UUID> sessionIds,
+            Instant touchedAt
+    ) {
+        if (sessionIds.isEmpty()) {
+            return;
+        }
+
+        queryFactory
+                .update(ws)
+                .set(ws.updatedAt, touchedAt)
+                .where(
+                        ws.id.in(sessionIds),
+                        ws.endedAt.isNull()
+                )
+                .execute();
     }
 
     private BooleanBuilder filter(
@@ -145,8 +161,8 @@ public class WatchingSessionQueryRepositoryImpl implements WatchingSessionReposi
         Instant cursor = Instant.parse(request.cursor());
 
         BooleanExpression createdAtCondition = ascending
-                ? c.createdAt.gt(cursor)
-                : c.createdAt.lt(cursor);
+                ? ws.createdAt.gt(cursor)
+                : ws.createdAt.lt(cursor);
 
         // 보조 커서 입력 확인
         if (request.idAfter() == null) {
@@ -154,10 +170,10 @@ public class WatchingSessionQueryRepositoryImpl implements WatchingSessionReposi
         }
 
         // 생성 시간이 같은 경우 보조 커서
-        BooleanExpression sameCreatedAtCondition = c.createdAt.eq(cursor)
+        BooleanExpression sameCreatedAtCondition = ws.createdAt.eq(cursor)
                 .and(ascending
-                        ? c.id.gt(request.idAfter())
-                        : c.id.lt(request.idAfter()));
+                        ? ws.id.gt(request.idAfter())
+                        : ws.id.lt(request.idAfter()));
 
         return createdAtCondition.or(sameCreatedAtCondition);
     }

@@ -19,11 +19,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.time.ZoneId;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -36,11 +35,11 @@ public class WatchingSessionService {
     private final WatchingSessionMapper watchingSessionMapper;
 
     @Transactional(readOnly = true)
-    public WatchingSessionDto findByUser(UUID watcherId){
-        if(watcherId != null) {
+    public WatchingSessionDto findByUser(UUID watcherId) {
+        if (watcherId != null) {
             userRepository.findById(watcherId)
                     .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
-        }else{
+        } else {
             throw new BaseException(ErrorCode.INVALID_REQUEST);
         }
 
@@ -50,13 +49,13 @@ public class WatchingSessionService {
     }
 
     @Transactional(readOnly = true)
-    public CursorResponseWatchingSessionDto findByContent (
+    public CursorResponseWatchingSessionDto findByContent(
             UUID contentId, String watcherNameLike, SliceCursorRequest request
-    ){
-        if(contentId != null) {
+    ) {
+        if (contentId != null) {
             contentRepository.findById(contentId)
                     .orElseThrow(() -> new BaseException(ErrorCode.CONTENT_NOT_FOUND));
-        }else {
+        } else {
             throw new BaseException(ErrorCode.INVALID_REQUEST);
         }
         return watchingSessionRepository.findActiveByContent(contentId, watcherNameLike, request);
@@ -121,6 +120,47 @@ public class WatchingSessionService {
         watchingSessionRepository.flush();
 
         return Optional.of(change(ChangeType.LEAVE, session));
+    }
+
+    @Transactional
+    public void touch(Collection<UUID> sessionIds) {
+        if (sessionIds.isEmpty()) {
+            return;
+        }
+
+        watchingSessionRepository.touchActiveSessions(
+                sessionIds,
+                Instant.now()
+        );
+    }
+
+    @Transactional
+    public List<WatchingSessionChange> expireStaleSessions(
+            Instant cutoff
+    ) {
+        List<WatchingSession> staleSessions =
+                watchingSessionRepository
+                        .findByEndedAtIsNullAndUpdatedAtBefore(cutoff);
+
+        List<WatchingSessionChange> changes = new ArrayList<>();
+
+        for (WatchingSession session : staleSessions) {
+            if (!session.isWatching()) {
+                continue;
+            }
+
+            LocalDateTime lastSeenAt = LocalDateTime.ofInstant(
+                    session.getUpdatedAt(),
+                    ZoneId.systemDefault() // ZoneOffset.UTC << 서버와 DB의 표준 시간대를 UTC로 통일
+            );
+
+            session.end(lastSeenAt);
+            watchingSessionRepository.flush();
+
+            changes.add(change(ChangeType.LEAVE, session));
+        }
+
+        return List.copyOf(changes);
     }
 
     private WatchingSessionChange change(

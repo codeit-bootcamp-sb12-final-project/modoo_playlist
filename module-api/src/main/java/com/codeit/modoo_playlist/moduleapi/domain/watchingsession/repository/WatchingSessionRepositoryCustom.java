@@ -4,6 +4,8 @@ import com.codeit.modoo_playlist.core.domain.watchingSession.entity.WatchingSess
 import com.codeit.modoo_playlist.moduleapi.dto.conversation.request.SliceCursorRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.watchingsession.response.CursorResponseWatchingSessionDto;
 
+import java.time.Instant;
+import java.util.Collection;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -12,4 +14,6 @@ public interface WatchingSessionRepositoryCustom {
     Optional<WatchingSession> findActiveByWatcherId(UUID watcherId);
 
     CursorResponseWatchingSessionDto findActiveByContent(UUID contentId, String watcherNameLike, SliceCursorRequest request);
+
+    void touchActiveSessions(Collection<UUID> sessionIds, Instant touchedAt);
 }
