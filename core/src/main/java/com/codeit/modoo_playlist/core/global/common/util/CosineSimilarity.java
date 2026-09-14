@@ -12,7 +12,7 @@ public class CosineSimilarity {
   }
 
   // 코사인 유사도 = (A·B 내적) / (A 크기 * B 크기)
-  public static double compute(Map<UUID, Double> weightsA, Map<UUID, Double> weightsB) {
+  public static <K> double compute(Map<K, Double> weightsA, Map<K, Double> weightsB) {
     double dot = weightsA.entrySet().stream()
         .mapToDouble(e -> e.getValue() * weightsB.getOrDefault(e.getKey(), 0.0))
         .sum();

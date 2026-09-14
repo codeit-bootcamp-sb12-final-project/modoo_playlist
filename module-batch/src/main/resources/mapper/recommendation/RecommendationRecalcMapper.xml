@@ -46,4 +46,32 @@
             last_signal_at = incoming.last_signal_at
     </insert>
 
+    <select id="findAllPreferenceScores"
+      resultType="com.codeit.modoo_playlist.modulebatch.recommendation.model.UserTagScore">
+        SELECT BIN_TO_UUID(user_id) AS userId, BIN_TO_UUID(tag_id) AS tagId, score
+        FROM user_preference_tags
+        WHERE score > 0
+    </select>
+
+    <select id="findTagNames"
+      resultType="com.codeit.modoo_playlist.modulebatch.recommendation.model.TagName">
+        SELECT BIN_TO_UUID(id) AS tagId, name FROM tags
+    </select>
+
+    <insert id="upsertSimilarities">
+        INSERT INTO user_similarities (user_id, other_user_id, score, shared_tags, computed_at)
+        VALUES
+        <foreach collection="rows" item="row" separator=",">
+            (
+            UUID_TO_BIN(#{row.userId}), UUID_TO_BIN(#{row.otherUserId}), #{row.score},
+            #{row.sharedTags}, #{row.computedAt}
+            )
+        </foreach>
+        AS incoming
+        ON DUPLICATE KEY UPDATE
+        score = incoming.score,
+        shared_tags = incoming.shared_tags,
+        computed_at = incoming.computed_at
+    </insert>
+
 </mapper>
