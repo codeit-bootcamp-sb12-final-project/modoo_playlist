@@ -2,8 +2,10 @@ package com.codeit.modoo_playlist.modulebatch.embedding.scheduler;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.job.Job;
+import org.springframework.batch.core.job.JobExecution;
 import org.springframework.batch.core.job.parameters.JobParametersBuilder;
 import org.springframework.batch.core.launch.JobExecutionAlreadyRunningException;
 import org.springframework.batch.core.launch.JobInstanceAlreadyCompleteException;
@@ -36,9 +38,11 @@ public class ContentEmbeddingBatchScheduler {
 
   @Scheduled(cron = "${batch.embedding.cron:0 0 23 * * *}", zone = "${batch.embedding.zone:Asia/Seoul}")
   public void run() throws Exception {
-    if (!jobRepository.findRunningJobExecutions(contentEmbeddingJob.getName()).isEmpty()) {
-      log.warn("콘텐츠 임베딩 Job이 이미 실행 중이므로 이번 스케줄을 건너뜁니다.");
-      return;
+    Set<JobExecution> staleExecutions = jobRepository.findRunningJobExecutions(contentEmbeddingJob.getName());
+    for (JobExecution staleExecution : staleExecutions) {
+      log.warn("콘텐츠 임베딩 Job이 STARTED 상태로 남아있어 비정상 종료로 보고 복구합니다. jobExecutionId={}",
+          staleExecution.getId());
+      jobOperator.recover(staleExecution);
     }
 
     String scheduleSlot = Instant.now().truncatedTo(ChronoUnit.MINUTES).toString();

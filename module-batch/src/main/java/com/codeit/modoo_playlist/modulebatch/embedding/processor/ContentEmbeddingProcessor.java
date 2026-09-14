@@ -21,13 +21,16 @@ public class ContentEmbeddingProcessor implements
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   private final EmbeddingModel embeddingModel;
+  private final String configuredModel;
 
   @Override
   public @Nullable ContentEmbeddingResult process(ContentEmbeddingTarget target) {
     String text = EmbeddingTextBuilder.build(target);
     String newHash = EmbeddingTextBuilder.hash(text);
 
-    if (newHash.equals(target.currentSourceHash())) {
+    boolean hashUnchanged = newHash.equals(target.currentSourceHash());
+    boolean modelUnchanged = configuredModel.equals(target.currentModel());
+    if (hashUnchanged && modelUnchanged) {
       return null;
     }
 

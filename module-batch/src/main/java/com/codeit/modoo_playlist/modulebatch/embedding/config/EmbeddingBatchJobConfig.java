@@ -7,11 +7,13 @@ import com.codeit.modoo_playlist.modulebatch.embedding.processor.ContentEmbeddin
 import com.codeit.modoo_playlist.modulebatch.embedding.reader.ContentEmbeddingReader;
 import com.codeit.modoo_playlist.modulebatch.embedding.writer.ContentEmbeddingWriter;
 import org.springframework.ai.embedding.EmbeddingModel;
+import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.Step;
 import org.springframework.batch.core.step.builder.StepBuilder;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -32,17 +34,25 @@ public class EmbeddingBatchJobConfig {
   }
 
   @Bean
+  @StepScope
+  ContentEmbeddingReader contentEmbeddingReader(ContentEmbeddingMapper mapper) {
+    return new ContentEmbeddingReader(mapper);
+  }
+
+  @Bean
   Step contentEmbeddingStep(
       JobRepository jobRepository,
       PlatformTransactionManager transactionManager,
+      ContentEmbeddingReader contentEmbeddingReader,
       ContentEmbeddingMapper mapper,
-      EmbeddingModel embeddingModel
+      EmbeddingModel embeddingModel,
+      @Value("${spring.ai.google.genai.embedding.text.model}") String configuredModel
   ) {
     return new StepBuilder("contentEmbeddingStep", jobRepository)
         .<ContentEmbeddingTarget, ContentEmbeddingResult>chunk(CHUNK_SIZE)
         .transactionManager(transactionManager)
-        .reader(new ContentEmbeddingReader(mapper))
-        .processor(new ContentEmbeddingProcessor(embeddingModel))
+        .reader(contentEmbeddingReader)
+        .processor(new ContentEmbeddingProcessor(embeddingModel, configuredModel))
         .writer(new ContentEmbeddingWriter(mapper))
         .build();
   }

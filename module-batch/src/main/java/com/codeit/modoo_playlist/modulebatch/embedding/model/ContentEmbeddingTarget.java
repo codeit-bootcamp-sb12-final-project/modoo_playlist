@@ -5,7 +5,8 @@ public record ContentEmbeddingTarget(
     String title,
     String description,
     String tagNames,
-    String currentSourceHash
+    String currentSourceHash,
+    String currentModel
 ) {
 
 }
