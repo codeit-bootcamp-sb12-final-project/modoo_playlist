@@ -326,7 +326,9 @@ public class ConversationRepositoryImpl implements ConversationRepositoryCustom 
             SliceCursorRequest request,
             boolean ascending
     ) {
-        if (request.cursor() == null || request.cursor().isBlank()) {
+        if (request.cursor() == null
+                || request.cursor().isBlank()
+                || request.idAfter() == null) {
             return null;
         }
 
