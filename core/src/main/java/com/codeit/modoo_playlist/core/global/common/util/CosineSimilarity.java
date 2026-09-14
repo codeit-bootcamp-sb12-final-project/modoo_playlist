@@ -1,5 +1,6 @@
 package com.codeit.modoo_playlist.core.global.common.util;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
@@ -20,4 +21,21 @@ public class CosineSimilarity {
     double normB = Math.sqrt(weightsB.values().stream().mapToDouble(w -> w * w).sum());
     return (normA == 0 || normB == 0) ? 0.0 : dot / (normA * normB);
   }
+
+  public static double compute(List<Double> vectorA, List<Double> vectorB) {
+    if (vectorA.size() != vectorB.size()) {
+      throw new IllegalArgumentException(
+          "벡터 차원이 다릅니다: " + vectorA.size() + " vs " + vectorB.size());
+    }
+    double dot = 0, normA = 0, normB = 0;
+    for (int i = 0; i < vectorA.size(); i++) {
+      double a = vectorA.get(i);
+      double b = vectorB.get(i);
+      dot += a * b;
+      normA += a * a;
+      normB += b * b;
+    }
+    return (normA == 0 || normB == 0) ? 0.0 : dot / (Math.sqrt(normA) * Math.sqrt(normB));
+  }
+
 }
