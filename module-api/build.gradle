@@ -4,10 +4,6 @@ plugins {
 
 description = 'module-api'
 
-ext {
-    set('springAiVersion', '2.0.1')
-}
-
 dependencies {
     implementation project(':core')
     implementation project(':infra')
@@ -32,8 +28,6 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-kafka'
 
     // AI
-    implementation 'org.springframework.ai:spring-ai-starter-model-google-genai'
-    implementation 'org.springframework.ai:spring-ai-starter-model-chat-memory-repository-redis'
 //    implementation 'org.springframework.ai:spring-ai-starter-model-openai'
 
     // 현재 코드가 Jackson 2 패키지를 직접 import함
@@ -60,10 +54,5 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-security-oauth2-client-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-websocket-test'
-}
-
-dependencyManagement {
-    imports {
-        mavenBom "org.springframework.ai:spring-ai-bom:${springAiVersion}"
-    }
+    testImplementation 'org.testcontainers:testcontainers-mysql'
 }
