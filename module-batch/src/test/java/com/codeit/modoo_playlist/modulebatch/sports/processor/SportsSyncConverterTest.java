@@ -59,16 +59,28 @@ class SportsSyncConverterTest {
 
     @Test
     void 썸네일은_이벤트_리그_홈팀_기존값_순서로_보완한다() {
-        var event = new SportsDbEvent("event-1", null, "Premier League", "2026", "Soccer",
-                "Arsenal", "Chelsea", null, "2026-12-01T12:00:00Z", "England",
-                null, "league.png", "home.png", "NS", null);
-        assertThat(converter.convert(event, null).thumbnailUrl()).isEqualTo("league.png");
+        ExistingSportsContent existing = existing("SCHEDULED");
+
+        assertThat(converter.convert(thumbnailEvent("event.png", "league.png", "home.png"), existing)
+                .thumbnailUrl()).isEqualTo("event.png");
+        assertThat(converter.convert(thumbnailEvent(null, "league.png", "home.png"), existing)
+                .thumbnailUrl()).isEqualTo("league.png");
+        assertThat(converter.convert(thumbnailEvent(null, null, "home.png"), existing)
+                .thumbnailUrl()).isEqualTo("home.png");
+        assertThat(converter.convert(thumbnailEvent(null, null, null), existing)
+                .thumbnailUrl()).isEqualTo("old.png");
     }
 
     private SportsDbEvent event(String status, String postponed, String timestamp) {
         return new SportsDbEvent("event-1", null, "Premier League", "2026", "Soccer",
                 "Arsenal", "Chelsea", "Stadium", timestamp, "England",
                 "thumb.png", "league.png", "home.png", status, postponed);
+    }
+
+    private SportsDbEvent thumbnailEvent(String eventImage, String leagueImage, String homeImage) {
+        return new SportsDbEvent("event-1", null, "Premier League", "2026", "Soccer",
+                "Arsenal", "Chelsea", null, "2026-12-01T12:00:00Z", "England",
+                eventImage, leagueImage, homeImage, "NS", null);
     }
 
     private ExistingSportsContent existing(String status) {

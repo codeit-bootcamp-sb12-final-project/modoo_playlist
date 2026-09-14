@@ -47,11 +47,22 @@ class SportsSyncItemProcessorTest {
     }
 
     @Test
-    void 신규경기나_변경된_경기는_저장대상으로_반환한다() throws Exception {
+    void 신규경기는_저장대상으로_반환한다() throws Exception {
         SportsDbEvent event = event();
         SportsSyncContent converted = sync("changed");
         when(mapper.findBySourceId("event-1")).thenReturn(null);
         when(converter.convert(event, null)).thenReturn(converted);
+
+        assertThat(new SportsSyncItemProcessor(mapper, converter).process(event)).isSameAs(converted);
+    }
+
+    @Test
+    void 기존경기의_값이_변경되면_저장대상으로_반환한다() throws Exception {
+        SportsDbEvent event = event();
+        ExistingSportsContent existing = existing(null);
+        SportsSyncContent converted = sync("changed");
+        when(mapper.findBySourceId("event-1")).thenReturn(existing);
+        when(converter.convert(event, existing)).thenReturn(converted);
 
         assertThat(new SportsSyncItemProcessor(mapper, converter).process(event)).isSameAs(converted);
     }

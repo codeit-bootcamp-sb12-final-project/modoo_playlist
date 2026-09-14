@@ -58,6 +58,7 @@ class TmdbSyncItemProcessorTest {
 
         assertThat(processor(TmdbCandidate.MediaType.MOVIE, SyncMode.ACTIVE)
                 .process(TmdbFetchedContent.movie(candidate, null))).isNull();
+        verify(converter, never()).fromMovie(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
     }
 
     @Test

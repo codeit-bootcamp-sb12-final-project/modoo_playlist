@@ -2,8 +2,8 @@ package com.codeit.modoo_playlist.modulebatch.sports.writer;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.Instant;
@@ -49,7 +49,9 @@ class SportsContentWriterTest {
 
         assertThatThrownBy(() -> new SportsContentWriter(mapper).write(new Chunk<>(List.of(content))))
                 .isInstanceOf(IllegalStateException.class);
-        verify(mapper, never()).upsertSports(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
+        verify(mapper).upsertContent(content);
+        verify(mapper).findContentIdBySourceId("event-1");
+        verifyNoMoreInteractions(mapper);
     }
 
     private SportsSyncContent content() {

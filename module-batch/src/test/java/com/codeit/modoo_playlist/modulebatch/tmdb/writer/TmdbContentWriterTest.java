@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -51,8 +52,12 @@ class TmdbContentWriterTest {
         new TmdbContentWriter(mapper).write(new Chunk<>(List.of(content)));
 
         verify(mapper, never()).deletePeople("content-id");
+        verify(mapper, never()).insertPeople("content-id", content.people());
         verify(mapper, never()).insertTags(content.tags());
+        verify(mapper, never()).decreaseMissingOpenApiTagCounts("content-id", content.tags());
         verify(mapper, never()).deleteMissingOpenApiTags("content-id", content.tags());
+        verify(mapper, never()).increaseNewContentTagCounts("content-id", content.tags());
+        verify(mapper, never()).upsertContentTags("content-id", content.tags());
     }
 
     @Test
@@ -62,7 +67,9 @@ class TmdbContentWriterTest {
 
         assertThatThrownBy(() -> new TmdbContentWriter(mapper).write(new Chunk<>(List.of(content))))
                 .isInstanceOf(IllegalStateException.class);
-        verify(mapper, never()).upsertVideo(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
+        verify(mapper).upsertContent(content);
+        verify(mapper).findContentIdBySourceId("MOVIE", "10");
+        verifyNoMoreInteractions(mapper);
     }
 
     private TmdbSyncContent content(boolean replacePeople, boolean replaceTags) {
