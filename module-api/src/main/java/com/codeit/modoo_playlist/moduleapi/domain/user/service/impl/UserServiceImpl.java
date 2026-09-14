@@ -1,13 +1,14 @@
 package com.codeit.modoo_playlist.moduleapi.domain.user.service.impl;
 
 import com.codeit.modoo_playlist.core.domain.user.entity.User;
+import com.codeit.modoo_playlist.core.global.exception.BaseException;
+import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.user.service.UserService;
 import com.codeit.modoo_playlist.moduleapi.dto.UserDto;
 import com.codeit.modoo_playlist.moduleapi.dto.request.UserCreateRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.request.UserProfileUpdateRequest;
 import com.codeit.modoo_playlist.moduleapi.exception.auth.ForbiddenException;
-import com.codeit.modoo_playlist.moduleapi.exception.user.EmailAlreadyExistsException;
 import com.codeit.modoo_playlist.moduleapi.exception.user.UserNotFoundException;
 import com.codeit.modoo_playlist.moduleapi.mapper.UserMapper;
 import java.util.Objects;
@@ -32,7 +33,7 @@ public class UserServiceImpl implements UserService {
 //    TODO: 유저 동시 저장시 DB에서 블록을 거는데, 반환값이 같은지 확인 필요.
 //    핸들러에서 409로 처리 중
     if (userRepository.existsByEmail(request.email())) {
-      throw EmailAlreadyExistsException.withEmail(request.email());
+      throw new BaseException(ErrorCode.EMAIL_ALREADY_EXISTS);
     }
 
     String encodedPassword = passwordEncoder.encode(request.password());

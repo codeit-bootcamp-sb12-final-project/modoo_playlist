@@ -181,6 +181,33 @@
         </if>
     </delete>
 
+    <update id="decreaseMissingOpenApiTagCounts">
+        UPDATE tags t
+        JOIN content_tags ct ON ct.tag_id = t.id
+        SET t.content_count = GREATEST(t.content_count - 1, 0)
+        WHERE ct.content_id = UUID_TO_BIN(#{contentId})
+          AND ct.source = 'OPENAPI'
+        <if test="tags != null and !tags.isEmpty()">
+          AND t.name NOT IN
+          <foreach collection="tags" item="tag" open="(" close=")" separator=",">
+              #{tag.name}
+          </foreach>
+        </if>
+    </update>
+
+    <update id="increaseNewContentTagCounts">
+        UPDATE tags t
+        LEFT JOIN content_tags ct
+          ON ct.tag_id = t.id
+         AND ct.content_id = UUID_TO_BIN(#{contentId})
+        SET t.content_count = t.content_count + 1
+        WHERE t.name IN
+        <foreach collection="tags" item="tag" open="(" close=")" separator=",">
+            #{tag.name}
+        </foreach>
+          AND ct.tag_id IS NULL
+    </update>
+
     <insert id="upsertContentTags">
         INSERT IGNORE INTO content_tags (tag_id, content_id, source)
         SELECT id, UUID_TO_BIN(#{contentId}), 'OPENAPI'

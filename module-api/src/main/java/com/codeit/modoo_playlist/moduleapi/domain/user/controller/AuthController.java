@@ -1,9 +1,15 @@
 package com.codeit.modoo_playlist.moduleapi.domain.user.controller;
 
+import com.codeit.modoo_playlist.moduleapi.domain.user.service.AuthService;
 import com.codeit.modoo_playlist.moduleapi.dto.jwt.JwtDto;
+import com.codeit.modoo_playlist.moduleapi.dto.jwt.TokenRefreshResult;
 import com.codeit.modoo_playlist.moduleapi.dto.request.ResetPasswordRequest;
+import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtTokenProvider;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.CacheControl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.stereotype.Controller;
@@ -15,7 +21,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
 @RequestMapping("/api/auth")
+@RequiredArgsConstructor
 public class AuthController {
+
+  private final AuthService authService;
+  private final JwtTokenProvider jwtTokenProvider;
 
 //Sign-in과 Sign-out은 필터체인에서 처리.
 
@@ -35,11 +45,30 @@ public class AuthController {
       path = "/refresh"
   )
   public ResponseEntity<JwtDto> reissueToken(
-      @CookieValue("REFRESH_TOKEN") String refreshToken,
+      @CookieValue(
+          value = JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME,
+          required = false
+      ) String refreshToken,
       HttpServletResponse response
   ) {
-    // TODO: 토큰 재발급 및 새 REFRESH_TOKEN 쿠키 설정
-    throw new UnsupportedOperationException("구현 예정");
+    TokenRefreshResult tokenRefreshResult = authService.refresh(refreshToken);
+
+    Cookie refreshCookie = jwtTokenProvider.generateRefreshTokenCookie(
+        tokenRefreshResult.refreshToken(),
+        tokenRefreshResult.expiresAt()
+    );
+
+    JwtDto jwtDto = new JwtDto(
+        tokenRefreshResult.userDto(),
+        tokenRefreshResult.accessToken()
+    );
+
+    response.addCookie(refreshCookie);
+
+//    인증 응답을 브라우저나 캐시가 저장하지 않도록 여기에도 명시.
+    return ResponseEntity.ok()
+        .cacheControl(CacheControl.noStore())
+        .body(jwtDto);
   }
 
   @GetMapping(

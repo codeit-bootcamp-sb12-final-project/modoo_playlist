@@ -19,6 +19,10 @@ public enum ErrorCode {
   REFRESH_TOKEN_EXPIRED(401, "로그인 유지 기간이 만료되었습니다. 다시 로그인해 주세요."),
   LOGIN_SESSION_INVALIDATED(401, "로그인이 만료되었거나 해제되었습니다."),
   INVALID_CSRF_TOKEN(403, "요청 검증에 실패했습니다."),
+  LOGIN_SESSION_ID_MISMATCH(409, "저장된 로그인 세션의 ID가 일치하지 않습니다."),
+  LOGIN_SESSION_CREATION_FAILED(500, "로그인 세션을 생성하지 못했습니다."),
+  TOKEN_GENERATION_FAILED(500, "토큰 생성 중 오류가 발생했습니다."),
+  LOGIN_SESSION_UPDATE_FAILED(500, "로그인 세션을 갱신하지 못했습니다."),
 
   // User
   USER_NOT_FOUND(404, "사용자를 찾을 수 없습니다."),
@@ -80,6 +84,18 @@ public enum ErrorCode {
   // Tag
   TAG_NAME_INVALID(400, "태그 이름이 올바르지 않습니다."),
   TAG_SYNC_FAILED(500, "태그 저장 결과를 확인하지 못했습니다."),
+
+  // Batch - TMDB
+  TMDB_CONTENT_INVALID(422, "TMDB 콘텐츠의 필수 정보가 올바르지 않습니다."),
+  TMDB_ITEM_FETCH_FAILED(502, "TMDB 콘텐츠 상세 정보를 가져오지 못했습니다."),
+  TMDB_AUTHENTICATION_FAILED(502, "TMDB 인증에 실패했습니다."),
+  TMDB_PATH_UNAVAILABLE(503, "TMDB 목록 API를 사용할 수 없습니다."),
+
+  // Batch - TheSportsDB
+  SPORTSDB_EVENT_INVALID(422, "TheSportsDB 경기의 필수 정보가 올바르지 않습니다."),
+  SPORTSDB_API_ERROR(502, "TheSportsDB API가 오류를 반환했습니다."),
+  SPORTSDB_DISCOVERY_FAILED(503, "TheSportsDB 경기 목록을 가져오지 못했습니다."),
+  SPORTSDB_AUTHENTICATION_FAILED(502, "TheSportsDB 인증에 실패했습니다."),
 
   // Common
   INVALID_REQUEST(400, "잘못된 요청입니다."),

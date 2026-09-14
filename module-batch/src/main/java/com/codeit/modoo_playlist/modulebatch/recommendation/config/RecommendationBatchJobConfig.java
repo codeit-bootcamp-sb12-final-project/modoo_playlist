@@ -2,6 +2,7 @@ package com.codeit.modoo_playlist.modulebatch.recommendation.config;
 
 import com.codeit.modoo_playlist.modulebatch.recommendation.persistence.RecommendationRecalcMapper;
 import com.codeit.modoo_playlist.modulebatch.recommendation.tasklet.PreferenceRecalcTasklet;
+import com.codeit.modoo_playlist.modulebatch.recommendation.tasklet.SimilarUserTasklet;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
@@ -17,10 +18,12 @@ public class RecommendationBatchJobConfig {
 	@Bean
 	Job nightlyRecalcJob(
 			JobRepository jobRepository,
-			Step preferenceRecalcStep
+			Step preferenceRecalcStep,
+			Step similarUserStep
 	) {
 		return new JobBuilder("nightlyRecalcJob", jobRepository)
 				.start(preferenceRecalcStep)
+				.next(similarUserStep)
 				.build();
 	}
 
@@ -32,6 +35,17 @@ public class RecommendationBatchJobConfig {
 	) {
 		return new StepBuilder("preferenceRecalcStep", jobRepository)
 				.tasklet(new PreferenceRecalcTasklet(mapper), transactionManager)
+				.build();
+	}
+
+	@Bean
+	Step similarUserStep(
+			JobRepository jobRepository,
+			PlatformTransactionManager transactionManager,
+			RecommendationRecalcMapper mapper
+	) {
+		return new StepBuilder("similarUserStep", jobRepository)
+				.tasklet(new SimilarUserTasklet(mapper), transactionManager)
 				.build();
 	}
 }

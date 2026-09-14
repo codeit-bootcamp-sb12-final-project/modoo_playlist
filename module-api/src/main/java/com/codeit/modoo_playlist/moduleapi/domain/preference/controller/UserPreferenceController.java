@@ -6,7 +6,6 @@ import com.codeit.modoo_playlist.moduleapi.domain.preference.service.UserPrefere
 import com.codeit.modoo_playlist.moduleapi.security.UserDetails;
 import jakarta.validation.Valid;
 import java.util.List;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

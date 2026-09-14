@@ -13,12 +13,12 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
 
+import com.codeit.modoo_playlist.core.global.exception.BaseException;
+import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import com.codeit.modoo_playlist.infra.client.tmdb.TmdbClient;
 import com.codeit.modoo_playlist.infra.client.tmdb.dto.TmdbMediaSummary;
 import com.codeit.modoo_playlist.infra.client.tmdb.dto.TmdbPageResponse;
 import com.codeit.modoo_playlist.modulebatch.tmdb.config.TmdbBatchProperties;
-import com.codeit.modoo_playlist.modulebatch.tmdb.exception.TmdbFatalIntegrationException;
-import com.codeit.modoo_playlist.modulebatch.tmdb.exception.TmdbPathUnavailableException;
 import com.codeit.modoo_playlist.modulebatch.tmdb.model.TmdbCandidate;
 import com.codeit.modoo_playlist.modulebatch.tmdb.model.TmdbCandidate.MediaType;
 import com.codeit.modoo_playlist.modulebatch.tmdb.model.TmdbFetchedContent;
@@ -117,7 +117,7 @@ public class TmdbCandidateLoader {
                         : TmdbFetchedContent.tv(candidate, tmdbClient.getTvDetail(id)));
             } catch (RestClientException exception) {
                 if (authenticationFailure(exception)) {
-                    throw new TmdbFatalIntegrationException("TMDB 인증에 실패했습니다.", exception);
+                    throw new BaseException(ErrorCode.TMDB_AUTHENTICATION_FAILED, exception);
                 }
                 fetched.add(TmdbFetchedContent.failed(candidate, exception));
             }
@@ -163,9 +163,11 @@ public class TmdbCandidateLoader {
 
     private RuntimeException pathFailure(String pathName, RestClientException exception) {
         if (authenticationFailure(exception)) {
-            return new TmdbFatalIntegrationException("TMDB 인증에 실패했습니다.", exception);
+            return new BaseException(ErrorCode.TMDB_AUTHENTICATION_FAILED, exception);
         }
-        return new TmdbPathUnavailableException("TMDB " + pathName + " 목록을 가져오지 못했습니다.", exception);
+        BaseException pathException = new BaseException(ErrorCode.TMDB_PATH_UNAVAILABLE, exception);
+        pathException.addDetail("path", pathName);
+        return pathException;
     }
 
     private boolean authenticationFailure(RestClientException exception) {

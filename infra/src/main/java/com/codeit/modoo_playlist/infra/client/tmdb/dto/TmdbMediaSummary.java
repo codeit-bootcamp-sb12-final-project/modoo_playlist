@@ -9,7 +9,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public record TmdbMediaSummary(
         long id,
         boolean adult,
-        double popularity,
         @JsonProperty("genre_ids") List<Integer> genreIds
 ) {
 }

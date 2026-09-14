@@ -25,7 +25,7 @@ dependencies {
     // Data
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-    implementation 'org.springframework.boot:spring-boot-starter-elasticsearch'
+    implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
     implementation 'io.github.openfeign.querydsl:querydsl-jpa:7.5'
 
     // Kafka
@@ -53,7 +53,7 @@ dependencies {
     runtimeOnly 'com.mysql:mysql-connector-j'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
-    testImplementation 'org.springframework.boot:spring-boot-starter-elasticsearch-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-kafka-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-security-oauth2-authorization-server-test'
