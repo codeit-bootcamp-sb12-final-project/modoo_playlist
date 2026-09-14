@@ -2,7 +2,7 @@ package com.codeit.modoo_playlist.moduleapi.mapper;
 
 import com.codeit.modoo_playlist.core.domain.user.entity.User;
 import com.codeit.modoo_playlist.moduleapi.dto.UserDto;
-import com.codeit.modoo_playlist.moduleapi.dto.UserSummary;
+import com.codeit.modoo_playlist.moduleapi.dto.user.response.UserSummaryResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -16,5 +16,5 @@ public interface UserMapper {
   @Mapping(target = "userId", source = "id")
   @Mapping(target = "name", source = "username")
   @Mapping(target = "profileImageUrl", source = "profileImageUrl")
-  UserSummary toSummary(User user);
+  UserSummaryResponse toSummary(User user);
 }
