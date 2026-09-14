@@ -77,6 +77,18 @@ public enum ErrorCode {
   TAG_NAME_INVALID(400, "태그 이름이 올바르지 않습니다."),
   TAG_SYNC_FAILED(500, "태그 저장 결과를 확인하지 못했습니다."),
 
+  // Batch - TMDB
+  TMDB_CONTENT_INVALID(422, "TMDB 콘텐츠의 필수 정보가 올바르지 않습니다."),
+  TMDB_ITEM_FETCH_FAILED(502, "TMDB 콘텐츠 상세 정보를 가져오지 못했습니다."),
+  TMDB_AUTHENTICATION_FAILED(502, "TMDB 인증에 실패했습니다."),
+  TMDB_PATH_UNAVAILABLE(503, "TMDB 목록 API를 사용할 수 없습니다."),
+
+  // Batch - TheSportsDB
+  SPORTSDB_EVENT_INVALID(422, "TheSportsDB 경기의 필수 정보가 올바르지 않습니다."),
+  SPORTSDB_API_ERROR(502, "TheSportsDB API가 오류를 반환했습니다."),
+  SPORTSDB_DISCOVERY_FAILED(503, "TheSportsDB 경기 목록을 가져오지 못했습니다."),
+  SPORTSDB_AUTHENTICATION_FAILED(502, "TheSportsDB 인증에 실패했습니다."),
+
   // Common
   INVALID_REQUEST(400, "잘못된 요청입니다."),
   CONFLICT(409, "이미 존재하는 데이터입니다."),

@@ -1,4 +1,7 @@
-package com.codeit.modoo_playlist.infra.client.tmdb;
+package com.codeit.modoo_playlist.infra.client.sportsdb;
+
+import java.io.IOException;
+import java.net.HttpURLConnection;
 
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -9,31 +12,36 @@ import org.springframework.core.retry.RetryTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
-import org.springframework.web.client.ResourceAccessException;
 
 @Configuration(proxyBeanMethods = false)
-@EnableConfigurationProperties(TmdbClientProperties.class)
-public class TmdbClientConfig {
+@EnableConfigurationProperties(SportsDbClientProperties.class)
+public class SportsDbClientConfig {
 
     @Bean
-    RestClient tmdbRestClient(RestClient.Builder builder, TmdbClientProperties properties) {
-        var requestFactory = new SimpleClientHttpRequestFactory();
+    RestClient sportsDbRestClient(RestClient.Builder builder, SportsDbClientProperties properties) {
+        var requestFactory = new SimpleClientHttpRequestFactory() {
+            @Override
+            protected void prepareConnection(HttpURLConnection connection, String httpMethod) throws IOException {
+                super.prepareConnection(connection, httpMethod);
+                connection.setInstanceFollowRedirects(false);
+            }
+        };
         requestFactory.setConnectTimeout(properties.getConnectTimeout());
         requestFactory.setReadTimeout(properties.getReadTimeout());
 
         return builder
                 .baseUrl(properties.getBaseUrl())
                 .requestFactory(requestFactory)
-                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + properties.getAccessToken())
                 .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
                 .build();
     }
 
     @Bean
-    RetryTemplate tmdbRetryTemplate(TmdbClientProperties properties) {
+    RetryTemplate sportsDbRetryTemplate(SportsDbClientProperties properties) {
         RetryPolicy retryPolicy = RetryPolicy.builder()
                 .maxRetries(properties.getRetryMaxAttempts() - 1L)
                 .delay(properties.getRetryInitialDelay())
@@ -45,12 +53,23 @@ public class TmdbClientConfig {
     }
 
     @Bean
-    TmdbClient tmdbClient(
-            @Qualifier("tmdbRestClient") RestClient tmdbRestClient,
-            TmdbClientProperties properties,
-            @Qualifier("tmdbRetryTemplate") RetryTemplate tmdbRetryTemplate
+    SportsDbRateLimiter sportsDbRateLimiter(SportsDbClientProperties properties) {
+        return new SportsDbRateLimiter(properties.getRequestsPerMinute());
+    }
+
+    @Bean
+    SportsDbClient sportsDbClient(
+            @Qualifier("sportsDbRestClient") RestClient sportsDbRestClient,
+            SportsDbClientProperties properties,
+            @Qualifier("sportsDbRetryTemplate") RetryTemplate sportsDbRetryTemplate,
+            SportsDbRateLimiter sportsDbRateLimiter
     ) {
-        return new TmdbClient(tmdbRestClient, properties, tmdbRetryTemplate);
+        return new SportsDbClient(
+                sportsDbRestClient,
+                properties,
+                sportsDbRetryTemplate,
+                sportsDbRateLimiter
+        );
     }
 
     private boolean isRetryable(Throwable throwable) {
