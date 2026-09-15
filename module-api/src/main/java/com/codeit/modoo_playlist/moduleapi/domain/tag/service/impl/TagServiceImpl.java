@@ -8,7 +8,6 @@ import java.util.TreeSet;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.codeit.modoo_playlist.core.domain.tag.entity.Tag;
@@ -30,7 +29,7 @@ public class TagServiceImpl implements TagService {
     private final TagRepository tagRepository;
 
     @Override
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public List<Tag> getOrCreateTags(List<String> tagNames) {
         List<String> normalizedNames = normalizeNames(tagNames);
         if (normalizedNames.isEmpty()) {
