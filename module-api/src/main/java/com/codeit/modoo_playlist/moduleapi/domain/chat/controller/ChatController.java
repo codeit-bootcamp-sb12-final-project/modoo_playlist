@@ -1,6 +1,6 @@
 package com.codeit.modoo_playlist.moduleapi.domain.chat.controller;
 
-import com.codeit.modoo_playlist.moduleapi.domain.chat.dto.requrst.ChatMessageRequest;
+import com.codeit.modoo_playlist.moduleapi.domain.chat.dto.request.ChatMessageRequest;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.service.ChatService;
 import com.codeit.modoo_playlist.moduleapi.security.UserDetails;
 import jakarta.validation.Valid;

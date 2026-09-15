@@ -7,7 +7,7 @@ import com.codeit.modoo_playlist.moduleapi.domain.content.repository.jpa.Content
 import com.codeit.modoo_playlist.moduleapi.domain.interaction.repository.UserContentInteractionRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.preference.dto.SimilarUserDto;
 import com.codeit.modoo_playlist.moduleapi.domain.preference.repository.UserSimilarityRepository;
-import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.SimilarContentDto;
+import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.RecommendedContentDto;
 import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.SimilarUserInteractionProjection;
 import com.codeit.modoo_playlist.moduleapi.domain.recommendation.service.RecommendationService;
 import java.util.ArrayList;
@@ -39,14 +39,14 @@ public class RecommendationServiceImpl implements RecommendationService {
   private final UserContentInteractionRepository userContentInteractionRepository;
 
   @Override
-  public List<SimilarContentDto> getSimilarContents(UUID contentId, Integer limit) {
-    List<SimilarContentDto> candidates =
+  public List<RecommendedContentDto> getSimilarContents(UUID contentId, Integer limit) {
+    List<RecommendedContentDto> candidates =
         contentTagRepository.findSimilarContents(contentId, PageRequest.of(0, CANDIDATE_POOL_SIZE));
     if (candidates.isEmpty()) {
       return List.of();
     }
 
-    List<UUID> ids = new ArrayList<>(candidates.stream().map(SimilarContentDto::contentId).toList());
+    List<UUID> ids = new ArrayList<>(candidates.stream().map(RecommendedContentDto::contentId).toList());
     ids.add(contentId);
 
     long totalContentCount = contentRepository.count();
@@ -62,17 +62,17 @@ public class RecommendationServiceImpl implements RecommendationService {
     Map<UUID, Double> target = weightsByContent.getOrDefault(contentId, Map.of());
 
     return candidates.stream()
-        .map(c -> new SimilarContentDto(
+        .map(c -> new RecommendedContentDto(
             c.contentId(), c.title(), c.thumbnailUrl(),
             CosineSimilarity.compute(target, weightsByContent.getOrDefault(c.contentId(), Map.of()))
         ))
-        .sorted(Comparator.comparingDouble(SimilarContentDto::score).reversed())
+        .sorted(Comparator.comparingDouble(RecommendedContentDto::score).reversed())
         .limit(limit)
         .toList();
   }
 
   @Override
-  public List<SimilarContentDto> getRecommendationsForMe(UUID userId, Integer limit) {
+  public List<RecommendedContentDto> getRecommendationsForMe(UUID userId, Integer limit) {
     List<SimilarUserDto> similarUsers =
         userSimilarityRepository.findTopSimilarUsersByUserId(userId, PageRequest.of(0, SIMILAR_USER_POOL_SIZE));
     if (similarUsers.isEmpty()) {
@@ -107,7 +107,7 @@ public class RecommendationServiceImpl implements RecommendationService {
         .limit(limit)
         .map(e -> {
           SimilarUserInteractionProjection c = firstSeenByContent.get(e.getKey());
-          return new SimilarContentDto(c.contentId(), c.title(), c.thumbnailUrl(), e.getValue());
+          return new RecommendedContentDto(c.contentId(), c.title(), c.thumbnailUrl(), e.getValue());
         })
         .toList();
   }
