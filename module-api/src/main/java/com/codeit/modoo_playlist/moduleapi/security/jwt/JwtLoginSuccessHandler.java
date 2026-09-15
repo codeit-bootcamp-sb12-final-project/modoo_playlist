@@ -1,9 +1,12 @@
 package com.codeit.modoo_playlist.moduleapi.security.jwt;
 
-import com.codeit.modoo_playlist.core.global.exception.ErrorResponse;
+import com.codeit.modoo_playlist.core.global.exception.BaseException;
+import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import com.codeit.modoo_playlist.moduleapi.dto.jwt.JwtDto;
 import com.codeit.modoo_playlist.moduleapi.dto.jwt.LoginSession;
+import com.codeit.modoo_playlist.moduleapi.security.SecurityErrorResponseWriter;
 import com.codeit.modoo_playlist.moduleapi.security.UserDetails;
+import com.nimbusds.jose.JOSEException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -30,6 +33,7 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
   private final JwtTokenProvider tokenProvider;
   private final LoginSessionStore loginSessionStore;
   private final RefreshTokenHasher refreshTokenHasher;
+  private final SecurityErrorResponseWriter errorResponseWriter;
 
   /*
     인증 성공 순서
@@ -57,10 +61,9 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
       SecurityContextHolder.clearContext();
       log.error("Unexpected principal type in login success handler");
 
-      writeError(
+      errorResponseWriter.write(
           response,
-          HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-          "로그인 처리 중 오류가 발생했습니다."
+          ErrorCode.INTERNAL_SERVER_ERROR
       );
       return;
     }
@@ -108,14 +111,30 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
 
       loginSessionStore.register(session);
 
+    } catch (BaseException e) {
+      SecurityContextHolder.clearContext();
+      log.error("Login processing failed: {}", e.getErrorCode(), e);
+
+      errorResponseWriter.write(response, e);
+      return;
+
     } catch (DataAccessException e) {
       SecurityContextHolder.clearContext();
       log.error("Failed to store login session", e);
 
-      writeError(
+      errorResponseWriter.write(
           response,
-          HttpServletResponse.SC_SERVICE_UNAVAILABLE,
-          "로그인 저장소에 접근할 수 없습니다."
+          ErrorCode.AUTHENTICATION_SERVICE_UNAVAILABLE
+      );
+      return;
+
+    } catch (JOSEException e) {
+      SecurityContextHolder.clearContext();
+      log.error("Failed to generate login tokens", e);
+
+      errorResponseWriter.write(
+          response,
+          ErrorCode.TOKEN_GENERATION_FAILED
       );
       return;
 
@@ -123,10 +142,9 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
       SecurityContextHolder.clearContext();
       log.error("Failed to complete login", e);
 
-      writeError(
+      errorResponseWriter.write(
           response,
-          HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-          "로그인 처리 중 오류가 발생했습니다."
+          ErrorCode.INTERNAL_SERVER_ERROR
       );
       return;
     }
@@ -135,22 +153,5 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
     response.setStatus(HttpServletResponse.SC_OK);
     response.addCookie(refreshCookie);
     response.getWriter().write(responseBody);
-  }
-
-  private void writeError(
-      HttpServletResponse response,
-      int status,
-      String message
-  ) throws IOException {
-
-    ErrorResponse errorResponse = new ErrorResponse(
-        new RuntimeException(message),
-        status
-    );
-
-    response.setStatus(status);
-    response.getWriter().write(
-        objectMapper.writeValueAsString(errorResponse)
-    );
   }
 }

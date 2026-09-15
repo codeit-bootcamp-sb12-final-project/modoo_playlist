@@ -61,7 +61,7 @@ public class RedisLoginSessionStore implements LoginSessionStore {
 
 //    userId와 다르면 에러.
     if (!userId.equals(session.userId())) {
-      throw new BaseException(ErrorCode.LOGIN_SESSION_ID_MISMATCH);
+      throw new BaseException(ErrorCode.INTERNAL_SERVER_ERROR);
     }
 
 //    새로운 환경에서 로그인. 인증 만료

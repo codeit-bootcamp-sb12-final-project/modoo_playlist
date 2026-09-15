@@ -55,4 +55,29 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-websocket-test'
     testImplementation 'org.testcontainers:testcontainers-mysql'
+    testRuntimeOnly 'com.h2database:h2'
+    testImplementation 'org.testcontainers:testcontainers'
+    testImplementation 'com.microsoft.playwright:playwright:1.55.0'
+}
+
+tasks.named('test') {
+    useJUnitPlatform { excludeTags 'e2e' }
+}
+
+tasks.register('e2eTest', Test) {
+    description = 'Runs browser authentication tests (Docker and a Playwright browser required).'
+    group = 'verification'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    useJUnitPlatform { includeTags 'e2e' }
+    systemProperty 'e2e.browser.channel', System.getProperty('e2e.browser.channel', 'chromium')
+    environment 'PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD', '1'
+}
+
+tasks.register('installE2eBrowser', JavaExec) {
+    description = 'Installs Chromium for browser tests.'
+    group = 'verification'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.microsoft.playwright.CLI'
+    args 'install', 'chromium'
 }
