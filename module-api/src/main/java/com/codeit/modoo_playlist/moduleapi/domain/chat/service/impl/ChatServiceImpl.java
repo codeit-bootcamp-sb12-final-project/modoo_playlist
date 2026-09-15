@@ -6,14 +6,23 @@ import com.codeit.modoo_playlist.core.domain.conversation.entity.ConversationTyp
 import com.codeit.modoo_playlist.core.domain.message.entity.Message;
 import com.codeit.modoo_playlist.core.domain.message.entity.MessageType;
 import com.codeit.modoo_playlist.core.domain.user.entity.User;
+import com.codeit.modoo_playlist.moduleapi.domain.chat.dto.response.ChatCardsEvent;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.dto.response.ChatDoneEvent;
+import com.codeit.modoo_playlist.moduleapi.domain.chat.dto.response.ContentCardDto;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.exception.ChatAccessDeniedException;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.exception.ChatNotFoundException;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.service.ChatService;
+import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.ChatToolContext;
+import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.ContentCardCollector;
+import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.preference.GetUserPreferenceTool;
+import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.recommendation.GetPersonalizedRecommendationsTool;
+import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.recommendation.RecommendContentsTool;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.search.SearchContentsTool;
 import com.codeit.modoo_playlist.moduleapi.domain.conversation.repository.ConversationRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.message.repository.MessageRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +43,9 @@ public class ChatServiceImpl implements ChatService {
 
   private final ChatClient chatClient;
   private final SearchContentsTool searchContentsTool;
+  private final RecommendContentsTool recommendContentsTool;
+  private final GetUserPreferenceTool getUserPreferenceTool;
+  private final GetPersonalizedRecommendationsTool getPersonalizedRecommendationsTool;
   private final ConversationRepository conversationRepository;
   private final UserRepository userRepository;
   private final MessageRepository messageRepository;
@@ -70,10 +82,12 @@ public class ChatServiceImpl implements ChatService {
         .build());
 
     StringBuilder responseBuilder = new StringBuilder();
+    ContentCardCollector cardCollector = new ContentCardCollector();
 
     Flux<ServerSentEvent<Object>> messageEvents = chatClient.prompt()
         .user(message)
-        .tools(searchContentsTool)
+        .tools(searchContentsTool, recommendContentsTool, getUserPreferenceTool, getPersonalizedRecommendationsTool)
+        .toolContext(Map.of(ChatToolContext.USER_ID, userId, ChatToolContext.CARD_COLLECTOR, cardCollector))
         .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, conversation.getId().toString()))
         .stream()
         .content()
@@ -92,22 +106,26 @@ public class ChatServiceImpl implements ChatService {
         .map(token -> ServerSentEvent.builder((Object) token)
             .event("message").build());
 
+    Flux<ServerSentEvent<Object>> cardsEvent = cardsEvent(cardCollector);
+
     Flux<ServerSentEvent<Object>> doneEvent = Flux.just(
         ServerSentEvent.builder((Object) new ChatDoneEvent(conversation.getId())).event("done")
             .build()
     );
 
-    return messageEvents.concatWith(doneEvent);
+    return messageEvents.concatWith(cardsEvent).concatWith(doneEvent);
   }
 
   @Override
   public Flux<ServerSentEvent<Object>> chatAnonymous(UUID conversationId, String message) {
     UUID sessionId = (conversationId != null) ? conversationId : UUID.randomUUID();
     log.info("chatAnonymous 요청: sessionId={}", sessionId);
+    ContentCardCollector cardCollector = new ContentCardCollector();
 
     Flux<ServerSentEvent<Object>> messageEvents = chatClient.prompt()
         .user(message)
-        .tools(searchContentsTool)
+        .tools(searchContentsTool, recommendContentsTool)
+        .toolContext(Map.of(ChatToolContext.CARD_COLLECTOR, cardCollector))
         .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, sessionId.toString()))
         .stream()
         .content()
@@ -116,11 +134,23 @@ public class ChatServiceImpl implements ChatService {
         .map(token -> ServerSentEvent.builder((Object) token)
             .event("message").build());
 
+    Flux<ServerSentEvent<Object>> cardsEvent = cardsEvent(cardCollector);
+
     Flux<ServerSentEvent<Object>> doneEvent = Flux.just(
         ServerSentEvent.builder((Object) new ChatDoneEvent(sessionId)).event("done")
             .build()
     );
 
-    return messageEvents.concatWith(doneEvent);
+    return messageEvents.concatWith(cardsEvent).concatWith(doneEvent);
+  }
+
+  private Flux<ServerSentEvent<Object>> cardsEvent(ContentCardCollector cardCollector) {
+    return Flux.defer(() -> {
+      List<ContentCardDto> cards = cardCollector.getCards();
+      if (cards.isEmpty()) {
+        return Flux.empty();
+      }
+      return Flux.just(ServerSentEvent.builder((Object) new ChatCardsEvent(cards)).event("cards").build());
+    });
   }
 }

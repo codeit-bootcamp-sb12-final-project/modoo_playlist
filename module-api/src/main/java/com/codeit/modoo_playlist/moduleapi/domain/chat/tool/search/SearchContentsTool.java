@@ -1,10 +1,13 @@
 package com.codeit.modoo_playlist.moduleapi.domain.chat.tool.search;
 
+import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.ChatToolContext;
+import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.ContentCardCollector;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.search.service.SearchContentsService;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.search.dto.SearchContentDto;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Component;
@@ -24,11 +27,17 @@ public class SearchContentsTool {
           + "대신 recommend_contents를 쓰세요."
   )
   public List<SearchContentDto> searchContents(
-      @ToolParam(description = "사용자가 찾고 있는 콘텐츠에 대한 자연어 설명") String query
+      @ToolParam(description = "사용자가 찾고 있는 콘텐츠에 대한 자연어 설명") String query,
+      ToolContext toolContext
   ) {
     log.info("search_contents 호출: queryLength={}", query == null ? 0 : query.length());
     List<SearchContentDto> result = searchContentsService.search(query, DEFAULT_LIMIT);
     log.info("search_contents 결과: {}건", result.size());
+
+    Object collector = toolContext.getContext().get(ChatToolContext.CARD_COLLECTOR);
+    if (collector instanceof ContentCardCollector cardCollector) {
+      result.forEach(c -> cardCollector.add(c.contentId(), c.title(), c.thumbnailUrl()));
+    }
     return result;
   }
 }
