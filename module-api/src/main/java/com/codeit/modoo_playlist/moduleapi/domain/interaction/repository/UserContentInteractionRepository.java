@@ -22,10 +22,7 @@ public interface UserContentInteractionRepository extends
       InteractionType type);
 
   @Query("""
-      select new com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.SimilarUserInteractionProjection(
-        uci.content.id, uci.content.title, uci.content.thumbnailUrl,
-        uci.user.id, uci.type, uci.value, uci.occurrenceCount
-      )
+      select distinct uci.content.id
       from UserContentInteraction uci
       where uci.user.id in :similarUserIds
         and uci.content.deletedAt is null
@@ -34,7 +31,19 @@ public interface UserContentInteractionRepository extends
         )
       order by uci.content.id
       """)
-  List<SimilarUserInteractionProjection> findCandidateInteractions(
+  List<UUID> findCandidateContentIds(
       @Param("myUserId") UUID myUserId, @Param("similarUserIds") List<UUID> similarUserIds,
       Pageable pageable);
+
+  @Query("""
+      select new com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.SimilarUserInteractionProjection(
+        uci.content.id, uci.content.title, uci.content.thumbnailUrl,
+        uci.user.id, uci.type, uci.value, uci.occurrenceCount
+      )
+      from UserContentInteraction uci
+      where uci.user.id in :similarUserIds
+        and uci.content.id in :contentIds
+      """)
+  List<SimilarUserInteractionProjection> findInteractionsByContentIds(
+      @Param("similarUserIds") List<UUID> similarUserIds, @Param("contentIds") List<UUID> contentIds);
 }
