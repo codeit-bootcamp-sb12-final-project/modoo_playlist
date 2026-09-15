@@ -25,4 +25,14 @@
   <update id="updateEmbeddingSourceHash">
     UPDATE contents SET embedding_source_hash = #{hash} WHERE id = UUID_TO_BIN(#{contentId})
   </update>
+
+  <select id="findDeletedContentIdsNeedingCleanup" resultType="String">
+    SELECT BIN_TO_UUID(id)
+    FROM contents
+    WHERE deleted_at IS NOT NULL AND embedding_source_hash IS NOT NULL
+  </select>
+
+  <update id="clearEmbeddingSourceHash">
+    UPDATE contents SET embedding_source_hash = NULL WHERE id = UUID_TO_BIN(#{contentId})
+  </update>
 </mapper>

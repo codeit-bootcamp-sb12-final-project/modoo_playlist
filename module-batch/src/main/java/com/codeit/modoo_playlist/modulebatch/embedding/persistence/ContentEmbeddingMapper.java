@@ -10,4 +10,8 @@ public interface ContentEmbeddingMapper {
   List<ContentEmbeddingTarget> findContentsNeedingEmbedding(@Param("offset") int offset, @Param("limit") int limit);
 
   void updateEmbeddingSourceHash(@Param("contentId") String contentId, @Param("hash") String hash);
+
+  List<String> findDeletedContentIdsNeedingCleanup();
+
+  void clearEmbeddingSourceHash(@Param("contentId") String contentId);
 }

@@ -5,6 +5,7 @@ import com.codeit.modoo_playlist.modulebatch.embedding.model.ContentEmbeddingTar
 import com.codeit.modoo_playlist.modulebatch.embedding.persistence.ContentEmbeddingMapper;
 import com.codeit.modoo_playlist.modulebatch.embedding.processor.ContentEmbeddingProcessor;
 import com.codeit.modoo_playlist.modulebatch.embedding.reader.ContentEmbeddingReader;
+import com.codeit.modoo_playlist.modulebatch.embedding.tasklet.ContentEmbeddingCleanupTasklet;
 import com.codeit.modoo_playlist.modulebatch.embedding.writer.ContentEmbeddingWriter;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.batch.core.configuration.annotation.StepScope;
@@ -27,10 +28,12 @@ public class EmbeddingBatchJobConfig {
   @Bean
   Job contentEmbeddingJob(
       JobRepository jobRepository,
-      Step contentEmbeddingStep
+      Step contentEmbeddingStep,
+      Step contentEmbeddingCleanupStep
   ) {
     return new JobBuilder("contentEmbeddingJob", jobRepository)
         .start(contentEmbeddingStep)
+        .next(contentEmbeddingCleanupStep)
         .build();
   }
 
@@ -50,14 +53,27 @@ public class EmbeddingBatchJobConfig {
       ContentEmbeddingReader contentEmbeddingReader,
       ContentEmbeddingMapper mapper,
       ElasticsearchOperations elasticsearchOperations,
-      EmbeddingModel embeddingModel
+      EmbeddingModel embeddingModel,
+      @Value("${spring.ai.google.genai.embedding.text.model}") String configuredModel
   ) {
     return new StepBuilder("contentEmbeddingStep", jobRepository)
         .<ContentEmbeddingTarget, ContentEmbeddingResult>chunk(CHUNK_SIZE)
         .transactionManager(transactionManager)
         .reader(contentEmbeddingReader)
-        .processor(new ContentEmbeddingProcessor())
+        .processor(new ContentEmbeddingProcessor(configuredModel))
         .writer(new ContentEmbeddingWriter(mapper, elasticsearchOperations, embeddingModel))
+        .build();
+  }
+
+  @Bean
+  Step contentEmbeddingCleanupStep(
+      JobRepository jobRepository,
+      PlatformTransactionManager transactionManager,
+      ContentEmbeddingMapper mapper,
+      ElasticsearchOperations elasticsearchOperations
+  ) {
+    return new StepBuilder("contentEmbeddingCleanupStep", jobRepository)
+        .tasklet(new ContentEmbeddingCleanupTasklet(mapper, elasticsearchOperations), transactionManager)
         .build();
   }
 }

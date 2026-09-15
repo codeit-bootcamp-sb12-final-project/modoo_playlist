@@ -30,6 +30,8 @@ spring:
             model: gemini-embedding-2
   elasticsearch:
     uris: ${ELASTICSEARCH_URL:http://localhost:9200}
+    connection-timeout: ${ELASTICSEARCH_CONNECTION_TIMEOUT:2s}
+    socket-timeout: ${ELASTICSEARCH_SOCKET_TIMEOUT:30s}
 
 module-api:
   auth:
