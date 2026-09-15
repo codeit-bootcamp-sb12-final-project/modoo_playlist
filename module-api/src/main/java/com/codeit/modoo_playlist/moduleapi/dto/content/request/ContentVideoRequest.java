@@ -6,6 +6,7 @@ import com.codeit.modoo_playlist.core.domain.content.type.VideoReleaseStatus;
 
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 
@@ -18,7 +19,7 @@ public record ContentVideoRequest(
         @PositiveOrZero Integer numberOfEpisodes,
         @Size(max = 10) String originalLanguage,
         @PositiveOrZero Float popularity,
-        @DecimalMin("0.0") @DecimalMax("10.0") BigDecimal externalRating,
+        @DecimalMin("0.0") @DecimalMax("10.0") @Digits(integer = 2, fraction = 1) BigDecimal externalRating,
         @PositiveOrZero Integer externalRatingCount
 ) {
 }

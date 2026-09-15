@@ -49,7 +49,7 @@ public class ContentQueryRepositoryImpl implements ContentQueryRepository {
     @Override
     public ContentQueryPage findAllByCondition(ContentListCondition condition, UUID userId) {
         if (condition.sortBy() == SortType.RECOMMENDED) {
-            if (!hasPreferenceScore(userId)) {
+            if (!hasPreferenceScore(condition, userId)) {
                 return findAllByStandardSort(withSort(condition, SortType.WATCHER_COUNT));
             }
             return findAllByRecommendation(condition, userId);
@@ -172,14 +172,17 @@ public class ContentQueryRepositoryImpl implements ContentQueryRepository {
         );
     }
 
-    private boolean hasPreferenceScore(UUID userId) {
+    private boolean hasPreferenceScore(ContentListCondition condition, UUID userId) {
         if (userId == null) {
             return false;
         }
         return queryFactory
                 .selectOne()
-                .from(userPreferenceTag)
+                .from(content)
+                .join(contentTag).on(contentTag.content.eq(content))
+                .join(userPreferenceTag).on(userPreferenceTag.id.tagId.eq(contentTag.id.tagId))
                 .where(
+                        createFilter(condition),
                         userPreferenceTag.id.userId.eq(userId),
                         userPreferenceTag.score.ne(BigDecimal.ZERO)
                 )

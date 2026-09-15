@@ -73,6 +73,37 @@ class ContentRequestValidationTest {
     }
 
     @Test
+    void 생성과_수정요청은_null_등장인물_요소를_거부한다() {
+        ContentCreateRequest createRequest = new ContentCreateRequest(
+                "movie", "제목", null, null, null, List.of(), null, null,
+                java.util.Collections.singletonList(null)
+        );
+        ContentUpdateRequest updateRequest = new ContentUpdateRequest(
+                null, null, null, null, null, null, null,
+                java.util.Collections.singletonList(null)
+        );
+
+        assertThat(validator.validate(createRequest))
+                .extracting(violation -> violation.getPropertyPath().toString())
+                .contains("people[0].<list element>");
+        assertThat(validator.validate(updateRequest))
+                .extracting(violation -> violation.getPropertyPath().toString())
+                .contains("people[0].<list element>");
+    }
+
+    @Test
+    void 외부평점은_소수_첫째자리까지만_허용한다() {
+        ContentVideoRequest video = new ContentVideoRequest(
+                null, null, null, null, null, null, null, null,
+                new java.math.BigDecimal("8.25"), null
+        );
+
+        assertThat(validator.validate(video))
+                .extracting(violation -> violation.getPropertyPath().toString())
+                .containsExactly("externalRating");
+    }
+
+    @Test
     void 스포츠_요청의_문자열_길이와_중첩_검증이_적용된다() {
         ContentCreateRequest request = new ContentCreateRequest(
                 "sport", "경기", null, null, null, List.of(), null,

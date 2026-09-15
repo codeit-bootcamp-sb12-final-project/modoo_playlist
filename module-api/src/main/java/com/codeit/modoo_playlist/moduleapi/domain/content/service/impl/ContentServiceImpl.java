@@ -126,7 +126,7 @@ public class ContentServiceImpl implements ContentService {
                 .build();
         contentRepository.save(content);
         syncContentTags(content, request.tags());
-        syncSubtype(content, request.video(), request.sports());
+        syncSubtype(content, request.video(), request.sports(), true);
         if (content.getType() != ContentType.SPORT && request.people() != null) {
             replacePeople(content, request.people());
         }
@@ -158,7 +158,7 @@ public class ContentServiceImpl implements ContentService {
         if (request.tags() != null) {
             syncContentTags(content, request.tags());
         }
-        syncSubtype(content, request.video(), request.sports());
+        syncSubtype(content, request.video(), request.sports(), false);
         if (request.people() != null) {
             replacePeople(content, request.people());
         }
@@ -287,14 +287,18 @@ public class ContentServiceImpl implements ContentService {
     }
 
     private void syncSubtype(Content content, ContentVideoRequest videoRequest,
-            ContentSportsRequest sportsRequest) {
+            ContentSportsRequest sportsRequest, boolean createMissingSports) {
         if (content.getType() == ContentType.SPORT) {
             if (sportsRequest == null) {
                 return;
             }
             ContentSports sports = contentSportsRepository.findById(content.getId())
-                    .orElseGet(() -> ContentSports.builder()
-                            .content(content).build());
+                    .orElseGet(() -> {
+                        if (!createMissingSports) {
+                            throw new BaseException(ErrorCode.CONTENT_DETAIL_INVALID);
+                        }
+                        return ContentSports.builder().content(content).build();
+                    });
             SportsStatus status = sportsRequest.status() != null
                     ? sportsRequest.status()
                     : sports.getStatus() != null ? sports.getStatus() : SportsStatus.SCHEDULED;
