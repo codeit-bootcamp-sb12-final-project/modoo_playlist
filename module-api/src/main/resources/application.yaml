@@ -24,8 +24,14 @@ spring:
         chat:
           model: gemini-3.7-flash
           thinking-level: LOW
+        embedding:
+          api-key: ${GEMINI_API_KEY}
+          text:
+            model: gemini-embedding-2
   elasticsearch:
     uris: ${ELASTICSEARCH_URL:http://localhost:9200}
+    connection-timeout: ${ELASTICSEARCH_CONNECTION_TIMEOUT:2s}
+    socket-timeout: ${ELASTICSEARCH_SOCKET_TIMEOUT:30s}
 
 module-api:
   auth:

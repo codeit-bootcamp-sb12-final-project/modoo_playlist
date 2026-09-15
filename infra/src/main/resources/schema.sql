@@ -123,16 +123,6 @@ CREATE TABLE `content_people` (
 );
 
 
-CREATE TABLE `content_embeddings` (
-	`content_id`	BINARY(16)	NOT NULL,
-	`vector`	JSON	NOT NULL,
-	`dims`	INT	NOT NULL,
-	`model`	VARCHAR(50)	NOT NULL	COMMENT '모델 교체 시 벡터 공간이 달라지므로 전체 재생성 판단 근거',
-	`created_at`	DATETIME(6)	NOT NULL	DEFAULT CURRENT_TIMESTAMP(6),
-
-	PRIMARY KEY (`content_id`),
-	KEY `IDX_EMBEDDING_MODEL` (`model`)
-);
 
 
 CREATE TABLE `tags` (
@@ -382,9 +372,6 @@ ALTER TABLE `content_people` ADD CONSTRAINT `FK_contents_TO_content_people_1`
 	FOREIGN KEY (`content_id`) REFERENCES `contents` (`id`)
 	ON UPDATE RESTRICT ON DELETE CASCADE;
 
-ALTER TABLE `content_embeddings` ADD CONSTRAINT `FK_contents_TO_content_embeddings_1`
-	FOREIGN KEY (`content_id`) REFERENCES `contents` (`id`)
-	ON UPDATE RESTRICT ON DELETE CASCADE;
 
 ALTER TABLE `content_review_summaries` ADD CONSTRAINT `FK_contents_TO_content_review_summaries_1`
 	FOREIGN KEY (`content_id`) REFERENCES `contents` (`id`)
