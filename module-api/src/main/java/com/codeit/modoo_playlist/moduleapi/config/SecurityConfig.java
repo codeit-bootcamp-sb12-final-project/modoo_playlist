@@ -6,22 +6,15 @@ import com.codeit.modoo_playlist.moduleapi.security.Http403ForbiddenAccessDenied
 import com.codeit.modoo_playlist.moduleapi.security.LoginFailureHandler;
 import com.codeit.modoo_playlist.moduleapi.security.SecurityErrorResponseWriter;
 import com.codeit.modoo_playlist.moduleapi.security.SpaCsrfTokenRequestHandler;
-import com.codeit.modoo_playlist.moduleapi.security.jwt.InMemoryJwtRegistry;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtAuthenticationFilter;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtLoginSuccessHandler;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtLogoutHandler;
-import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtRegistry;
-import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtTokenProvider;
-import com.codeit.modoo_playlist.moduleapi.security.jwt.RedisJwtRegistry;
-import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
@@ -39,7 +32,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.web.cors.CorsConfiguration;
-import tools.jackson.databind.json.JsonMapper;
 
 @Slf4j
 @Configuration
@@ -50,7 +42,6 @@ public class SecurityConfig {
   @Bean
   public SecurityFilterChain filterChain(
       HttpSecurity http,
-      JsonMapper objectMapper,
       Http403ForbiddenAccessDeniedHandler http403ForbiddenAccessDeniedHandler,
       JwtLoginSuccessHandler jwtLoginSuccessHandler,
       JwtLogoutHandler jwtLogoutHandler,
@@ -184,27 +175,5 @@ public class SecurityConfig {
           .toList();
       log.debug("Debug Filter Chain...\n{}", String.join(System.lineSeparator(), filterNames));
     };
-  }
-
-  // JWT 세션 저장소: prod는 Redis (서버 재시작/스케일아웃에도 세션 유지)
-  @Profile("prod")
-  @Bean
-  public JwtRegistry<java.util.UUID> jwtRegistry(
-      RedisTemplate<String, Object> redisTemplate,
-      JwtTokenProvider jwtTokenProvider
-  ) {
-    return new RedisJwtRegistry(
-        redisTemplate,
-        2,
-        jwtTokenProvider.getAccessTokenExpirationMs(),
-        jwtTokenProvider.getRefreshTokenExpirationMs()
-    );
-  }
-
-  // JWT 세션 저장소: dev/test는 Redis 없이 JVM 메모리에만 저장
-  @Profile("!prod")
-  @Bean
-  public JwtRegistry<java.util.UUID> devJwtRegistry(JwtTokenProvider jwtTokenProvider) {
-    return new InMemoryJwtRegistry(2, jwtTokenProvider);
   }
 }
