@@ -6,5 +6,7 @@ public interface ContentQueryRepository {
 
     ContentQueryPage findAllByCondition(ContentListCondition condition);
 
+    ContentQueryPage findAllByCondition(ContentListCondition condition, UUID userId);
+
     long countCurrentWatchers(UUID contentId);
 }

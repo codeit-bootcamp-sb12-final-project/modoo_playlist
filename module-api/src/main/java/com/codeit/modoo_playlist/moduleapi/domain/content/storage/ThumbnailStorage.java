@@ -7,4 +7,6 @@ import org.springframework.web.multipart.MultipartFile;
 public interface ThumbnailStorage {
 
     String store(MultipartFile thumbnail) throws IOException;
+
+    void delete(String thumbnailUrl) throws IOException;
 }
