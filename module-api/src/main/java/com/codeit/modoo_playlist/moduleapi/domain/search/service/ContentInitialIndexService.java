@@ -4,8 +4,11 @@ import com.codeit.modoo_playlist.moduleapi.domain.search.document.ContentDocumen
 import com.codeit.modoo_playlist.moduleapi.domain.search.repository.ContentIndexReader;
 import com.codeit.modoo_playlist.moduleapi.domain.search.repository.ContentSearchRepository;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -16,13 +19,14 @@ public class ContentInitialIndexService {
   private final ContentIndexReader contentIndexReader;
   private final ContentSearchRepository contentSearchRepository;
 
+  @Transactional(propagation = Propagation.NOT_SUPPORTED)
   public long indexAll() {
-    int start = 0;
+    UUID lastId = null;
     long indexedCount = 0;
 
     while (true) {
       List<ContentDocument> documents =
-          contentIndexReader.read(start, BATCH_SIZE);
+          contentIndexReader.read(lastId, BATCH_SIZE);
 
       if (documents.isEmpty()) {
         return indexedCount;
@@ -31,7 +35,9 @@ public class ContentInitialIndexService {
       contentSearchRepository.saveAll(documents);
 
       indexedCount += documents.size();
-      start += documents.size();
+      lastId = UUID.fromString(
+          documents.get(documents.size() - 1).getId()
+      );
     }
   }
 

@@ -1,12 +1,16 @@
 package com.codeit.modoo_playlist.moduleapi.domain.search.repository;
 
 import com.codeit.modoo_playlist.core.domain.content.entity.Content;
+import com.codeit.modoo_playlist.moduleapi.domain.content.repository.jpa.ContentRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.jpa.ContentTagRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.search.document.ContentDocument;
 import com.codeit.modoo_playlist.moduleapi.domain.search.mapper.ContentDocumentMapper;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.TypedQuery;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -18,19 +22,64 @@ import org.springframework.transaction.annotation.Transactional;
 public class ContentIndexReader {
 
   private final EntityManager entityManager;
+  private final ContentRepository contentRepository;
   private final ContentTagRepository contentTagRepository;
   private final ContentDocumentMapper contentDocumentMapper;
 
   @Transactional(readOnly = true)
-  public List<ContentDocument> read(int start, int size) {
+  public Optional<ContentDocument> readOne(UUID contentId) {
+    Objects.requireNonNull(contentId, "콘텐츠 ID는 필수입니다.");
 
-    List<Content> contents = entityManager.createQuery("""
+    Optional<Content> optionalContent =
+        contentRepository.findByIdAndDeletedAtIsNull(contentId);
+
+    if (optionalContent.isEmpty()) {
+      return Optional.empty();
+    }
+
+    Content content = optionalContent.get();
+
+    List<String> tagNames = contentTagRepository
+        .findAllWithTagByContentIds(List.of(contentId))
+        .stream()
+        .map(contentTag -> contentTag.getTag().getName())
+        .toList();
+
+    return Optional.of(
+        contentDocumentMapper.toDocument(content, tagNames)
+    );
+  }
+
+  @Transactional(readOnly = true)
+  public List<ContentDocument> read(UUID lastId, int size) {
+
+    if (size <= 0) {
+      throw new IllegalArgumentException("조회 개수는 1 이상이어야 합니다.");
+    }
+
+    String jpql = lastId == null
+        ? """
             select content
             from Content content
             where content.deletedAt is null
-            order by content.id
-            """, Content.class)
-        .setFirstResult(start)
+            order by content.id asc
+            """
+        : """
+            select content
+            from Content content
+            where content.deletedAt is null
+                and content.id > :lastId
+            order by content.id asc
+            """;
+
+    TypedQuery<Content> query =
+        entityManager.createQuery(jpql, Content.class);
+
+    if (lastId != null) {
+      query.setParameter("lastId", lastId);
+    }
+
+    List<Content> contents = query
         .setMaxResults(size)
         .getResultList();
 
