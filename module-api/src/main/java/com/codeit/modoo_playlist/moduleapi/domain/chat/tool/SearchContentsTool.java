@@ -1,9 +1,7 @@
-package com.codeit.modoo_playlist.moduleapi.domain.chat.tool.search;
+package com.codeit.modoo_playlist.moduleapi.domain.chat.tool;
 
-import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.ChatToolContext;
-import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.ContentCardCollector;
-import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.search.service.SearchContentsService;
-import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.search.dto.SearchContentDto;
+import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.RecommendedContentDto;
+import com.codeit.modoo_playlist.moduleapi.domain.recommendation.service.SemanticSearchService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +16,7 @@ import org.springframework.stereotype.Component;
 public class SearchContentsTool {
   private static final int DEFAULT_LIMIT = 5;
 
-  private final SearchContentsService searchContentsService;
+  private final SemanticSearchService semanticSearchService;
 
   @Tool(
       name = "search_contents",
@@ -26,12 +24,12 @@ public class SearchContentsTool {
           + "의미 기반으로 유사한 콘텐츠를 검색합니다. 장르/태그가 명확한 추천 요청에는 "
           + "대신 recommend_contents를 쓰세요."
   )
-  public List<SearchContentDto> searchContents(
+  public List<RecommendedContentDto> searchContents(
       @ToolParam(description = "사용자가 찾고 있는 콘텐츠에 대한 자연어 설명") String query,
       ToolContext toolContext
   ) {
     log.info("search_contents 호출: queryLength={}", query == null ? 0 : query.length());
-    List<SearchContentDto> result = searchContentsService.search(query, DEFAULT_LIMIT);
+    List<RecommendedContentDto> result = semanticSearchService.search(query, DEFAULT_LIMIT);
     log.info("search_contents 결과: {}건", result.size());
 
     Object collector = toolContext.getContext().get(ChatToolContext.CARD_COLLECTOR);

@@ -2,7 +2,7 @@ package com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto;
 
 import java.util.UUID;
 
-public record SimilarContentDto(
+public record RecommendedContentDto(
 		UUID contentId,
 		String title,
 		String thumbnailUrl,

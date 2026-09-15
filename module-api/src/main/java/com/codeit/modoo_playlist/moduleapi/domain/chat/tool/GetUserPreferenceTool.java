@@ -1,6 +1,5 @@
-package com.codeit.modoo_playlist.moduleapi.domain.chat.tool.preference;
+package com.codeit.modoo_playlist.moduleapi.domain.chat.tool;
 
-import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.ChatToolContext;
 import com.codeit.modoo_playlist.moduleapi.domain.preference.dto.UserPreferenceTagDto;
 import com.codeit.modoo_playlist.moduleapi.domain.preference.service.UserPreferenceTagService;
 import java.util.List;

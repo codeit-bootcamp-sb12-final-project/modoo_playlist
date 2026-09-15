@@ -1,10 +1,10 @@
-package com.codeit.modoo_playlist.moduleapi.domain.chat.tool.search.service.impl;
+package com.codeit.modoo_playlist.moduleapi.domain.recommendation.service.impl;
 
 import com.codeit.modoo_playlist.infra.search.ContentEmbeddingDocument;
-import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.search.dto.SearchContentDto;
-import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.search.service.SearchContentsService;
-import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.search.util.SearchQueryTextBuilder;
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.jpa.ContentRepository;
+import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.RecommendedContentDto;
+import com.codeit.modoo_playlist.moduleapi.domain.recommendation.service.SemanticSearchService;
+import com.codeit.modoo_playlist.moduleapi.domain.recommendation.util.SearchQueryTextBuilder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -21,7 +21,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class SearchContentsServiceImpl implements SearchContentsService {
+public class SemanticSearchServiceImpl implements SemanticSearchService {
 
   private static final int CANDIDATE_MULTIPLIER = 10;
 
@@ -30,7 +30,7 @@ public class SearchContentsServiceImpl implements SearchContentsService {
   private final ContentRepository contentRepository;
 
   @Override
-  public List<SearchContentDto> search(String query, Integer limit) {
+  public List<RecommendedContentDto> search(String query, Integer limit) {
     List<Float> queryVector = embedQuery(query);
 
     NativeQuery searchQuery = NativeQuery.builder()
@@ -53,7 +53,7 @@ public class SearchContentsServiceImpl implements SearchContentsService {
 
     return hits.stream()
         .filter(hit -> aliveIds.contains(UUID.fromString(hit.getContent().contentId())))
-        .map(SearchContentsServiceImpl::toDto)
+        .map(SemanticSearchServiceImpl::toDto)
         .toList();
   }
 
@@ -69,9 +69,9 @@ public class SearchContentsServiceImpl implements SearchContentsService {
     return vector;
   }
 
-  private static SearchContentDto toDto(SearchHit<ContentEmbeddingDocument> hit) {
+  private static RecommendedContentDto toDto(SearchHit<ContentEmbeddingDocument> hit) {
     ContentEmbeddingDocument document = hit.getContent();
-    return new SearchContentDto(
+    return new RecommendedContentDto(
         UUID.fromString(document.contentId()),
         document.title(),
         document.thumbnailUrl(),
