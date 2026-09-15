@@ -16,6 +16,10 @@ spring:
       enabled: false
     jdbc:
       initialize-schema: ${BATCH_SCHEMA_INITIALIZE:always}
+  elasticsearch:
+    uris: ${ELASTICSEARCH_URL:http://localhost:9200}
+    connection-timeout: ${ELASTICSEARCH_CONNECTION_TIMEOUT:2s}
+    socket-timeout: ${ELASTICSEARCH_SOCKET_TIMEOUT:30s}
   ai:
     google:
       genai:
@@ -57,7 +61,8 @@ batch:
     zone: Asia/Seoul
   embedding:
     enabled: ${EMBEDDING_BATCH_ENABLED:true}
-    cron: ${EMBEDDING_BATCH_CRON:0 0 23 * * *}
+    max-items-per-run: ${EMBEDDING_MAX_ITEMS_PER_RUN:100000}
+    cron: ${EMBEDDING_BATCH_CRON:0 31 13 * * *}
     zone: Asia/Seoul
   tmdb:
     enabled: ${TMDB_BATCH_ENABLED:true}

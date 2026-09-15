@@ -1,0 +1,16 @@
+{
+  "properties": {
+    "vector": {
+      "type": "dense_vector",
+      "index": true,
+      "similarity": "cosine"
+    },
+    "title": {
+      "type": "keyword"
+    },
+    "thumbnailUrl": {
+      "type": "keyword",
+      "index": false
+    }
+  }
+}

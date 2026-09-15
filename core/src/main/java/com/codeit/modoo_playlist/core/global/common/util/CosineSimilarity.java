@@ -1,7 +1,6 @@
 package com.codeit.modoo_playlist.core.global.common.util;
 
 import java.util.Map;
-import java.util.UUID;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -20,4 +19,5 @@ public class CosineSimilarity {
     double normB = Math.sqrt(weightsB.values().stream().mapToDouble(w -> w * w).sum());
     return (normA == 0 || normB == 0) ? 0.0 : dot / (normA * normB);
   }
+
 }

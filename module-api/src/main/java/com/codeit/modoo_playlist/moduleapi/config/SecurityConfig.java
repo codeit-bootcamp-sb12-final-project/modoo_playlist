@@ -1,25 +1,20 @@
 package com.codeit.modoo_playlist.moduleapi.config;
 
 import com.codeit.modoo_playlist.core.domain.user.entity.UserRole;
+import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import com.codeit.modoo_playlist.moduleapi.security.Http403ForbiddenAccessDeniedHandler;
 import com.codeit.modoo_playlist.moduleapi.security.LoginFailureHandler;
+import com.codeit.modoo_playlist.moduleapi.security.SecurityErrorResponseWriter;
 import com.codeit.modoo_playlist.moduleapi.security.SpaCsrfTokenRequestHandler;
-import com.codeit.modoo_playlist.moduleapi.security.jwt.InMemoryJwtRegistry;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtAuthenticationFilter;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtLoginSuccessHandler;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtLogoutHandler;
-import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtRegistry;
-import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtTokenProvider;
-import com.codeit.modoo_playlist.moduleapi.security.jwt.RedisJwtRegistry;
-import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
@@ -37,7 +32,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.web.cors.CorsConfiguration;
-import tools.jackson.databind.json.JsonMapper;
 
 @Slf4j
 @Configuration
@@ -48,12 +42,12 @@ public class SecurityConfig {
   @Bean
   public SecurityFilterChain filterChain(
       HttpSecurity http,
-      JsonMapper objectMapper,
       Http403ForbiddenAccessDeniedHandler http403ForbiddenAccessDeniedHandler,
       JwtLoginSuccessHandler jwtLoginSuccessHandler,
       JwtLogoutHandler jwtLogoutHandler,
       LoginFailureHandler loginFailureHandler,
-      JwtAuthenticationFilter jwtAuthenticationFilter
+      JwtAuthenticationFilter jwtAuthenticationFilter,
+      SecurityErrorResponseWriter securityErrorResponseWriter
   ) throws Exception {
 
     http
@@ -116,12 +110,11 @@ public class SecurityConfig {
         // 만약 공통 인증 오류로 넘기면 이 부분도 변경이 필요함
         // ErrorResponse를 써서 Json으로 넘기는 방식으로 생각 중.
         .exceptionHandling(ex -> ex
-            .authenticationEntryPoint((request, response, authException) -> {
-              response.sendError(
-                  HttpServletResponse.SC_UNAUTHORIZED,
-                  "Unauthorized"
-              );
-            })
+            .authenticationEntryPoint((request, response, authException) ->
+                securityErrorResponseWriter.write(
+                    response,
+                    ErrorCode.AUTHENTICATION_REQUIRED
+                ))
             .accessDeniedHandler(http403ForbiddenAccessDeniedHandler)
         )
 
@@ -182,27 +175,5 @@ public class SecurityConfig {
           .toList();
       log.debug("Debug Filter Chain...\n{}", String.join(System.lineSeparator(), filterNames));
     };
-  }
-
-  // JWT 세션 저장소: prod는 Redis (서버 재시작/스케일아웃에도 세션 유지)
-  @Profile("prod")
-  @Bean
-  public JwtRegistry<java.util.UUID> jwtRegistry(
-      RedisTemplate<String, Object> redisTemplate,
-      JwtTokenProvider jwtTokenProvider
-  ) {
-    return new RedisJwtRegistry(
-        redisTemplate,
-        2,
-        jwtTokenProvider.getAccessTokenExpirationMs(),
-        jwtTokenProvider.getRefreshTokenExpirationMs()
-    );
-  }
-
-  // JWT 세션 저장소: dev/test는 Redis 없이 JVM 메모리에만 저장
-  @Profile("!prod")
-  @Bean
-  public JwtRegistry<java.util.UUID> devJwtRegistry(JwtTokenProvider jwtTokenProvider) {
-    return new InMemoryJwtRegistry(2, jwtTokenProvider);
   }
 }
