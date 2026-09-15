@@ -1,15 +1,19 @@
 package com.codeit.modoo_playlist.moduleapi.domain.content.service.impl;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.codeit.modoo_playlist.core.domain.content.entity.Content;
@@ -19,6 +23,7 @@ import com.codeit.modoo_playlist.core.domain.content.entity.ContentTag;
 import com.codeit.modoo_playlist.core.domain.content.entity.ContentTagId;
 import com.codeit.modoo_playlist.core.domain.content.entity.ContentVideo;
 import com.codeit.modoo_playlist.core.domain.content.type.ContentType;
+import com.codeit.modoo_playlist.core.domain.content.type.SportsStatus;
 import com.codeit.modoo_playlist.core.domain.tag.entity.Tag;
 import com.codeit.modoo_playlist.core.domain.tag.type.TagKind;
 import com.codeit.modoo_playlist.core.global.exception.BaseException;
@@ -40,6 +45,9 @@ import com.codeit.modoo_playlist.moduleapi.domain.tag.service.TagService;
 import com.codeit.modoo_playlist.moduleapi.dto.content.request.ContentCreateRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.content.request.ContentListRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.content.request.ContentUpdateRequest;
+import com.codeit.modoo_playlist.moduleapi.dto.content.request.ContentPersonRequest;
+import com.codeit.modoo_playlist.moduleapi.dto.content.request.ContentSportsRequest;
+import com.codeit.modoo_playlist.moduleapi.dto.content.request.ContentVideoRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.content.response.ContentCursorResponse;
 import com.codeit.modoo_playlist.moduleapi.dto.content.response.ContentDetailResponse;
 import com.codeit.modoo_playlist.moduleapi.dto.content.response.ContentListItemResponse;
@@ -105,14 +113,23 @@ public class ContentServiceImpl implements ContentService {
             ContentCreateRequest request,
             MultipartFile thumbnail
     ) {
+        ContentType contentType = toContentType(request.type());
+        validateReleaseDate(request.releaseDate());
+        validateCreateDetails(contentType, request.video(), request.sports(), request.people());
         Content content = Content.builder()
-                .type(toContentType(request.type()))
+                .type(contentType)
                 .title(request.title())
                 .description(request.description())
                 .thumbnailUrl(storeThumbnailIfPresent(thumbnail))
+                .releaseDate(request.releaseDate())
+                .originCountry(request.originCountry())
                 .build();
         contentRepository.save(content);
         syncContentTags(content, request.tags());
+        syncSubtype(content, request.video(), request.sports());
+        if (content.getType() != ContentType.SPORT && request.people() != null) {
+            replacePeople(content, request.people());
+        }
 
         return createDetailResponse(content);
     }
@@ -126,14 +143,24 @@ public class ContentServiceImpl implements ContentService {
     ) {
         Content content = contentRepository.findByIdAndDeletedAtIsNull(contentId)
                 .orElseThrow(() -> new BaseException(ErrorCode.CONTENT_NOT_FOUND));
+        validateReleaseDate(request.releaseDate());
+        validateUpdateDetails(content.getType(), request.video(), request.sports(), request.people());
 
+        String previousThumbnailUrl = content.getThumbnailUrl();
+        String newThumbnailUrl = storeThumbnailIfPresent(thumbnail);
         content.update(
                 request.title(),
                 request.description(),
-                storeThumbnailIfPresent(thumbnail)
+                newThumbnailUrl
         );
+        registerPreviousThumbnailCleanup(previousThumbnailUrl, newThumbnailUrl);
+        content.updateMetadata(request.releaseDate(), request.originCountry());
         if (request.tags() != null) {
             syncContentTags(content, request.tags());
+        }
+        syncSubtype(content, request.video(), request.sports());
+        if (request.people() != null) {
+            replacePeople(content, request.people());
         }
 
         return createDetailResponse(content);
@@ -144,7 +171,18 @@ public class ContentServiceImpl implements ContentService {
     public void deleteContent(UUID contentId) {
         Content content = contentRepository.findByIdAndDeletedAtIsNull(contentId)
                 .orElseThrow(() -> new BaseException(ErrorCode.CONTENT_NOT_FOUND));
+        removeAllContentTags(content);
         content.softDelete();
+    }
+
+    private void removeAllContentTags(Content content) {
+        List<ContentTag> contentTags = contentTagRepository
+                .findAllWithTagByContentIds(List.of(content.getId()));
+        contentTagRepository.deleteAll(contentTags);
+        contentTagRepository.decreaseTagContentCounts(contentTags.stream()
+                .map(contentTag -> contentTag.getTag().getId())
+                .toList());
+        contentTagRepository.flush();
     }
 
     private ContentDetailResponse createDetailResponse(Content content) {
@@ -175,6 +213,9 @@ public class ContentServiceImpl implements ContentService {
     }
 
     private void syncContentTags(Content content, List<String> requestedTags) {
+        if (requestedTags == null) {
+            return;
+        }
         List<Tag> desiredTags = tagService.getOrCreateTags(requestedTags);
         List<ContentTag> currentContentTags = contentTagRepository
                 .findAllWithTagByContentIds(List.of(content.getId()));
@@ -213,15 +254,161 @@ public class ContentServiceImpl implements ContentService {
         contentTagRepository.flush();
     }
 
+    private void validateCreateDetails(ContentType type, ContentVideoRequest video,
+            ContentSportsRequest sports, List<ContentPersonRequest> people) {
+        if (type == ContentType.SPORT) {
+            if (video != null || people != null || sports == null
+                    || blank(sports.sportType()) || blank(sports.league())
+                    || blank(sports.homeTeam()) || blank(sports.awayTeam())
+                    || sports.kickoffAt() == null) {
+                throw new BaseException(ErrorCode.CONTENT_DETAIL_INVALID);
+            }
+            return;
+        }
+        if (sports != null) {
+            throw new BaseException(ErrorCode.CONTENT_DETAIL_INVALID);
+        }
+    }
+
+    private void validateUpdateDetails(ContentType type, ContentVideoRequest video,
+            ContentSportsRequest sports, List<ContentPersonRequest> people) {
+        if (type == ContentType.SPORT) {
+            if (video != null || people != null) {
+                throw new BaseException(ErrorCode.CONTENT_DETAIL_INVALID);
+            }
+            if (sports != null && (blank(sports.sportType()) || blank(sports.league())
+                    || blank(sports.homeTeam()) || blank(sports.awayTeam())
+                    || sports.kickoffAt() == null)) {
+                throw new BaseException(ErrorCode.CONTENT_DETAIL_INVALID);
+            }
+        } else if (sports != null) {
+            throw new BaseException(ErrorCode.CONTENT_DETAIL_INVALID);
+        }
+    }
+
+    private void syncSubtype(Content content, ContentVideoRequest videoRequest,
+            ContentSportsRequest sportsRequest) {
+        if (content.getType() == ContentType.SPORT) {
+            if (sportsRequest == null) {
+                return;
+            }
+            ContentSports sports = contentSportsRepository.findById(content.getId())
+                    .orElseGet(() -> ContentSports.builder()
+                            .content(content).build());
+            SportsStatus status = sportsRequest.status() != null
+                    ? sportsRequest.status()
+                    : sports.getStatus() != null ? sports.getStatus() : SportsStatus.SCHEDULED;
+            sports.update(sportsRequest.sportType(), sportsRequest.league(), sportsRequest.season(),
+                    sportsRequest.homeTeam(), sportsRequest.awayTeam(), sportsRequest.venue(),
+                    status, sportsRequest.kickoffAt());
+            contentSportsRepository.save(sports);
+            return;
+        }
+        if (videoRequest == null) {
+            return;
+        }
+        ContentVideo video = contentVideoRepository.findById(content.getId())
+                .orElseGet(() -> ContentVideo.builder()
+                        .content(content).build());
+        video.update(
+                valueOrCurrent(videoRequest.runtimeMinutes(), video.getRuntimeMinutes()),
+                valueOrCurrent(videoRequest.collectionName(), video.getCollectionName()),
+                valueOrCurrent(videoRequest.imdbId(), video.getImdbId()),
+                valueOrCurrent(videoRequest.releaseStatus(), video.getReleaseStatus()),
+                valueOrCurrent(videoRequest.numberOfSeasons(), video.getNumberOfSeasons()),
+                valueOrCurrent(videoRequest.numberOfEpisodes(), video.getNumberOfEpisodes()),
+                valueOrCurrent(videoRequest.originalLanguage(), video.getOriginalLanguage()),
+                valueOrCurrent(videoRequest.popularity(), video.getPopularity()),
+                valueOrCurrent(videoRequest.externalRating(), video.getExternalRating()),
+                valueOrCurrent(videoRequest.externalRatingCount(), video.getExternalRatingCount())
+        );
+        contentVideoRepository.save(video);
+    }
+
+    private void replacePeople(Content content, List<ContentPersonRequest> requests) {
+        contentPersonRepository.deleteAllByContent_Id(content.getId());
+        List<ContentPerson> people = java.util.stream.IntStream.range(0, requests.size())
+                .mapToObj(index -> toPerson(content, requests.get(index), index))
+                .toList();
+        contentPersonRepository.saveAll(people);
+    }
+
+    private ContentPerson toPerson(Content content, ContentPersonRequest request, int displayOrder) {
+        return ContentPerson.builder()
+                .content(content)
+                .roleType(blank(request.roleType()) ? "CAST" : request.roleType())
+                .personName(request.personName())
+                .characterName(request.characterName())
+                .displayOrder(displayOrder)
+                .personId(request.personId())
+                .personImg(request.personImg())
+                .build();
+    }
+
+    private boolean blank(String value) {
+        return value == null || value.isBlank();
+    }
+
+    private <T> T valueOrCurrent(T requestedValue, T currentValue) {
+        return requestedValue != null ? requestedValue : currentValue;
+    }
+
+    private void validateReleaseDate(LocalDate releaseDate) {
+        if (releaseDate != null && (releaseDate.getYear() < 1000 || releaseDate.getYear() > 9999)) {
+            throw new BaseException(ErrorCode.CONTENT_DETAIL_INVALID);
+        }
+    }
+
     private String storeThumbnailIfPresent(MultipartFile thumbnail) {
         if (thumbnail == null || thumbnail.isEmpty()) {
             return null;
         }
         try {
-            return thumbnailStorage.store(thumbnail);
+            String thumbnailUrl = thumbnailStorage.store(thumbnail);
+            registerThumbnailRollbackCleanup(thumbnailUrl);
+            return thumbnailUrl;
         } catch (IOException exception) {
             throw new BaseException(ErrorCode.FILE_SAVE_FAILED, exception);
         }
+    }
+
+    private void registerThumbnailRollbackCleanup(String thumbnailUrl) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCompletion(int status) {
+                if (status != STATUS_ROLLED_BACK) {
+                    return;
+                }
+                try {
+                    thumbnailStorage.delete(thumbnailUrl);
+                } catch (IOException ignored) {
+                    // 원래 저장 실패 예외를 유지한다.
+                }
+            }
+        });
+    }
+
+    private void registerPreviousThumbnailCleanup(String previousThumbnailUrl, String newThumbnailUrl) {
+        if (previousThumbnailUrl == null || newThumbnailUrl == null
+                || Objects.equals(previousThumbnailUrl, newThumbnailUrl)
+                || !TransactionSynchronizationManager.isSynchronizationActive()) {
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCompletion(int status) {
+                if (status != STATUS_COMMITTED) {
+                    return;
+                }
+                try {
+                    thumbnailStorage.delete(previousThumbnailUrl);
+                } catch (IOException ignored) {
+                }
+            }
+        });
     }
 
     private Map<UUID, List<String>> loadDisplayTagsByContentId(List<Content> contents) {

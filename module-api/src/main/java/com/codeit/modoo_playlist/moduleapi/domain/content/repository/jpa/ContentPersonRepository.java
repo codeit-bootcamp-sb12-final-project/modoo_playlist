@@ -10,4 +10,6 @@ import com.codeit.modoo_playlist.core.domain.content.entity.ContentPerson;
 public interface ContentPersonRepository extends JpaRepository<ContentPerson, UUID> {
 
     List<ContentPerson> findAllByContent_IdOrderByDisplayOrderAsc(UUID contentId);
+
+    void deleteAllByContent_Id(UUID contentId);
 }
