@@ -95,7 +95,7 @@ public class WatchingSessionService {
     public Optional<WatchingSessionChange> end(UUID watchingSessionId) {
         // 세션 존재 확인
         WatchingSession session = watchingSessionRepository
-                .findById(watchingSessionId)
+                .findWatchingSessionById(watchingSessionId)
                 .orElse(null);
 
         // 세션이 없거나 이미 종료면 무시

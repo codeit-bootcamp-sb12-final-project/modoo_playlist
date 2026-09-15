@@ -8,6 +8,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
+import org.springframework.web.socket.messaging.SessionConnectEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 import org.springframework.web.socket.messaging.SessionSubscribeEvent;
 import org.springframework.web.socket.messaging.SessionUnsubscribeEvent;
@@ -86,5 +87,17 @@ public class WatchingSessionWebSocketListener {
     @EventListener
     public void onDisconnect(SessionDisconnectEvent event) {
         registry.endAll(event.getSessionId());
+    }
+
+    @EventListener
+    public void onConnect(SessionConnectEvent event) {
+        StompHeaderAccessor headers =
+                StompHeaderAccessor.wrap(event.getMessage());
+
+        String sessionId = headers.getSessionId();
+
+        if (sessionId != null) {
+            registry.connected(sessionId);
+        }
     }
 }
