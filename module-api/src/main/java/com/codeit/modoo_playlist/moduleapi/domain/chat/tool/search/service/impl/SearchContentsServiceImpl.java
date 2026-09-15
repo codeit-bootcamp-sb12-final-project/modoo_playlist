@@ -4,8 +4,10 @@ import com.codeit.modoo_playlist.infra.search.ContentEmbeddingDocument;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.search.dto.SearchContentDto;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.search.service.SearchContentsService;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.search.util.SearchQueryTextBuilder;
+import com.codeit.modoo_playlist.moduleapi.domain.content.repository.jpa.ContentRepository;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.embedding.EmbeddingModel;
@@ -25,6 +27,7 @@ public class SearchContentsServiceImpl implements SearchContentsService {
 
   private final ElasticsearchOperations elasticsearchOperations;
   private final EmbeddingModel embeddingModel;
+  private final ContentRepository contentRepository;
 
   @Override
   public List<SearchContentDto> search(String query, Integer limit) {
@@ -39,9 +42,17 @@ public class SearchContentsServiceImpl implements SearchContentsService {
         .withMaxResults(limit)
         .build();
 
-    return elasticsearchOperations
+    List<SearchHit<ContentEmbeddingDocument>> hits = elasticsearchOperations
         .search(searchQuery, ContentEmbeddingDocument.class)
-        .stream()
+        .getSearchHits();
+
+    List<UUID> contentIds = hits.stream()
+        .map(hit -> UUID.fromString(hit.getContent().contentId()))
+        .toList();
+    Set<UUID> aliveIds = Set.copyOf(contentRepository.findAliveIds(contentIds));
+
+    return hits.stream()
+        .filter(hit -> aliveIds.contains(UUID.fromString(hit.getContent().contentId())))
         .map(SearchContentsServiceImpl::toDto)
         .toList();
   }

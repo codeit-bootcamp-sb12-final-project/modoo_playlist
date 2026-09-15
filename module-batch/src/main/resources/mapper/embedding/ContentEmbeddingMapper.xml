@@ -30,9 +30,15 @@
     SELECT BIN_TO_UUID(id)
     FROM contents
     WHERE deleted_at IS NOT NULL AND embedding_source_hash IS NOT NULL
+    ORDER BY id
+    LIMIT #{limit}
   </select>
 
-  <update id="clearEmbeddingSourceHash">
-    UPDATE contents SET embedding_source_hash = NULL WHERE id = UUID_TO_BIN(#{contentId})
+  <update id="clearEmbeddingSourceHashBulk">
+    UPDATE contents SET embedding_source_hash = NULL
+    WHERE id IN
+    <foreach item="contentId" collection="contentIds" open="(" separator="," close=")">
+      UUID_TO_BIN(#{contentId})
+    </foreach>
   </update>
 </mapper>

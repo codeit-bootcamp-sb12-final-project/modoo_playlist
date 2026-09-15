@@ -11,7 +11,7 @@ public interface ContentEmbeddingMapper {
 
   void updateEmbeddingSourceHash(@Param("contentId") String contentId, @Param("hash") String hash);
 
-  List<String> findDeletedContentIdsNeedingCleanup();
+  List<String> findDeletedContentIdsNeedingCleanup(@Param("limit") int limit);
 
-  void clearEmbeddingSourceHash(@Param("contentId") String contentId);
+  void clearEmbeddingSourceHashBulk(@Param("contentIds") List<String> contentIds);
 }
