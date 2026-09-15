@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Lock;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface WatchingSessionRepository
@@ -19,4 +20,6 @@ public interface WatchingSessionRepository
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     List<WatchingSession> findByEndedAtIsNullAndUpdatedAtBefore(Instant cutoff);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Optional<WatchingSession> findWatchingSessionById(UUID id);
 }
