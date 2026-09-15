@@ -10,6 +10,7 @@ import com.codeit.modoo_playlist.moduleapi.domain.chat.dto.response.ChatDoneEven
 import com.codeit.modoo_playlist.moduleapi.domain.chat.exception.ChatAccessDeniedException;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.exception.ChatNotFoundException;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.service.ChatService;
+import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.search.SearchContentsTool;
 import com.codeit.modoo_playlist.moduleapi.domain.conversation.repository.ConversationRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.message.repository.MessageRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
@@ -32,6 +33,7 @@ public class ChatServiceImpl implements ChatService {
   private static final UUID AI_BOT_ID = UUID.fromString("00000000-0000-0000-0000-000000000000");
 
   private final ChatClient chatClient;
+  private final SearchContentsTool searchContentsTool;
   private final ConversationRepository conversationRepository;
   private final UserRepository userRepository;
   private final MessageRepository messageRepository;
@@ -39,6 +41,7 @@ public class ChatServiceImpl implements ChatService {
   @Override
   @Transactional
   public Flux<ServerSentEvent<Object>> chat(UUID userId, UUID conversationId, String message) {
+    log.info("chat 요청: userId={}, conversationId={}", userId, conversationId);
     Conversation conversation;
     User user = userRepository.findById(userId).orElseThrow(IllegalArgumentException::new);
     User bot = userRepository.findById(AI_BOT_ID).orElseThrow(IllegalStateException::new);
@@ -70,18 +73,22 @@ public class ChatServiceImpl implements ChatService {
 
     Flux<ServerSentEvent<Object>> messageEvents = chatClient.prompt()
         .user(message)
+        .tools(searchContentsTool)
         .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, conversation.getId().toString()))
         .stream()
         .content()
         .doOnNext(responseBuilder::append)
-        .doOnComplete(() -> messageRepository.save(Message.builder()
-            .sender(bot)
-            .receiver(user)
-            .conversation(conversation)
-            .type(MessageType.AI)
-            .message(responseBuilder.toString())
-            .build())
-        )
+        .doOnComplete(() -> {
+          log.info("chat 완료: conversationId={}", conversation.getId());
+          messageRepository.save(Message.builder()
+              .sender(bot)
+              .receiver(user)
+              .conversation(conversation)
+              .type(MessageType.AI)
+              .message(responseBuilder.toString())
+              .build());
+        })
+        .doOnError(e -> log.error("chat 스트림 오류: conversationId={}", conversation.getId(), e))
         .map(token -> ServerSentEvent.builder((Object) token)
             .event("message").build());
 
@@ -96,12 +103,16 @@ public class ChatServiceImpl implements ChatService {
   @Override
   public Flux<ServerSentEvent<Object>> chatAnonymous(UUID conversationId, String message) {
     UUID sessionId = (conversationId != null) ? conversationId : UUID.randomUUID();
+    log.info("chatAnonymous 요청: sessionId={}", sessionId);
 
     Flux<ServerSentEvent<Object>> messageEvents = chatClient.prompt()
         .user(message)
+        .tools(searchContentsTool)
         .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, sessionId.toString()))
         .stream()
         .content()
+        .doOnComplete(() -> log.info("chatAnonymous 완료: sessionId={}", sessionId))
+        .doOnError(e -> log.error("chatAnonymous 스트림 오류: sessionId={}", sessionId, e))
         .map(token -> ServerSentEvent.builder((Object) token)
             .event("message").build());
 

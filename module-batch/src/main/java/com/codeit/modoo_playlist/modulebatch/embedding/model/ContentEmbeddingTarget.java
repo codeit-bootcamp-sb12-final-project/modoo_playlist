@@ -4,9 +4,9 @@ public record ContentEmbeddingTarget(
     String contentId,
     String title,
     String description,
+    String thumbnailUrl,
     String tagNames,
-    String currentSourceHash,
-    String currentModel
+    String currentSourceHash
 ) {
 
 }

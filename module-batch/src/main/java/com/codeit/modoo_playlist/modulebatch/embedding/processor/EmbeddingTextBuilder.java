@@ -8,21 +8,30 @@ import java.util.HexFormat;
 
 public class EmbeddingTextBuilder {
 
+  private static final String STORE_GENERATION = "es-v1";
+
   private EmbeddingTextBuilder() {
   }
 
+  // Gemini 비대칭 검색 문서 포맷. 쿼리 쪽은 module-api의 SearchQueryTextBuilder가 짝을 맞춤
   public static String build(ContentEmbeddingTarget target) {
-    return String.join("\n",
-        target.title() == null ? "" : target.title(),
+    String title = target.title() == null ? "none" : target.title();
+    String body = String.join(" ",
         target.description() == null ? "" : target.description(),
         target.tagNames() == null ? "" : target.tagNames()
-    );
+    ).trim();
+    return "title: " + title + " | text: " + body;
   }
 
-  public static String hash(String text) {
+  public static String hash(String text, String model, String thumbnailUrl) {
+    String normalizedThumbnail = thumbnailUrl == null ? "" : thumbnailUrl;
+    return sha256(model + "::" + STORE_GENERATION + "::" + normalizedThumbnail + "::" + text);
+  }
+
+  private static String sha256(String input) {
     try {
       MessageDigest digest = MessageDigest.getInstance("SHA-256");
-      return HexFormat.of().formatHex(digest.digest(text.getBytes(StandardCharsets.UTF_8)));
+      return HexFormat.of().formatHex(digest.digest(input.getBytes(StandardCharsets.UTF_8)));
     } catch (NoSuchAlgorithmException e) {
       throw new IllegalStateException(e);
     }
