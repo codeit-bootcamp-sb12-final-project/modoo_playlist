@@ -17,6 +17,8 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class WatchingSessionRegistry {
 
+    private static final int MAX_END_ATTEMPTS = 3;
+
     private final WatchingSessionService watchingSessionService;
     private final RealtimeNotifier realtimeNotifier;
 
@@ -41,6 +43,10 @@ public class WatchingSessionRegistry {
         boolean startFinished;  // JOIN 전송 완료
         boolean endRequested;   // start 중에 end 요청이 들어옴
         boolean ending;         // end 진행 중
+
+        // 재시도 횟수 상한 관련 필드
+        int endAttempts;
+        boolean endFailed;
 
         SessionState(ConnectionState connection, String subscriptionId) {
             this.connection = connection;
@@ -177,11 +183,14 @@ public class WatchingSessionRegistry {
         synchronized (state.connection) {
             if (!state.endRequested
                     || !state.startFinished
-                    || state.ending) {
+                    || state.ending
+                    || state.endFailed
+            ) {
                 return;
             }
 
             state.ending = true;
+            state.endAttempts++;
             id = state.id;
         }
 
@@ -191,13 +200,30 @@ public class WatchingSessionRegistry {
             // DB 호출: 잠금 밖
             change = watchingSessionService.end(id);
         } catch (RuntimeException exception) {
+            int attempts;
+            boolean terminal;
+
             synchronized (state.connection) {
                 // 종료 의도는 유지하고, 다음 재시도만 허용한다.
                 state.ending = false;
-            }
+                attempts = state.endAttempts;
+                terminal = attempts >= MAX_END_ATTEMPTS;
+                state.endFailed = terminal;
 
-            log.error("시청 세션 종료 실패, 재시도 예정: {}", id, exception);
-            return;
+                if (terminal) {
+                    forget(state);
+                    log.error(
+                            "시청 세션 종료 최종 실패: sessionId={}, attempts={},status=END_FAILED",
+                            id, attempts, exception
+                    );
+                } else {
+                    log.warn(
+                            "시청 세션 종료 실패, 재시도 예정: sessionId={}, attempts={}/{}",
+                            id, attempts, MAX_END_ATTEMPTS, exception
+                    );
+                }
+                return;
+            }
         }
 
         forget(state);

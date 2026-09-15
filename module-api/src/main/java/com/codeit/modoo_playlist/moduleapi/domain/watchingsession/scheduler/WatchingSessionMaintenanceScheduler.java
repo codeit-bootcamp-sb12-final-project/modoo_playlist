@@ -36,7 +36,7 @@ public class WatchingSessionMaintenanceScheduler {
         }
     }
 
-    @Scheduled(fixedDelay = 10_000)
+    @Scheduled(fixedDelay = 1_000)
     public void retryPendingEnds() {
         try {
             registry.retryPendingEnds();
