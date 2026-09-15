@@ -82,7 +82,7 @@ public class JwtTokenProvider {
     Instant sessionExpiry = sessionExpiresAt.truncatedTo(ChronoUnit.SECONDS);
 
     if (!sessionExpiry.isAfter(now)) {
-      throw new IllegalArgumentException("로그인 세션이 만료되었습니다.");
+      throw new BaseException(ErrorCode.LOGIN_SESSION_INVALIDATED);
     }
 
     Instant accessExpiry = now.plusMillis(accessTokenExpirationMs)
@@ -111,7 +111,7 @@ public class JwtTokenProvider {
     Instant expiresAt = sessionExpiresAt.truncatedTo(ChronoUnit.SECONDS);
 
     if (!expiresAt.isAfter(now)) {
-      throw new IllegalArgumentException("로그인 세션이 만료되었습니다.");
+      throw new BaseException(ErrorCode.LOGIN_SESSION_INVALIDATED);
     }
 
     return generateToken(
@@ -237,20 +237,23 @@ public class JwtTokenProvider {
       SignedJWT signedJWT = SignedJWT.parse(token);
       return signedJWT.getJWTClaimsSet().getSubject();
     } catch (Exception e) {
-      throw new IllegalArgumentException("Invalid JWT token", e);
+      throw new BaseException(ErrorCode.INVALID_TOKEN, e);
     }
   }
 
   public UUID getUserId(String token) {
     try {
       SignedJWT signedJWT = SignedJWT.parse(token);
-      String userIdStr = (String) signedJWT.getJWTClaimsSet().getClaim("userId");
-      if (userIdStr == null) {
-        throw new IllegalArgumentException("User ID claim not found in JWT token");
+      String userId = (String) signedJWT.getJWTClaimsSet().getClaim("userId");
+      if (userId == null) {
+        throw new BaseException(ErrorCode.INVALID_TOKEN);
       }
-      return UUID.fromString(userIdStr);
+
+      return UUID.fromString(userId);
+    } catch (BaseException e) {
+      throw e;
     } catch (Exception e) {
-      throw new IllegalArgumentException("Invalid JWT token", e);
+      throw new BaseException(ErrorCode.INVALID_TOKEN, e);
     }
   }
 
@@ -262,12 +265,14 @@ public class JwtTokenProvider {
           .getStringClaim("sid");
 
       if (sid == null) {
-        throw new IllegalArgumentException("SID claim not found in JWT token");
+        throw new BaseException(ErrorCode.INVALID_TOKEN);
       }
 
       return UUID.fromString(sid);
+    } catch (BaseException e) {
+      throw e;
     } catch (Exception e) {
-      throw new IllegalArgumentException("Invalid JWT token", e);
+      throw new BaseException(ErrorCode.INVALID_TOKEN, e);
     }
   }
 
@@ -283,7 +288,7 @@ public class JwtTokenProvider {
         sessionExpiresAt
     ).getSeconds();
     if (remainingSeconds <= 0) {
-      throw new BaseException(ErrorCode.INVALID_TOKEN);
+      throw new BaseException(ErrorCode.LOGIN_SESSION_INVALIDATED);
     }
     Cookie refreshCookie = new Cookie(REFRESH_TOKEN_COOKIE_NAME, refreshToken);
 

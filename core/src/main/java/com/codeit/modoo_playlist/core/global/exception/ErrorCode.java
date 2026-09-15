@@ -10,24 +10,20 @@ public enum ErrorCode {
   // Social
   // 추후 추가
 
-  // Auth
-  INVALID_CREDENTIALS(401, "아이디 또는 비밀번호가 올바르지 않습니다."),
+  // Auth - 인증 및 인가
+  INVALID_CREDENTIALS(401, "이메일 또는 비밀번호가 올바르지 않습니다."),
   AUTHENTICATION_REQUIRED(401, "로그인이 필요합니다."),
   ACCESS_DENIED(403, "접근 권한이 없습니다."),
+  INVALID_CSRF_TOKEN(403, "CSRF 토큰이 없거나 유효하지 않습니다."),
   INVALID_TOKEN(401, "유효하지 않은 인증 토큰입니다."),
-  ACCESS_TOKEN_EXPIRED(401, "액세스 토큰이 만료되었습니다,"),
-  REFRESH_TOKEN_EXPIRED(401, "로그인 유지 기간이 만료되었습니다. 다시 로그인해 주세요."),
-  LOGIN_SESSION_INVALIDATED(401, "로그인이 만료되었거나 해제되었습니다."),
-  INVALID_CSRF_TOKEN(403, "요청 검증에 실패했습니다."),
-  LOGIN_SESSION_ID_MISMATCH(409, "저장된 로그인 세션의 ID가 일치하지 않습니다."),
-  LOGIN_SESSION_CREATION_FAILED(500, "로그인 세션을 생성하지 못했습니다."),
-  TOKEN_GENERATION_FAILED(500, "토큰 생성 중 오류가 발생했습니다."),
+  LOGIN_SESSION_INVALIDATED(401, "로그인 세션이 만료되었거나 무효화되었습니다. 다시 로그인해 주세요."),
+  TOKEN_GENERATION_FAILED(500, "인증 토큰을 생성하지 못했습니다."),
   LOGIN_SESSION_UPDATE_FAILED(500, "로그인 세션을 갱신하지 못했습니다."),
+  AUTHENTICATION_SERVICE_UNAVAILABLE(503, "인증 서비스를 일시적으로 사용할 수 없습니다."),
 
   // User
   USER_NOT_FOUND(404, "사용자를 찾을 수 없습니다."),
   EMAIL_ALREADY_EXISTS(409, "이미 사용 중인 이메일입니다."),
-  USER_ALREADY_EXISTS(409, "이미 존재하는 사용자입니다."),
   USER_ACCOUNT_LOCKED(403, "잠긴 계정입니다."),
 
   // Post

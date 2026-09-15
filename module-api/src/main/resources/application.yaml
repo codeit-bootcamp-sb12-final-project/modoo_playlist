@@ -49,3 +49,5 @@ module-api:
 external:
   tmdb:
     access-token: ${TMDB_ACCESS_TOKEN:업서여}
+  sports-db:
+    api-key: ${THESPORTSDB_API_KEY}

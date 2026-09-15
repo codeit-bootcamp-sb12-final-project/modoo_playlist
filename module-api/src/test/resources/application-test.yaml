@@ -1,0 +1,46 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:test-${random.uuid};MODE=MySQL;DB_CLOSE_DELAY=-1
+    username: sa
+    password: ''
+  test:
+    database:
+      replace: none
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    open-in-view: false
+  sql:
+    init:
+      mode: never
+  data:
+    redis:
+      repositories:
+        enabled: false
+    elasticsearch:
+      repositories:
+        enabled: false
+  main:
+    banner-mode: 'off'
+  autoconfigure:
+    exclude: org.springframework.ai.model.google.genai.autoconfigure.chat.GoogleGenAiChatAutoConfiguration
+
+module-api:
+  jwt:
+    access-token:
+      secret: test-access-secret-at-least-32-bytes-long
+      expiration-ms: 600000
+    refresh-token:
+      secret: test-refresh-secret-at-least-32-bytes-long
+      expiration-ms: 3600000
+      max-expiration-ms: 86400000
+    issuer: auth-test
+  auth:
+    cookie:
+      secure: false
+      same-site: Lax
+      path: /
+
+logging:
+  level:
+    root: WARN
