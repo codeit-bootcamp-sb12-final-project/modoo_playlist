@@ -119,12 +119,6 @@ public class SecurityConfig {
         // 만약 공통 인증 오류로 넘기면 이 부분도 변경이 필요함
         // ErrorResponse를 써서 Json으로 넘기는 방식으로 생각 중.
         .exceptionHandling(ex -> ex
-            .authenticationEntryPoint((request, response, authException) -> {
-              response.sendError(
-                  HttpServletResponse.SC_UNAUTHORIZED,
-                  "Unauthorized"
-              );
-            })
             .authenticationEntryPoint((request, response, authException) ->
                 securityErrorResponseWriter.write(
                     response,
