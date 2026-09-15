@@ -1,8 +1,10 @@
 package com.codeit.modoo_playlist.moduleapi.config;
 
 import com.codeit.modoo_playlist.core.domain.user.entity.UserRole;
+import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import com.codeit.modoo_playlist.moduleapi.security.Http403ForbiddenAccessDeniedHandler;
 import com.codeit.modoo_playlist.moduleapi.security.LoginFailureHandler;
+import com.codeit.modoo_playlist.moduleapi.security.SecurityErrorResponseWriter;
 import com.codeit.modoo_playlist.moduleapi.security.SpaCsrfTokenRequestHandler;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.InMemoryJwtRegistry;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtAuthenticationFilter;
@@ -53,7 +55,8 @@ public class SecurityConfig {
       JwtLoginSuccessHandler jwtLoginSuccessHandler,
       JwtLogoutHandler jwtLogoutHandler,
       LoginFailureHandler loginFailureHandler,
-      JwtAuthenticationFilter jwtAuthenticationFilter
+      JwtAuthenticationFilter jwtAuthenticationFilter,
+      SecurityErrorResponseWriter securityErrorResponseWriter
   ) throws Exception {
 
     http
@@ -122,6 +125,11 @@ public class SecurityConfig {
                   "Unauthorized"
               );
             })
+            .authenticationEntryPoint((request, response, authException) ->
+                securityErrorResponseWriter.write(
+                    response,
+                    ErrorCode.AUTHENTICATION_REQUIRED
+                ))
             .accessDeniedHandler(http403ForbiddenAccessDeniedHandler)
         )
 

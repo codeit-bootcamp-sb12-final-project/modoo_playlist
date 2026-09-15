@@ -8,8 +8,6 @@ import com.codeit.modoo_playlist.moduleapi.domain.user.service.UserService;
 import com.codeit.modoo_playlist.moduleapi.dto.UserDto;
 import com.codeit.modoo_playlist.moduleapi.dto.request.UserCreateRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.request.UserProfileUpdateRequest;
-import com.codeit.modoo_playlist.moduleapi.exception.auth.ForbiddenException;
-import com.codeit.modoo_playlist.moduleapi.exception.user.UserNotFoundException;
 import com.codeit.modoo_playlist.moduleapi.mapper.UserMapper;
 import java.util.Objects;
 import java.util.UUID;
@@ -54,7 +52,7 @@ public class UserServiceImpl implements UserService {
   public UserDto getUser(UUID userId) {
 
     User user = userRepository.findById(userId)
-        .orElseThrow(() -> UserNotFoundException.withUserId(userId));
+        .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
 
     return userMapper.toDto(user);
   }
@@ -70,7 +68,7 @@ public class UserServiceImpl implements UserService {
     validateOwner(actorId, userId);
 
     User user = userRepository.findById(userId)
-        .orElseThrow(() -> UserNotFoundException.withUserId(userId));
+        .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
 
     String imageUrl = null;
     if (image != null && !image.isEmpty()) {
@@ -84,7 +82,7 @@ public class UserServiceImpl implements UserService {
 
   private void validateOwner(UUID actorId, UUID userId) {
     if (!Objects.equals(actorId, userId)) {
-      throw new ForbiddenException();
+      throw new BaseException(ErrorCode.ACCESS_DENIED);
     }
   }
 }
