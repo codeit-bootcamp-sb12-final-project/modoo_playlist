@@ -7,4 +7,6 @@ import java.util.UUID;
 public interface RecommendationService {
 
   List<SimilarContentDto> getSimilarContents(UUID contentId, Integer limit);
+
+  List<SimilarContentDto> getRecommendationsForMe(UUID userId, Integer limit);
 }

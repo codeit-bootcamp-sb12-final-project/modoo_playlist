@@ -1,12 +1,18 @@
 package com.codeit.modoo_playlist.moduleapi.domain.recommendation.service.impl;
 
 import com.codeit.modoo_playlist.core.global.common.util.CosineSimilarity;
+import com.codeit.modoo_playlist.core.global.common.util.ScoringEngine;
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.jpa.ContentRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.jpa.ContentTagRepository;
+import com.codeit.modoo_playlist.moduleapi.domain.interaction.repository.UserContentInteractionRepository;
+import com.codeit.modoo_playlist.moduleapi.domain.preference.dto.SimilarUserDto;
+import com.codeit.modoo_playlist.moduleapi.domain.preference.repository.UserSimilarityRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.SimilarContentDto;
+import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.SimilarUserInteractionProjection;
 import com.codeit.modoo_playlist.moduleapi.domain.recommendation.service.RecommendationService;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -24,9 +30,13 @@ import org.springframework.transaction.annotation.Transactional;
 public class RecommendationServiceImpl implements RecommendationService {
 
   private static final int CANDIDATE_POOL_SIZE = 50;
+  private static final int SIMILAR_USER_POOL_SIZE = 20;
+  private static final int CANDIDATE_CONTENT_POOL_SIZE = 2000;
 
   private final ContentTagRepository contentTagRepository;
   private final ContentRepository contentRepository;
+  private final UserSimilarityRepository userSimilarityRepository;
+  private final UserContentInteractionRepository userContentInteractionRepository;
 
   @Override
   public List<SimilarContentDto> getSimilarContents(UUID contentId, Integer limit) {
@@ -58,6 +68,47 @@ public class RecommendationServiceImpl implements RecommendationService {
         ))
         .sorted(Comparator.comparingDouble(SimilarContentDto::score).reversed())
         .limit(limit)
+        .toList();
+  }
+
+  @Override
+  public List<SimilarContentDto> getRecommendationsForMe(UUID userId, Integer limit) {
+    List<SimilarUserDto> similarUsers =
+        userSimilarityRepository.findTopSimilarUsersByUserId(userId, PageRequest.of(0, SIMILAR_USER_POOL_SIZE));
+    if (similarUsers.isEmpty()) {
+      return List.of();
+    }
+
+    Map<UUID, Double> similarityByUser = similarUsers.stream()
+        .collect(Collectors.toMap(SimilarUserDto::userId, u -> u.score().doubleValue()));
+
+    List<UUID> similarUserIds = new ArrayList<>(similarityByUser.keySet());
+    List<UUID> candidateContentIds = userContentInteractionRepository.findCandidateContentIds(
+        userId, similarUserIds, PageRequest.of(0, CANDIDATE_CONTENT_POOL_SIZE));
+    if (candidateContentIds.isEmpty()) {
+      return List.of();
+    }
+
+    List<SimilarUserInteractionProjection> candidates = userContentInteractionRepository
+        .findInteractionsByContentIds(similarUserIds, candidateContentIds);
+
+    Map<UUID, Double> scoreByContent = new LinkedHashMap<>();
+    Map<UUID, SimilarUserInteractionProjection> firstSeenByContent = new LinkedHashMap<>();
+    for (SimilarUserInteractionProjection c : candidates) {
+      double contribution = similarityByUser.getOrDefault(c.otherUserId(), 0.0)
+          * ScoringEngine.weight(c.type(), c.value(), c.occurrenceCount());
+      scoreByContent.merge(c.contentId(), contribution, Double::sum);
+      firstSeenByContent.putIfAbsent(c.contentId(), c);
+    }
+
+    return scoreByContent.entrySet().stream()
+        .filter(e -> e.getValue() > 0)
+        .sorted(Map.Entry.<UUID, Double>comparingByValue().reversed())
+        .limit(limit)
+        .map(e -> {
+          SimilarUserInteractionProjection c = firstSeenByContent.get(e.getKey());
+          return new SimilarContentDto(c.contentId(), c.title(), c.thumbnailUrl(), e.getValue());
+        })
         .toList();
   }
 }

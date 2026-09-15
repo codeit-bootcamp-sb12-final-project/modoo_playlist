@@ -1,4 +1,4 @@
-package com.codeit.modoo_playlist.modulebatch.recommendation.scoring;
+package com.codeit.modoo_playlist.core.global.common.util;
 
 import com.codeit.modoo_playlist.core.domain.interaction.enums.InteractionType;
 import java.math.BigDecimal;
