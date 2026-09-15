@@ -37,13 +37,19 @@ public class WatchingSession extends BaseUpdatableEntity {
     @Column(name = "watched_seconds")
     private Integer watchedSeconds;
 
-    public void end() {
-        if (endedAt != null) return;
-        this.endedAt = LocalDateTime.now();
+    public void end(){
+        end(LocalDateTime.now());
+    }
+
+    public void end(LocalDateTime endedAt) {
+        if (this.endedAt != null) return;
+
+        this.endedAt = endedAt;
 
         if (this.startedAt != null) {
             this.watchedSeconds = Math.toIntExact(
-                    Duration.between(this.startedAt, this.endedAt).getSeconds()
+                    Duration.between(startedAt, endedAt)
+                            .getSeconds()
             );
         }
     }
