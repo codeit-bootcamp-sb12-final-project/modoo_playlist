@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+  namespace="com.codeit.modoo_playlist.modulebatch.embedding.persistence.ContentEmbeddingMapper">
+
+  <select id="findContentsNeedingEmbedding"
+    resultType="com.codeit.modoo_playlist.modulebatch.embedding.model.ContentEmbeddingTarget">
+    SELECT BIN_TO_UUID(c.id) AS contentId,
+           c.title AS title,
+           c.description AS description,
+           c.thumbnail_url AS thumbnailUrl,
+           GROUP_CONCAT(t.name ORDER BY t.name) AS tagNames,
+           c.embedding_source_hash AS currentSourceHash
+    FROM contents c
+    LEFT JOIN content_tags ct ON ct.content_id = c.id
+    LEFT JOIN tags t ON t.id = ct.tag_id
+    WHERE c.deleted_at IS NULL
+    GROUP BY c.id
+    ORDER BY c.id
+    LIMIT #{limit} OFFSET #{offset}
+  </select>
+
+  <update id="updateEmbeddingSourceHash">
+    UPDATE contents SET embedding_source_hash = #{hash} WHERE id = UUID_TO_BIN(#{contentId})
+  </update>
+
+  <select id="findDeletedContentIdsNeedingCleanup" resultType="String">
+    SELECT BIN_TO_UUID(id)
+    FROM contents
+    WHERE deleted_at IS NOT NULL AND embedding_source_hash IS NOT NULL
+    ORDER BY id
+    LIMIT #{limit}
+  </select>
+
+  <update id="clearEmbeddingSourceHashBulk">
+    UPDATE contents SET embedding_source_hash = NULL
+    WHERE id IN
+    <foreach item="contentId" collection="contentIds" open="(" separator="," close=")">
+      UUID_TO_BIN(#{contentId})
+    </foreach>
+  </update>
+</mapper>

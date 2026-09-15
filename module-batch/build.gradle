@@ -9,6 +9,7 @@ dependencies {
     implementation project(':infra')
 
     implementation 'org.springframework.boot:spring-boot-starter-batch'
+    implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
 
@@ -23,4 +24,6 @@ dependencies {
 
     testImplementation 'org.springframework.boot:spring-boot-starter-batch-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+    testImplementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter-test:4.1.0'
+    testImplementation 'org.testcontainers:testcontainers-mysql'
 }

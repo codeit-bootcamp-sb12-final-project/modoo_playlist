@@ -1,4 +1,4 @@
-package com.codeit.modoo_playlist.modulebatch.recommendation.scheduler;
+package com.codeit.modoo_playlist.modulebatch.embedding.scheduler;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -18,29 +18,29 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Slf4j
-@ConditionalOnProperty(prefix = "batch.recommendation", name = "enabled", havingValue = "true", matchIfMissing = true)
-public class RecommendationBatchScheduler {
+@ConditionalOnProperty(prefix = "batch.embedding", name = "enabled", havingValue = "true", matchIfMissing = true)
+public class ContentEmbeddingBatchScheduler {
 
   private final JobOperator jobOperator;
   private final JobRepository jobRepository;
 
-  private final Job nightlyRecalcJob;
+  private final Job contentEmbeddingJob;
 
-  public RecommendationBatchScheduler(
+  public ContentEmbeddingBatchScheduler(
       JobOperator jobOperator,
       JobRepository jobRepository,
-      @Qualifier("nightlyRecalcJob") Job nightlyRecalcJob
+      @Qualifier("contentEmbeddingJob") Job contentEmbeddingJob
   ) {
     this.jobOperator = jobOperator;
     this.jobRepository = jobRepository;
-    this.nightlyRecalcJob = nightlyRecalcJob;
+    this.contentEmbeddingJob = contentEmbeddingJob;
   }
 
-  @Scheduled(cron = "${batch.recommendation.cron:0 30 0 * * *}", zone = "${batch.recommendation.zone:Asia/Seoul}")
+  @Scheduled(cron = "${batch.embedding.cron:0 0 23 * * *}", zone = "${batch.embedding.zone:Asia/Seoul}")
   public void run() throws Exception {
-    Set<JobExecution> staleExecutions = jobRepository.findRunningJobExecutions(nightlyRecalcJob.getName());
+    Set<JobExecution> staleExecutions = jobRepository.findRunningJobExecutions(contentEmbeddingJob.getName());
     for (JobExecution staleExecution : staleExecutions) {
-      log.warn("추천 야간 재계산 Job이 STARTED 상태로 남아있어 비정상 종료로 보고 복구합니다. jobExecutionId={}",
+      log.warn("콘텐츠 임베딩 Job이 STARTED 상태로 남아있어 비정상 종료로 보고 복구합니다. jobExecutionId={}",
           staleExecution.getId());
       jobOperator.recover(staleExecution);
     }
@@ -48,13 +48,13 @@ public class RecommendationBatchScheduler {
     String scheduleSlot = Instant.now().truncatedTo(ChronoUnit.MINUTES).toString();
     try {
       jobOperator.start(
-          nightlyRecalcJob,
+          contentEmbeddingJob,
           new JobParametersBuilder()
               .addString("scheduleSlot", scheduleSlot)
               .toJobParameters()
       );
     } catch (JobExecutionAlreadyRunningException | JobInstanceAlreadyCompleteException exception) {
-      log.info("같은 스케줄 구간의 추천 재계산이 이미 실행됐습니다: {}", scheduleSlot);
+      log.info("같은 스케줄 구간의 콘텐츠 임베딩이 이미 실행됐습니다: {}", scheduleSlot);
     }
   }
 }

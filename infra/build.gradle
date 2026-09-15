@@ -2,6 +2,10 @@ plugins {
     id 'java-library'
 }
 
+ext {
+    set('springAiVersion', '2.0.1')
+}
+
 dependencies {
     implementation project(':core')
 
@@ -10,6 +14,9 @@ dependencies {
 
     // Redis
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+    // ContentEmbeddingDocument 어노테이션용
+    api 'org.springframework.data:spring-data-elasticsearch'
 
     // MVC, Interceptor, ExceptionHandler
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
@@ -35,4 +42,17 @@ dependencies {
     // AWS S3
     implementation platform('software.amazon.awssdk:bom:2.54.3')
     implementation 'software.amazon.awssdk:s3'
+
+    // AI
+    api 'org.springframework.ai:spring-ai-starter-model-google-genai:2.0.1'
+    api 'org.springframework.ai:spring-ai-starter-model-google-genai-embedding:2.0.1'
+    api 'org.springframework.ai:spring-ai-starter-model-chat-memory-repository-redis:2.0.1'
+
 }
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.ai:spring-ai-bom:${springAiVersion}"
+    }
+}
+
