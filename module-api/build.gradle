@@ -60,6 +60,9 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-security-oauth2-client-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-websocket-test'
+    testRuntimeOnly 'com.h2database:h2'
+    testImplementation 'org.testcontainers:testcontainers'
+    testImplementation 'com.microsoft.playwright:playwright:1.55.0'
 }
 
 dependencyManagement {
