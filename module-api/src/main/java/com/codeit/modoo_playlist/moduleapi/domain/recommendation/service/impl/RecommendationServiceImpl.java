@@ -31,7 +31,7 @@ public class RecommendationServiceImpl implements RecommendationService {
 
   private static final int CANDIDATE_POOL_SIZE = 50;
   private static final int SIMILAR_USER_POOL_SIZE = 20;
-  private static final int CANDIDATE_INTERACTION_POOL_SIZE = 500;
+  private static final int CANDIDATE_CONTENT_POOL_SIZE = 2000;
 
   private final ContentTagRepository contentTagRepository;
   private final ContentRepository contentRepository;
@@ -82,9 +82,15 @@ public class RecommendationServiceImpl implements RecommendationService {
     Map<UUID, Double> similarityByUser = similarUsers.stream()
         .collect(Collectors.toMap(SimilarUserDto::userId, u -> u.score().doubleValue()));
 
+    List<UUID> similarUserIds = new ArrayList<>(similarityByUser.keySet());
+    List<UUID> candidateContentIds = userContentInteractionRepository.findCandidateContentIds(
+        userId, similarUserIds, PageRequest.of(0, CANDIDATE_CONTENT_POOL_SIZE));
+    if (candidateContentIds.isEmpty()) {
+      return List.of();
+    }
+
     List<SimilarUserInteractionProjection> candidates = userContentInteractionRepository
-        .findCandidateInteractions(userId, new ArrayList<>(similarityByUser.keySet()),
-            PageRequest.of(0, CANDIDATE_INTERACTION_POOL_SIZE));
+        .findInteractionsByContentIds(similarUserIds, candidateContentIds);
 
     Map<UUID, Double> scoreByContent = new LinkedHashMap<>();
     Map<UUID, SimilarUserInteractionProjection> firstSeenByContent = new LinkedHashMap<>();
