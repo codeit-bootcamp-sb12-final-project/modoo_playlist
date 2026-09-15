@@ -38,6 +38,7 @@ public class WatchingSession extends BaseUpdatableEntity {
     private Integer watchedSeconds;
 
     public void end() {
+        if (endedAt != null) return;
         this.endedAt = LocalDateTime.now();
 
         if (this.startedAt != null) {

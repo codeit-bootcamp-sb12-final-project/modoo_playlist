@@ -4,10 +4,6 @@ plugins {
 
 description = 'module-api'
 
-ext {
-    set('springAiVersion', '2.0.1')
-}
-
 dependencies {
     implementation project(':core')
     implementation project(':infra')
@@ -25,15 +21,13 @@ dependencies {
     // Data
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-    implementation 'org.springframework.boot:spring-boot-starter-elasticsearch'
+    implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
     implementation 'io.github.openfeign.querydsl:querydsl-jpa:7.5'
 
     // Kafka
     implementation 'org.springframework.boot:spring-boot-starter-kafka'
 
     // AI
-    implementation 'org.springframework.ai:spring-ai-starter-model-google-genai'
-    implementation 'org.springframework.ai:spring-ai-starter-model-chat-memory-repository-redis'
 //    implementation 'org.springframework.ai:spring-ai-starter-model-openai'
 
     // 현재 코드가 Jackson 2 패키지를 직접 import함
@@ -53,13 +47,14 @@ dependencies {
     runtimeOnly 'com.mysql:mysql-connector-j'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
-    testImplementation 'org.springframework.boot:spring-boot-starter-elasticsearch-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-kafka-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-security-oauth2-authorization-server-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-security-oauth2-client-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-websocket-test'
+    testImplementation 'org.testcontainers:testcontainers-mysql'
     testRuntimeOnly 'com.h2database:h2'
     testImplementation 'org.testcontainers:testcontainers'
     testImplementation 'com.microsoft.playwright:playwright:1.55.0'
@@ -85,10 +80,4 @@ tasks.register('installE2eBrowser', JavaExec) {
     classpath = sourceSets.test.runtimeClasspath
     mainClass = 'com.microsoft.playwright.CLI'
     args 'install', 'chromium'
-}
-
-dependencyManagement {
-    imports {
-        mavenBom "org.springframework.ai:spring-ai-bom:${springAiVersion}"
-    }
 }

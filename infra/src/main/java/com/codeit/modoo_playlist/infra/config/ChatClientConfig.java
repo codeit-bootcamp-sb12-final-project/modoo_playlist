@@ -1,4 +1,4 @@
-package com.codeit.modoo_playlist.moduleapi.config;
+package com.codeit.modoo_playlist.infra.config;
 
 import java.time.Duration;
 import org.springframework.ai.chat.client.ChatClient;

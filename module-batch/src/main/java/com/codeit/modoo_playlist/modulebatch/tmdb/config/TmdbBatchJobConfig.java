@@ -1,5 +1,7 @@
 package com.codeit.modoo_playlist.modulebatch.tmdb.config;
 
+import java.util.Set;
+
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.builder.JobBuilder;
@@ -16,8 +18,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 
-import com.codeit.modoo_playlist.modulebatch.tmdb.exception.TmdbInvalidContentException;
-import com.codeit.modoo_playlist.modulebatch.tmdb.exception.TmdbItemFetchException;
+import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
+import com.codeit.modoo_playlist.modulebatch.support.ErrorCodeSkipPolicy;
 import com.codeit.modoo_playlist.modulebatch.tmdb.listener.TmdbSkipListener;
 import com.codeit.modoo_playlist.modulebatch.tmdb.listener.TmdbStepFailureListener;
 import com.codeit.modoo_playlist.modulebatch.tmdb.model.TmdbCandidate.MediaType;
@@ -148,8 +150,10 @@ public class TmdbBatchJobConfig {
                 .writer(writer)
                 .listener(reader)
                 .faultTolerant()
-                .skip(TmdbInvalidContentException.class, TmdbItemFetchException.class)
-                .skipLimit(properties.getSkipLimit())
+                .skipPolicy(new ErrorCodeSkipPolicy(
+                        Set.of(ErrorCode.TMDB_CONTENT_INVALID, ErrorCode.TMDB_ITEM_FETCH_FAILED),
+                        properties.getSkipLimit()
+                ))
                 .skipListener(skipListener)
                 .listener(stepFailureListener)
                 .build();

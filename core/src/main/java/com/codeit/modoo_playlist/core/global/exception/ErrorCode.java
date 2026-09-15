@@ -54,6 +54,14 @@ public enum ErrorCode {
   // Conversation
   CONVERSATION_NOT_FOUND(404, "대화를 찾을 수 없습니다."),
   CONVERSATION_ACCESS_DENIED(403, "해당 대화에 접근할 권한이 없습니다."),
+  SELF_CONVERSATION_NOT_ALLOWED(400,"생성될 수 없는 대화 형식입니다."),
+  REQUIRED_WITH_USER(400,"상대 사용자 ID는 필수입니다."),
+
+  // Message
+  MESSAGE_NOT_FOUND(404,"메시지를 찾을 수 없습니다."),
+
+  // WatchingSession
+  WATCHING_SESSION_NOT_FOUND(404,"시청 세션을 찾을 수 없습니다."),
 
   // File
   FILE_SAVE_FAILED(500, "파일 저장에 실패했습니다."),
@@ -72,6 +80,18 @@ public enum ErrorCode {
   // Tag
   TAG_NAME_INVALID(400, "태그 이름이 올바르지 않습니다."),
   TAG_SYNC_FAILED(500, "태그 저장 결과를 확인하지 못했습니다."),
+
+  // Batch - TMDB
+  TMDB_CONTENT_INVALID(422, "TMDB 콘텐츠의 필수 정보가 올바르지 않습니다."),
+  TMDB_ITEM_FETCH_FAILED(502, "TMDB 콘텐츠 상세 정보를 가져오지 못했습니다."),
+  TMDB_AUTHENTICATION_FAILED(502, "TMDB 인증에 실패했습니다."),
+  TMDB_PATH_UNAVAILABLE(503, "TMDB 목록 API를 사용할 수 없습니다."),
+
+  // Batch - TheSportsDB
+  SPORTSDB_EVENT_INVALID(422, "TheSportsDB 경기의 필수 정보가 올바르지 않습니다."),
+  SPORTSDB_API_ERROR(502, "TheSportsDB API가 오류를 반환했습니다."),
+  SPORTSDB_DISCOVERY_FAILED(503, "TheSportsDB 경기 목록을 가져오지 못했습니다."),
+  SPORTSDB_AUTHENTICATION_FAILED(502, "TheSportsDB 인증에 실패했습니다."),
 
   // Common
   INVALID_REQUEST(400, "잘못된 요청입니다."),

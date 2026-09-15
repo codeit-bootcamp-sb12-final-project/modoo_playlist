@@ -28,6 +28,6 @@ public record TmdbMovieDetailResponse(
         TmdbKeywordResponse keywords
 ) {
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record CollectionInfo(long id, String name) {
+    public record CollectionInfo(String name) {
     }
 }

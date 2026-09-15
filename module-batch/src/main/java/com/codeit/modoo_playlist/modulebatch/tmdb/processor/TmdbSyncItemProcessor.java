@@ -10,7 +10,8 @@ import java.util.Set;
 import org.springframework.batch.infrastructure.item.ItemProcessor;
 
 import com.codeit.modoo_playlist.core.domain.content.type.VideoReleaseStatus;
-import com.codeit.modoo_playlist.modulebatch.tmdb.exception.TmdbItemFetchException;
+import com.codeit.modoo_playlist.core.global.exception.BaseException;
+import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import com.codeit.modoo_playlist.modulebatch.tmdb.model.ExistingTmdbContent;
 import com.codeit.modoo_playlist.modulebatch.tmdb.model.TmdbFetchedContent;
 import com.codeit.modoo_playlist.modulebatch.tmdb.model.TmdbCandidate.MediaType;
@@ -30,10 +31,10 @@ public class TmdbSyncItemProcessor implements ItemProcessor<TmdbFetchedContent, 
     @Override
     public TmdbSyncContent process(TmdbFetchedContent fetched) {
         if (fetched.failure() != null) {
-            throw new TmdbItemFetchException(
-                    "TMDB 상세 정보를 가져오지 못했습니다: " + fetched.candidate().tmdbId(),
-                    fetched.failure()
-            );
+            BaseException exception = new BaseException(ErrorCode.TMDB_ITEM_FETCH_FAILED, fetched.failure());
+            exception.addDetail("mediaType", fetched.candidate().mediaType());
+            exception.addDetail("tmdbId", fetched.candidate().tmdbId());
+            throw exception;
         }
 
         long tmdbId = fetched.candidate().tmdbId();
