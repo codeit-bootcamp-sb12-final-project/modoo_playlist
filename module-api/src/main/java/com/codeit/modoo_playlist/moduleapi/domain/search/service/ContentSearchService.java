@@ -10,11 +10,15 @@ import com.codeit.modoo_playlist.moduleapi.domain.search.document.ContentDocumen
 import com.codeit.modoo_playlist.moduleapi.domain.search.mapper.ContentSearchResponseMapper;
 import com.codeit.modoo_playlist.moduleapi.dto.content.request.ContentListRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.content.response.ContentCursorResponse;
+import com.codeit.modoo_playlist.moduleapi.dto.content.response.ContentListItemResponse;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
@@ -82,7 +86,7 @@ public class ContentSearchService {
     );
   }
 
-  // 기존 콘텐츠 요청·응답 DTO를 사용하는 커서 조회
+  // 활성 DB 콘텐츠를 기준으로 결과를 모아 커서 페이지 구성
   public ContentCursorResponse searchPage(ContentListRequest request) {
     Objects.requireNonNull(request, "검색 요청은 필수입니다.");
 
@@ -107,59 +111,129 @@ public class ContentSearchService {
       );
     }
 
-    NativeQueryBuilder queryBuilder = createQueryBuilder(
-        request.keywordLike(),
-        request.typeEqual(),
-        request.tagsIn()
-    )
-        .withSort(sorts)
-        .withPageable(PageRequest.of(0, limit + 1))
-        .withTrackTotalHits(true);
+    List<Object> searchAfter = cursor == null
+        ? List.of()
+        : List.of(
+            parseCursor(cursor, sortBy),
+            idAfter.toString()
+        );
 
-    if (cursor != null) {
-      queryBuilder.withSearchAfter(List.of(
-          parseCursor(cursor, sortBy),
-          idAfter.toString()
-      ));
+    int fetchSize = limit + 1;
+    List<MatchedContent> matchedContents = new ArrayList<>(fetchSize);
+
+    long totalCount = 0;
+    boolean firstSearch = true;
+
+    while (matchedContents.size() < fetchSize) {
+      NativeQueryBuilder queryBuilder = createQueryBuilder(
+          request.keywordLike(),
+          request.typeEqual(),
+          request.tagsIn()
+      )
+          .withSort(sorts)
+          .withPageable(PageRequest.of(0, fetchSize))
+          .withTrackTotalHits(firstSearch);
+
+      if (!searchAfter.isEmpty()) {
+        queryBuilder.withSearchAfter(searchAfter);
+      }
+
+      SearchHits<ContentDocument> searchHits =
+          elasticsearchOperations.search(
+              queryBuilder.build(),
+              ContentDocument.class
+          );
+
+      if (firstSearch) {
+        totalCount = searchHits.getTotalHits();
+        firstSearch = false;
+      }
+
+      List<SearchHit<ContentDocument>> hits =
+          searchHits.getSearchHits();
+
+      if (hits.isEmpty()) {
+        break;
+      }
+
+      List<ContentDocument> documents = hits.stream()
+          .map(SearchHit::getContent)
+          .toList();
+
+      List<ContentListItemResponse> responses =
+          contentSearchResponseMapper.toResponses(documents);
+
+      Map<UUID, ContentListItemResponse> responsesById =
+          responses.stream()
+              .collect(Collectors.toMap(
+                  ContentListItemResponse::id,
+                  response -> response
+              ));
+
+      for (SearchHit<ContentDocument> hit : hits) {
+        UUID contentId = UUID.fromString(hit.getContent().getId());
+
+        ContentListItemResponse response =
+            responsesById.get(contentId);
+
+        if (response != null) {
+          matchedContents.add(new MatchedContent(hit, response));
+
+          if (matchedContents.size() == fetchSize) {
+            break;
+          }
+        }
+      }
+
+      if (matchedContents.size() == fetchSize) {
+        break;
+      }
+
+      if (hits.size() < fetchSize) {
+        break;
+      }
+
+      searchAfter = hits.get(hits.size() - 1).getSortValues();
     }
 
-    SearchHits<ContentDocument> searchHits = elasticsearchOperations.search(
-        queryBuilder.build(),
-        ContentDocument.class
-    );
+    boolean hasNext = matchedContents.size() > limit;
 
-    List<SearchHit<ContentDocument>> hits = searchHits.getSearchHits();
-    boolean hasNext = hits.size() > limit;
+    List<MatchedContent> pageContents = hasNext
+        ? matchedContents.subList(0, limit)
+        : matchedContents;
 
-    List<SearchHit<ContentDocument>> pageHits = hasNext
-        ? hits.subList(0, limit)
-        : hits;
-
-    List<ContentDocument> documents = pageHits.stream()
-        .map(SearchHit::getContent)
+    List<ContentListItemResponse> data = pageContents.stream()
+        .map(MatchedContent::response)
         .toList();
 
     String nextCursor = null;
     UUID nextIdAfter = null;
 
     if (hasNext) {
-      SearchHit<ContentDocument> last = pageHits.get(pageHits.size() - 1);
+      SearchHit<ContentDocument> lastHit =
+          pageContents.get(pageContents.size() - 1).hit();
 
-      nextCursor = last.getSortValues().get(0).toString();
+      nextCursor = lastHit.getSortValues().get(0).toString();
       nextIdAfter = UUID.fromString(
-          last.getSortValues().get(1).toString()
+          lastHit.getSortValues().get(1).toString()
       );
     }
 
     return new ContentCursorResponse(
-        contentSearchResponseMapper.toResponses(documents),
+        data,
         nextCursor,
         nextIdAfter,
         hasNext,
-        searchHits.getTotalHits(),
+        totalCount,
         sortBy,
         sortDirection
     );
+  }
+
+  private record MatchedContent(
+      SearchHit<ContentDocument> hit,
+      ContentListItemResponse response
+  ) {
   }
 
   // 검색어·타입·태그 조건을 공통으로 구성
