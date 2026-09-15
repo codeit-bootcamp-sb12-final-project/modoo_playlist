@@ -8,6 +8,7 @@ import org.springframework.boot.persistence.autoconfigure.EntityScan;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @ConfigurationPropertiesScan
 @SpringBootApplication(scanBasePackages = {
@@ -22,6 +23,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
     "com.codeit.modoo_playlist.moduleapi"
 })
 @Import(QuerydslConfig.class)
+@EnableScheduling
 public class ModuleApiApplication {
 
   public static void main(String[] args) {
