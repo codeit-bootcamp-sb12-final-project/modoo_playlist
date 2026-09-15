@@ -16,12 +16,13 @@ import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.transaction.PlatformTransactionManager;
 
 @Configuration(proxyBeanMethods = false)
 public class EmbeddingBatchJobConfig {
 
-  private static final int CHUNK_SIZE = 20;
+  private static final int CHUNK_SIZE = 50;
 
   @Bean
   Job contentEmbeddingJob(
@@ -35,8 +36,11 @@ public class EmbeddingBatchJobConfig {
 
   @Bean
   @StepScope
-  ContentEmbeddingReader contentEmbeddingReader(ContentEmbeddingMapper mapper) {
-    return new ContentEmbeddingReader(mapper);
+  ContentEmbeddingReader contentEmbeddingReader(
+      ContentEmbeddingMapper mapper,
+      @Value("${batch.embedding.max-items-per-run:100000}") int maxItemsPerRun
+  ) {
+    return new ContentEmbeddingReader(mapper, maxItemsPerRun);
   }
 
   @Bean
@@ -45,15 +49,15 @@ public class EmbeddingBatchJobConfig {
       PlatformTransactionManager transactionManager,
       ContentEmbeddingReader contentEmbeddingReader,
       ContentEmbeddingMapper mapper,
-      EmbeddingModel embeddingModel,
-      @Value("${spring.ai.google.genai.embedding.text.model}") String configuredModel
+      ElasticsearchOperations elasticsearchOperations,
+      EmbeddingModel embeddingModel
   ) {
     return new StepBuilder("contentEmbeddingStep", jobRepository)
         .<ContentEmbeddingTarget, ContentEmbeddingResult>chunk(CHUNK_SIZE)
         .transactionManager(transactionManager)
         .reader(contentEmbeddingReader)
-        .processor(new ContentEmbeddingProcessor(embeddingModel, configuredModel))
-        .writer(new ContentEmbeddingWriter(mapper))
+        .processor(new ContentEmbeddingProcessor())
+        .writer(new ContentEmbeddingWriter(mapper, elasticsearchOperations, embeddingModel))
         .build();
   }
 }

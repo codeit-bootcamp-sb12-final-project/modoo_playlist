@@ -1,7 +1,7 @@
 package com.codeit.modoo_playlist.moduleapi.domain.chat.tool.search;
 
 import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.search.service.SearchContentsService;
-import com.codeit.modoo_playlist.moduleapi.dto.chat.tool.SearchContentDto;
+import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.search.dto.SearchContentDto;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +26,7 @@ public class SearchContentsTool {
   public List<SearchContentDto> searchContents(
       @ToolParam(description = "사용자가 찾고 있는 콘텐츠에 대한 자연어 설명") String query
   ) {
-    log.info("search_contents 호출: query={}", query);
+    log.info("search_contents 호출: queryLength={}", query == null ? 0 : query.length());
     List<SearchContentDto> result = searchContentsService.search(query, DEFAULT_LIMIT);
     log.info("search_contents 결과: {}건", result.size());
     return result;

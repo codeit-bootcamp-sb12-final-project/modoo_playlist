@@ -12,11 +12,12 @@ public class EmbeddingTextBuilder {
   }
 
   public static String build(ContentEmbeddingTarget target) {
-    return String.join("\n",
-        target.title() == null ? "" : target.title(),
+    String title = target.title() == null ? "none" : target.title();
+    String body = String.join(" ",
         target.description() == null ? "" : target.description(),
         target.tagNames() == null ? "" : target.tagNames()
-    );
+    ).trim();
+    return "title: " + title + " | text: " + body;
   }
 
   public static String hash(String text) {

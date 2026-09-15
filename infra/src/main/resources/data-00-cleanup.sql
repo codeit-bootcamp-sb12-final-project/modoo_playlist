@@ -9,7 +9,6 @@ DELETE FROM playlist_subscriptions;
 DELETE FROM playlists;
 DELETE FROM reviews;
 DELETE FROM content_review_summaries;
-DELETE FROM content_embeddings;
 DELETE FROM content_tags;
 DELETE FROM content_people;
 DELETE FROM content_sports;
