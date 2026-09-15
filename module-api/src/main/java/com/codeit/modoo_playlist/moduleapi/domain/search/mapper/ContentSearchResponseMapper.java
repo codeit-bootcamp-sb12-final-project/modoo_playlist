@@ -20,7 +20,7 @@ public class ContentSearchResponseMapper {
 
   private final EntityManager entityManager;
 
-  // ES 검색 순서를 유지하며 기존 콘텐츠 응답 DTO로 변환
+  // 활성 DB 콘텐츠만 기존 ES 검색 순서를 유지하며 응답 DTO로 변환
   @Transactional(readOnly = true)
   public List<ContentListItemResponse> toResponses(
       List<ContentDocument> documents
@@ -56,15 +56,12 @@ public class ContentSearchResponseMapper {
         ));
 
     return documents.stream()
+        .filter(document ->
+            rowsById.containsKey(UUID.fromString(document.getId()))
+        )
         .map(document -> {
           UUID contentId = UUID.fromString(document.getId());
           Tuple row = rowsById.get(contentId);
-
-          if (row == null) {
-            throw new IllegalStateException(
-                "검색 문서에 대응하는 활성 DB 콘텐츠가 없습니다: " + contentId
-            );
-          }
 
           String type = switch (document.getType()) {
             case MOVIE -> "movie";
