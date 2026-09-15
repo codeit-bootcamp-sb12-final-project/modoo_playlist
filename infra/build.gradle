@@ -15,6 +15,9 @@ dependencies {
     // Redis
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
+    // ContentEmbeddingDocument 어노테이션용
+    api 'org.springframework.data:spring-data-elasticsearch'
+
     // MVC, Interceptor, ExceptionHandler
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
 
