@@ -212,3 +212,6 @@ gradle-app.setting
 .vscode/
 
 /logstash
+
+# Local file storage
+**/.blog/
