@@ -20,22 +20,39 @@ public class WatchingSessionRegistry {
     private final WatchingSessionService watchingSessionService;
     private final RealtimeNotifier realtimeNotifier;
 
-    private final Map<SubscriptionKey, SessionState> sessions = new ConcurrentHashMap<>();
+    private final Map<String, ConnectionState> connections =
+            new ConcurrentHashMap<>();
 
-    // endAll 과 새 start가 동시에 들어오는걸 방지
-    private final Set<String> disconnected = ConcurrentHashMap.newKeySet();
+    // 연결이 종료돼도 DB 종료에 실패한 상태는 재시도할 수 있게 유지한다.
+    private final Set<SessionState> trackedSessions =
+            ConcurrentHashMap.newKeySet();
 
-    private record SubscriptionKey(
-            String webSocketSessionId,
-            String subscriptionId
-    ) {
+    private static final class ConnectionState {
+        final Map<String, SessionState> subscriptions = new HashMap<>();
+        boolean closed;
     }
 
-    private static class SessionState {
+    private static final class SessionState {
+        final ConnectionState connection;
+        final String subscriptionId;
+
+        // 아래 필드는 모두 synchronized(connection) 안에서 접근한다.
         UUID id;                // null : start 진행 중
         boolean startFinished;  // JOIN 전송 완료
         boolean endRequested;   // start 중에 end 요청이 들어옴
         boolean ending;         // end 진행 중
+
+        SessionState(ConnectionState connection, String subscriptionId) {
+            this.connection = connection;
+            this.subscriptionId = subscriptionId;
+        }
+    }
+
+    public void connected(String webSocketSessionId) {
+        connections.putIfAbsent(
+                webSocketSessionId,
+                new ConnectionState()
+        );
     }
 
     public void start(
@@ -44,95 +61,123 @@ public class WatchingSessionRegistry {
             String webSocketSessionId,
             String subscriptionId
     ) {
-        // 이미 끊어진 연결인지 확인
-        if(disconnected.contains(webSocketSessionId)){
+        ConnectionState connection = connections.get(webSocketSessionId);
+
+        // 연결 등록 이전 또는 연결 종료 이후의 시작 요청은 무시한다.
+        if (connection == null) {
             return;
         }
 
-        SubscriptionKey key =
-                new SubscriptionKey(webSocketSessionId, subscriptionId);
-        SessionState state = new SessionState();
+        SessionState state;
 
-        // 미리 자리 선점 (중복 방지)
-        if (sessions.putIfAbsent(key,state) != null) {
-            return;
-        }
+        synchronized (connection) {
+            if (connection.closed) {
+                return;
+            }
 
-        // 그 사이에 연결이 끊겼는지 한번 더 확인
-        if (disconnected.contains(webSocketSessionId)){
-            sessions.remove(key,state);
-            return;
+            SessionState current =
+                    connection.subscriptions.get(subscriptionId);
+
+            // 종료 요청이 없는 현재 구독만 중복 시작으로 본다.
+            if (current != null && !current.endRequested) {
+                return;
+            }
+
+            state = new SessionState(connection, subscriptionId);
+            connection.subscriptions.put(subscriptionId, state);
+            trackedSessions.add(state);
         }
 
         StartResult result;
-        try{
+
+        try {
+            // DB 호출: 잠금 밖
             result = watchingSessionService.start(watcherId, contentId);
-        } catch(RuntimeException ex){
-            sessions.remove(key, state);
-            throw ex;
+        } catch (RuntimeException exception) {
+            forget(state);
+            throw exception;
         }
 
-        synchronized (state) {
+        synchronized (connection) {
             state.id = result.watchingSessionId();
         }
 
-        boolean endAfterStart;
         try {
-            // JOIN 알림
+            // 알림 호출: 잠금 밖
             result.changes().forEach(this::broadcast);
         } finally {
-            synchronized (state) {
-                state.startFinished = true; // 시작 완료
-                endAfterStart = state.endRequested && !state.ending; // end 요청 확인
-                if (endAfterStart) {
-                    state.ending = true;
-                }
+            synchronized (connection) {
+                state.startFinished = true;
             }
 
-            if (endAfterStart) {
-                finishEnd(key, state, result.watchingSessionId());
-            }
+            // 시작 중 종료 요청이 있었다면 여기서 이어서 처리한다.
+            finishEndIfRequested(state);
         }
     }
+
 
     public void end(
             String webSocketSessionId,
             String subscriptionId
     ) {
-        end(new SubscriptionKey(webSocketSessionId, subscriptionId));
-    }
+        ConnectionState connection = connections.get(webSocketSessionId);
 
-    public void endAll(String webSocketSessionId) {
-        disconnected.add(webSocketSessionId);
-
-        List<SubscriptionKey> keys = sessions.keySet().stream()
-                .filter(key ->
-                        key.webSocketSessionId().equals(webSocketSessionId))
-                .toList();
-
-        for (SubscriptionKey key : keys) {
-            try {
-                end(key);
-            } catch (RuntimeException exception) {
-                log.error("시청 세션 종료 실패: {}", key, exception);
-            }
-        }
-    }
-
-    private void end(SubscriptionKey key) {
-        SessionState state = sessions.get(key);
-        if (state == null) {
+        if (connection == null) {
             return;
         }
 
-        UUID id;
-        synchronized (state) {
-            if (!state.startFinished) {
-                state.endRequested = true;
+        SessionState state;
+
+        synchronized (connection) {
+            state = connection.subscriptions.get(subscriptionId);
+
+            if (state == null) {
                 return;
             }
 
-            if (state.ending) {
+            // DB 종료가 실패해도 이 요청은 취소하지 않는다.
+            state.endRequested = true;
+        }
+
+        finishEndIfRequested(state);
+    }
+
+    public void endAll(String webSocketSessionId) {
+        ConnectionState connection = connections.get(webSocketSessionId);
+
+        if (connection == null) {
+            return;
+        }
+
+        List<SessionState> states;
+
+        synchronized (connection) {
+            connection.closed = true;
+            states = List.copyOf(connection.subscriptions.values());
+
+            // 모든 구독에 종료 의도를 먼저 기록한다.
+            for (SessionState state : states) {
+                state.endRequested = true;
+            }
+
+            connection.subscriptions.clear();
+        }
+
+        connections.remove(webSocketSessionId, connection);
+
+        // DB 호출: 잠금 밖
+        for (SessionState state : states) {
+            finishEndIfRequested(state);
+        }
+    }
+
+    private void finishEndIfRequested(SessionState state) {
+        UUID id;
+
+        synchronized (state.connection) {
+            if (!state.endRequested
+                    || !state.startFinished
+                    || state.ending) {
                 return;
             }
 
@@ -140,53 +185,71 @@ public class WatchingSessionRegistry {
             id = state.id;
         }
 
-        finishEnd(key, state, id);
-    }
-
-    private void finishEnd(
-            SubscriptionKey key,
-            SessionState state,
-            UUID id
-    ) {
         Optional<WatchingSessionChange> change;
+
         try {
-            // DB 호출은 상태 객체의 잠금 밖에서 실행한다.
+            // DB 호출: 잠금 밖
             change = watchingSessionService.end(id);
         } catch (RuntimeException exception) {
-            synchronized (state) {
+            synchronized (state.connection) {
+                // 종료 의도는 유지하고, 다음 재시도만 허용한다.
                 state.ending = false;
             }
-            throw exception;
+
+            log.error("시청 세션 종료 실패, 재시도 예정: {}", id, exception);
+            return;
         }
 
-        // 성공한 종료의 결과만 제거한다. 다른 상태로 교체됐다면 건드리지 않는다.
-        sessions.remove(key, state);
+        forget(state);
+
+        // 알림 호출: 잠금 밖
         change.ifPresent(this::broadcast);
     }
 
-    public Set<UUID> activeSessionIds() {
+    private void forget(SessionState state) {
+        synchronized (state.connection) {
+            state.connection.subscriptions.remove(
+                    state.subscriptionId,
+                    state
+            );
+            trackedSessions.remove(state);
+        }
+    }
+
+    public void retryPendingEnds() {
+        for (SessionState state : trackedSessions) {
+            finishEndIfRequested(state);
+        }
+    }
+
+    private Set<UUID> activeSessionIds() {
         Set<UUID> ids = new HashSet<>();
 
-        for (SessionState state : sessions.values()) {
-            synchronized (state) {
-                if (state.id != null && !state.ending) {
+        for (SessionState state : trackedSessions) {
+            synchronized (state.connection) {
+                if (state.id != null
+                        && !state.endRequested
+                        && !state.connection.closed) {
                     ids.add(state.id);
                 }
             }
         }
-
-        return Set.copyOf(ids);
+        return ids;
     }
 
     public void touchActiveSessions() {
         Set<UUID> ids = activeSessionIds();
+
         if (!ids.isEmpty()) {
+            // DB 호출: 잠금 밖
             watchingSessionService.touch(ids);
         }
     }
 
     public void expireStaleSessions(Duration timeout) {
         Instant cutoff = Instant.now().minus(timeout);
+
+        // DB 및 알림 호출: 잠금 밖
         watchingSessionService.expireStaleSessions(cutoff)
                 .forEach(this::broadcast);
     }

@@ -35,4 +35,13 @@ public class WatchingSessionMaintenanceScheduler {
             log.error("오래된 시청 세션 정리 실패", exception);
         }
     }
+
+    @Scheduled(fixedDelay = 10_000)
+    public void retryPendingEnds() {
+        try {
+            registry.retryPendingEnds();
+        } catch (RuntimeException exception) {
+            log.error("시청 세션 종료 재시도 실패", exception);
+        }
+    }
 }
