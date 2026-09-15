@@ -1,4 +1,4 @@
-package com.codeit.modoo_playlist.moduleapi.dto.watchingsession;
+package com.codeit.modoo_playlist.moduleapi.dto.watchingsession.response;
 
 import com.codeit.modoo_playlist.core.domain.conversation.entity.SortDirection;
 import com.codeit.modoo_playlist.moduleapi.dto.WatchingSessionDto;

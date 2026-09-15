@@ -19,7 +19,7 @@ import java.util.*;
 
 @Repository
 @RequiredArgsConstructor
-public class WatchingSessionQueryRepositoryImpl implements WatchingSessionRepositoryCustom {
+public class WatchingSessionRepositoryCustomImpl implements WatchingSessionRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
     private final WatchingSessionMapper watchingSessionMapper;
@@ -93,11 +93,8 @@ public class WatchingSessionQueryRepositoryImpl implements WatchingSessionReposi
         Long count = queryFactory
                 .select(ws.id.countDistinct())
                 .from(ws)
-                .join(ws.watcher).fetchJoin()
-                .join(ws.content).fetchJoin()
-                .where(
-                        filter(contentId, watcherNameLike)
-                )
+                .join(ws.watcher)
+                .where(filter(contentId, watcherNameLike))
                 .fetchOne();
 
         long totalCount = count != null ? count : 0L;

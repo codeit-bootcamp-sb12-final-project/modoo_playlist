@@ -72,19 +72,6 @@ public class WatchingSessionService {
 
         List<WatchingSessionChange> changes = new ArrayList<>();
 
-        // 이전 활성 세션 조회
-        List<WatchingSession> previousSessions =
-                watchingSessionRepository
-                        .findByWatcher_IdAndEndedAtIsNull(watcherId);
-
-
-        for (WatchingSession previous : previousSessions) {
-            previous.end();
-            watchingSessionRepository.flush();
-
-            changes.add(change(ChangeType.LEAVE, previous));
-        }
-
         // 새 세션 생성
         WatchingSession session = WatchingSession.builder()
                 .watcher(watcher)
@@ -168,7 +155,7 @@ public class WatchingSessionService {
             WatchingSession session
     ) {
         long watcherCount = watchingSessionRepository
-                .countByContent_IdAndEndedAtIsNull(
+                .countDistinctByContent_IdAndEndedAtIsNull(
                         session.getContent().getId()
                 );
 

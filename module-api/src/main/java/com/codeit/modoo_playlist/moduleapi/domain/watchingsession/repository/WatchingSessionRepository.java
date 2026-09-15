@@ -14,7 +14,7 @@ public interface WatchingSessionRepository
 
     List<WatchingSession> findByWatcher_IdAndEndedAtIsNull(UUID watcherId);
 
-    long countByContent_IdAndEndedAtIsNull(UUID contentId);
+    long countDistinctByContent_IdAndEndedAtIsNull(UUID contentId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     List<WatchingSession> findByEndedAtIsNullAndUpdatedAtBefore(Instant cutoff);
