@@ -6,6 +6,9 @@ import com.codeit.modoo_playlist.core.domain.conversation.entity.ConversationTyp
 import com.codeit.modoo_playlist.core.domain.message.entity.Message;
 import com.codeit.modoo_playlist.core.domain.message.entity.MessageType;
 import com.codeit.modoo_playlist.core.domain.user.entity.User;
+import com.codeit.modoo_playlist.core.domain.user.entity.UserRole;
+import com.codeit.modoo_playlist.core.global.exception.BaseException;
+import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.dto.response.ChatDoneEvent;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.exception.ChatAccessDeniedException;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.exception.ChatNotFoundException;
@@ -30,8 +33,6 @@ import reactor.core.publisher.Flux;
 @Transactional(readOnly = true)
 public class ChatServiceImpl implements ChatService {
 
-  private static final UUID AI_BOT_ID = UUID.fromString("00000000-0000-0000-0000-000000000000");
-
   private final ChatClient chatClient;
   private final SearchContentsTool searchContentsTool;
   private final ConversationRepository conversationRepository;
@@ -44,10 +45,11 @@ public class ChatServiceImpl implements ChatService {
     log.info("chat 요청: userId={}, conversationId={}", userId, conversationId);
     Conversation conversation;
     User user = userRepository.findById(userId).orElseThrow(IllegalArgumentException::new);
-    User bot = userRepository.findById(AI_BOT_ID).orElseThrow(IllegalStateException::new);
+    User bot = userRepository.findByRole(UserRole.BOT)
+        .orElseThrow(() -> new BaseException(ErrorCode.BOT_SERVICE_UNAVAILABLE));
     if (conversationId != null) {
-        conversation = conversationRepository.findById(conversationId)
-            .orElseThrow(ChatNotFoundException::new);
+      conversation = conversationRepository.findById(conversationId)
+          .orElseThrow(ChatNotFoundException::new);
       boolean isParticipant = conversation.getParticipants().stream()
           .anyMatch(p -> p.getUser().getId().equals(userId));
       if (!conversation.getType().equals(ConversationType.AI) || !isParticipant) {

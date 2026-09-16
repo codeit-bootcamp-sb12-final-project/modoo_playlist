@@ -36,6 +36,11 @@ public class UserInitializer implements ApplicationRunner {
         continue;
       }
 
+//      소셜 및 bot의 경우 password가 null 가능
+      if (rawPassword == null) {
+        continue;
+      }
+
       String encoded = passwordEncoder.encode(rawPassword);
       user.setPassword(encoded);
       updatedCount++;

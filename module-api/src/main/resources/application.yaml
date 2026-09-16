@@ -34,6 +34,15 @@ spring:
     socket-timeout: ${ELASTICSEARCH_SOCKET_TIMEOUT:30s}
 
 module-api:
+  admin: # dev에서 실패 방지를 위해 false로 명시
+    enabled: ${ADMIN_ENABLED:false}
+    email: ${ADMIN_EMAIL:}
+    password: ${ADMIN_PASSWORD:}
+    name: ${ADMIN_NAME:admin}
+  bot:
+    enabled: ${BOT_ENABLED:true}
+    email: ${BOT_EMAIL:bot@modoo.bot}
+    name: ${BOT_NAME:MoDoo Bot}
   auth:
     cookie:
       same-site: ${AUTH_COOKIE_SAME_SITE:Lax} # 다른 사이트에서 보내느 요청에 refresh 토큰 전달 방지
