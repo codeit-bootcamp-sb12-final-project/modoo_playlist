@@ -1,5 +1,6 @@
 package com.codeit.modoo_playlist.moduleapi.domain.content.service.impl;
 
+import com.codeit.modoo_playlist.moduleapi.domain.search.event.ContentIndexRequestedEvent;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -10,6 +11,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -73,6 +75,7 @@ public class ContentServiceImpl implements ContentService {
     private final TagService tagService;
     private final ContentMapper contentMapper;
     private final ThumbnailStorage thumbnailStorage;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public ContentCursorResponse getContents(ContentListRequest request, UUID userId) {
@@ -131,6 +134,8 @@ public class ContentServiceImpl implements ContentService {
             replacePeople(content, request.people());
         }
 
+        eventPublisher.publishEvent(new ContentIndexRequestedEvent(content.getId()));
+
         return createDetailResponse(content);
     }
 
@@ -163,6 +168,8 @@ public class ContentServiceImpl implements ContentService {
             replacePeople(content, request.people());
         }
 
+        eventPublisher.publishEvent(new ContentIndexRequestedEvent(content.getId()));
+
         return createDetailResponse(content);
     }
 
@@ -173,6 +180,8 @@ public class ContentServiceImpl implements ContentService {
                 .orElseThrow(() -> new BaseException(ErrorCode.CONTENT_NOT_FOUND));
         removeAllContentTags(content);
         content.softDelete();
+
+        eventPublisher.publishEvent(new ContentIndexRequestedEvent(content.getId()));
     }
 
     private void removeAllContentTags(Content content) {
