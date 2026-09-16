@@ -2,7 +2,7 @@ spring:
   application:
     name: module-batch
   main:
-    web-application-type: none
+    web-application-type: servlet
   config:
     import:
       - "optional:file:./.env[.properties]"
@@ -31,6 +31,21 @@ spring:
 
 mybatis:
   mapper-locations: classpath*:mapper/**/*.xml
+
+server:
+  port: ${BATCH_MANAGEMENT_PORT:9091}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  endpoint:
+    health:
+      show-details: never
+  metrics:
+    tags:
+      application: ${spring.application.name}
 
 external:
   tmdb:
