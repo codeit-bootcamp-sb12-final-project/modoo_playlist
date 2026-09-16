@@ -1,4 +1,4 @@
-package com.codeit.modoo_playlist.moduleapi.config;
+package com.codeit.modoo_playlist.moduleapi.config.properties;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
