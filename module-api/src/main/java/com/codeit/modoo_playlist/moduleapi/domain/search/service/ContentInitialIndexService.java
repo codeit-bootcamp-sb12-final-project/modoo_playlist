@@ -1,7 +1,6 @@
 package com.codeit.modoo_playlist.moduleapi.domain.search.service;
 
 import com.codeit.modoo_playlist.moduleapi.domain.search.document.ContentDocument;
-import com.codeit.modoo_playlist.moduleapi.domain.search.repository.ContentIndexReader;
 import com.codeit.modoo_playlist.moduleapi.domain.search.repository.ContentSearchRepository;
 import java.util.List;
 import java.util.UUID;
@@ -16,7 +15,7 @@ public class ContentInitialIndexService {
 
   private static final int BATCH_SIZE = 100;
 
-  private final ContentIndexReader contentIndexReader;
+  private final ContentIndexService contentIndexService;
   private final ContentSearchRepository contentSearchRepository;
 
   @Transactional(propagation = Propagation.NOT_SUPPORTED)
@@ -26,7 +25,7 @@ public class ContentInitialIndexService {
 
     while (true) {
       List<ContentDocument> documents =
-          contentIndexReader.read(lastId, BATCH_SIZE);
+          contentIndexService.indexBatch(lastId, BATCH_SIZE);
 
       if (documents.isEmpty()) {
         return indexedCount;

@@ -9,11 +9,14 @@ import org.springframework.stereotype.Component;
 @Component
 public class ContentDocumentMapper {
 
-  // 원본 콘텐츠와 태그명을 검색 문서로 변환
-  public ContentDocument toDocument(Content content, List<String> tagNames) {
+  public ContentDocument toDocument(Content content, List<String> tagNames, long watcherCount) {
     Objects.requireNonNull(content, "콘텐츠는 필수입니다.");
     Objects.requireNonNull(content.getId(), "저장된 콘텐츠의 ID는 필수입니다.");
     Objects.requireNonNull(tagNames, "태그명 목록은 필수입니다.");
+
+    if (watcherCount < 0) {
+      throw new IllegalArgumentException("시청자 수는 0 이상이어야 합니다.");
+    }
 
     return ContentDocument.builder()
         .id(content.getId().toString())
@@ -24,6 +27,7 @@ public class ContentDocumentMapper {
         .tags(List.copyOf(tagNames))
         .averageRating(content.getAverageRating().doubleValue())
         .reviewCount(content.getReviewCount())
+        .watcherCount(watcherCount)
         .createdAt(content.getCreatedAt())
         .build();
   }
