@@ -55,12 +55,7 @@ public class MessageController {
             @Payload @Valid DirectMessageSendRequest payload,
             Principal principal
     ) {
-        if (!(principal instanceof Authentication auth)
-                || !(auth.getPrincipal() instanceof UserDetails me)) {
-            throw new IllegalStateException("인증 정보가 올바르지 않습니다.");
-        }
-
-        UUID senderId = me.getUserDto().id();
+        UUID senderId = extractSenderId(principal);
 
         MessageDto saved =
                 messageService.sendDirectMessage(
@@ -71,9 +66,6 @@ public class MessageController {
 
         realtimeNotifier.notifyStomp(
             "/sub/conversations/" + conversationId + "/direct-messages", saved);
-        /*if (!receiverUserId.equals(senderId)) {
-            realtimeNotifier.notifyStomp("/sub/dm." + senderId, saved);
-        }*/
     }
 
     private UUID extractSenderId(Principal principal) {

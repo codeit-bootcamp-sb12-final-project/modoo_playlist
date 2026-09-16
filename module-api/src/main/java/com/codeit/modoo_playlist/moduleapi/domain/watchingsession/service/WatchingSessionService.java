@@ -26,6 +26,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -134,6 +135,21 @@ public class WatchingSessionService {
                 watchingSessionRepository
                         .findByEndedAtIsNullAndUpdatedAtBefore(cutoff);
 
+        if (staleSessions.isEmpty()) {
+            return List.of();
+        }
+
+        List<UUID> contentIds = staleSessions.stream()
+                .map(session -> session.getContent().getId())
+                .distinct()
+                .toList();
+        Map<UUID, List<String>> tagsByContentId = contentTagRepository
+                .findAllWithTagByContentIds(contentIds).stream()
+                .collect(Collectors.groupingBy(
+                        contentTag -> contentTag.getId().getContentId(),
+                        Collectors.mapping(contentTag -> contentTag.getTag().getName(), Collectors.toList())
+                ));
+
         List<WatchingSessionChange> changes = new ArrayList<>();
 
         for (WatchingSession session : staleSessions) {
@@ -149,7 +165,11 @@ public class WatchingSessionService {
             session.end(lastSeenAt);
             watchingSessionRepository.flush();
 
-            changes.add(change(ChangeType.LEAVE, session));
+            Content content = session.getContent();
+            ContentSummaryResponse summary = contentMapper.toSummary(
+                    content, tagsByContentId.getOrDefault(content.getId(), List.of())
+            );
+            changes.add(change(ChangeType.LEAVE, session, watchingSessionMapper.toDto(session, summary)));
         }
 
         return List.copyOf(changes);
@@ -159,6 +179,14 @@ public class WatchingSessionService {
             ChangeType type,
             WatchingSession session
     ) {
+        return change(type, session, toDto(session));
+    }
+
+    private WatchingSessionChange change(
+            ChangeType type,
+            WatchingSession session,
+            WatchingSessionDto dto
+    ) {
         long watcherCount = watchingSessionRepository
                 .countDistinctByContent_IdAndEndedAtIsNull(
                         session.getContent().getId()
@@ -166,7 +194,7 @@ public class WatchingSessionService {
 
         return new WatchingSessionChange(
                 type,
-                toDto(session),
+                dto,
                 watcherCount
         );
     }
