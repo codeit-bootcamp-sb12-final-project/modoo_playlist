@@ -7,15 +7,11 @@ import com.codeit.modoo_playlist.moduleapi.domain.preference.service.UserPrefere
 import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.HomeFeedResponse;
 import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.HomeRowDto;
 import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.RecommendedContentDto;
-import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.SimilarUserInteractionProjection;
 import com.codeit.modoo_playlist.moduleapi.domain.recommendation.service.HomeFeedService;
 import com.codeit.modoo_playlist.moduleapi.domain.recommendation.service.RecommendationService;
-import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.watchingsession.repository.WatchingSessionRepository;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +27,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class HomeFeedServiceImpl implements HomeFeedService {
 
   private static final int ROW_LIMIT = 5;
-  private static final int FOLLOWING_CANDIDATE_POOL_SIZE = 2000;
 
   private final Random random = new Random();
 
@@ -55,7 +50,7 @@ public class HomeFeedServiceImpl implements HomeFeedService {
   }
 
   private void addIfPresent(List<HomeRowDto> rows, HomeRowDto row) {
-    if (row != null) {
+    if (row != null && row.contents() != null && !row.contents().isEmpty()) {
       rows.add(row);
     }
   }
@@ -90,32 +85,11 @@ public class HomeFeedServiceImpl implements HomeFeedService {
     if (followeeIds.isEmpty()) {
       return null;
     }
-
-    List<UUID> contentIds = userContentInteractionRepository.findCandidateContentIds(
-        userId, followeeIds, PageRequest.of(0, FOLLOWING_CANDIDATE_POOL_SIZE));
-    if (contentIds.isEmpty()) {
+    List<RecommendedContentDto> contents = userContentInteractionRepository
+        .findMostInteractedContentsByUsers(followeeIds, PageRequest.of(0, ROW_LIMIT));
+    if (contents.isEmpty()) {
       return null;
     }
-
-    List<SimilarUserInteractionProjection> interactions =
-        userContentInteractionRepository.findInteractionsByContentIds(followeeIds, contentIds);
-
-    Map<UUID, Long> watcherCountByContent = new LinkedHashMap<>();
-    Map<UUID, SimilarUserInteractionProjection> firstSeenByContent = new LinkedHashMap<>();
-    for (SimilarUserInteractionProjection c : interactions) {
-      watcherCountByContent.merge(c.contentId(), 1L, Long::sum);
-      firstSeenByContent.putIfAbsent(c.contentId(), c);
-    }
-
-    List<RecommendedContentDto> contents = watcherCountByContent.entrySet().stream()
-        .sorted(Map.Entry.<UUID, Long>comparingByValue().reversed())
-        .limit(ROW_LIMIT)
-        .map(e -> {
-          SimilarUserInteractionProjection c = firstSeenByContent.get(e.getKey());
-          return new RecommendedContentDto(c.contentId(), c.title(), c.thumbnailUrl(),
-              e.getValue().doubleValue());
-        })
-        .toList();
 
     return new HomeRowDto("팔로우한 사람들이 본", null, contents);
   }

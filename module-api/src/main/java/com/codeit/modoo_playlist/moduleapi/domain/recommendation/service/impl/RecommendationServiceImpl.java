@@ -6,7 +6,6 @@ import com.codeit.modoo_playlist.moduleapi.domain.content.repository.jpa.Content
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.jpa.ContentTagRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.interaction.repository.UserContentInteractionRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.preference.dto.SimilarUserDto;
-import com.codeit.modoo_playlist.moduleapi.domain.preference.dto.UserPreferenceTagDto;
 import com.codeit.modoo_playlist.moduleapi.domain.preference.repository.UserPreferenceTagRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.preference.repository.UserSimilarityRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.RecommendedContentDto;

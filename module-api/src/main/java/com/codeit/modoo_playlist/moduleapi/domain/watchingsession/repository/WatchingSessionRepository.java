@@ -32,6 +32,7 @@ public interface WatchingSessionRepository
         )
         from WatchingSession ws
         where ws.endedAt is null
+          and ws.content.deletedAt is null
         group by ws.content.id
         order by count(ws) desc
         """)
