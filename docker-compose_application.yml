@@ -22,6 +22,9 @@ services:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
 
       ELASTICSEARCH_URL: http://elasticsearch:9200
+
+      INSTANCE_ID: module-api-1
+
     depends_on:
       - mysql
       - redis
@@ -47,6 +50,9 @@ services:
       SPRING_DATA_REDIS_PORT: 6379
 
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+
+      INSTANCE_ID: realtime-1
+
     depends_on:
       - mysql
       - redis
