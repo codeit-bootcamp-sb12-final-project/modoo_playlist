@@ -20,7 +20,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 		"batch.sports.status-update-enabled=false",
 		"external.tmdb.access-token=test",
 		"external.sports-db.api-key=test",
-		"spring.ai.google.genai.api-key=test"
+		"spring.ai.google.genai.api-key=test",
+		"server.port=0"
 })
 class ModuleBatchApplicationTests {
 

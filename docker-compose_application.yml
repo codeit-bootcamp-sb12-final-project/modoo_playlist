@@ -58,6 +58,8 @@ services:
       context: .
       dockerfile: batch.Dockerfile
     container_name: media-batch
+    expose:
+      - "9091"
     environment:
       SPRING_PROFILES_ACTIVE: docker
 
@@ -68,6 +70,7 @@ services:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
 
       ELASTICSEARCH_URL: http://elasticsearch:9200
+      BATCH_MANAGEMENT_PORT: 9091
     depends_on:
       - mysql
       - kafka

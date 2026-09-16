@@ -7,6 +7,7 @@ import com.codeit.modoo_playlist.modulebatch.embedding.processor.ContentEmbeddin
 import com.codeit.modoo_playlist.modulebatch.embedding.reader.ContentEmbeddingReader;
 import com.codeit.modoo_playlist.modulebatch.embedding.tasklet.ContentEmbeddingCleanupTasklet;
 import com.codeit.modoo_playlist.modulebatch.embedding.writer.ContentEmbeddingWriter;
+import com.codeit.modoo_playlist.modulebatch.monitoring.BatchMetricsListener;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.Job;
@@ -29,9 +30,11 @@ public class EmbeddingBatchJobConfig {
   Job contentEmbeddingJob(
       JobRepository jobRepository,
       Step contentEmbeddingStep,
-      Step contentEmbeddingCleanupStep
+      Step contentEmbeddingCleanupStep,
+      BatchMetricsListener metricsListener
   ) {
     return new JobBuilder("contentEmbeddingJob", jobRepository)
+        .listener(metricsListener)
         .start(contentEmbeddingStep)
         .next(contentEmbeddingCleanupStep)
         .build();
