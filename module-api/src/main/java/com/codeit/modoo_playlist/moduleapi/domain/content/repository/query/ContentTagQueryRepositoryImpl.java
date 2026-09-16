@@ -13,7 +13,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import com.codeit.modoo_playlist.core.domain.content.entity.ContentTag;
 import com.codeit.modoo_playlist.core.domain.content.entity.QContentTag;
-import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.SimilarContentDto;
+import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.RecommendedContentDto;
 
 import jakarta.persistence.EntityManager;
 import org.springframework.data.domain.Pageable;
@@ -40,13 +40,13 @@ public class ContentTagQueryRepositoryImpl implements ContentTagQueryRepository 
     }
 
     @Override
-    public List<SimilarContentDto> findSimilarContents(UUID contentId, Pageable pageable) {
+    public List<RecommendedContentDto> findSimilarContents(UUID contentId, Pageable pageable) {
         QContentTag targetContentTag = new QContentTag("targetContentTag");
         QContentTag candidateContentTag = new QContentTag("candidateContentTag");
 
         return queryFactory
                 .select(Projections.constructor(
-                        SimilarContentDto.class,
+                        RecommendedContentDto.class,
                         content.id,
                         content.title,
                         content.thumbnailUrl,

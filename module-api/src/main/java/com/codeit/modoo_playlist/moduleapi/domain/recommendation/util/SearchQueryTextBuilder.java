@@ -1,4 +1,4 @@
-package com.codeit.modoo_playlist.moduleapi.domain.chat.tool.search.util;
+package com.codeit.modoo_playlist.moduleapi.domain.recommendation.util;
 
 public class SearchQueryTextBuilder {
 

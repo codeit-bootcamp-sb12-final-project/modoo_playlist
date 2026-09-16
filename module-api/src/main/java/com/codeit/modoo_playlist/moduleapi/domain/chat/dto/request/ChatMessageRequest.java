@@ -1,4 +1,4 @@
-package com.codeit.modoo_playlist.moduleapi.domain.chat.dto.requrst;
+package com.codeit.modoo_playlist.moduleapi.domain.chat.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
