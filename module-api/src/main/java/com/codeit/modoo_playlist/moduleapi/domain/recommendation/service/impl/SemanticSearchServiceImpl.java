@@ -29,6 +29,16 @@ public class SemanticSearchServiceImpl implements SemanticSearchService {
   private final EmbeddingModel embeddingModel;
   private final ContentRepository contentRepository;
 
+  private static RecommendedContentDto toDto(SearchHit<ContentEmbeddingDocument> hit) {
+    ContentEmbeddingDocument document = hit.getContent();
+    return new RecommendedContentDto(
+        UUID.fromString(document.contentId()),
+        document.title(),
+        document.thumbnailUrl(),
+        hit.getScore()
+    );
+  }
+
   @Override
   public List<RecommendedContentDto> search(String query, Integer limit) {
     List<Float> queryVector = embedQuery(query);
@@ -67,15 +77,5 @@ public class SemanticSearchServiceImpl implements SemanticSearchService {
       vector.add(v);
     }
     return vector;
-  }
-
-  private static RecommendedContentDto toDto(SearchHit<ContentEmbeddingDocument> hit) {
-    ContentEmbeddingDocument document = hit.getContent();
-    return new RecommendedContentDto(
-        UUID.fromString(document.contentId()),
-        document.title(),
-        document.thumbnailUrl(),
-        hit.getScore()
-    );
   }
 }
