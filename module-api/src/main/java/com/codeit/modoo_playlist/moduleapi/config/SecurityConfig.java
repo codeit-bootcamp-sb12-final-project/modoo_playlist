@@ -87,6 +87,7 @@ public class SecurityConfig {
         .csrf(csrf -> csrf
             .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
             .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler())
+            .ignoringRequestMatchers("/ws/**")
         )
 
         // 3) form login 사용 (JWT 발급용 로그인 엔드포인트)
