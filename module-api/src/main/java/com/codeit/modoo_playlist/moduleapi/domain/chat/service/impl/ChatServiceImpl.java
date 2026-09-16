@@ -14,10 +14,10 @@ import com.codeit.modoo_playlist.moduleapi.domain.chat.exception.ChatNotFoundExc
 import com.codeit.modoo_playlist.moduleapi.domain.chat.service.ChatService;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.ChatToolContext;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.ContentCardCollector;
-import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.preference.GetUserPreferenceTool;
-import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.recommendation.GetPersonalizedRecommendationsTool;
-import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.recommendation.RecommendContentsTool;
-import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.search.SearchContentsTool;
+import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.GetPersonalizedRecommendationsTool;
+import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.GetUserPreferenceTool;
+import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.RecommendContentsTool;
+import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.SearchContentsTool;
 import com.codeit.modoo_playlist.moduleapi.domain.conversation.repository.ConversationRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.message.repository.MessageRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;

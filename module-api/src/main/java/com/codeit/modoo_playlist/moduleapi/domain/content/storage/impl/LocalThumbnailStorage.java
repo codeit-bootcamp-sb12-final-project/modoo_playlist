@@ -55,6 +55,19 @@ public class LocalThumbnailStorage implements ThumbnailStorage {
         return THUMBNAIL_URL_PREFIX + storedFilename;
     }
 
+    @Override
+    public void delete(String thumbnailUrl) throws IOException {
+        if (thumbnailUrl == null || !thumbnailUrl.startsWith(THUMBNAIL_URL_PREFIX)) {
+            return;
+        }
+        String filename = thumbnailUrl.substring(THUMBNAIL_URL_PREFIX.length());
+        Path directory = fileConfig.getRootPath().resolve(THUMBNAIL_DIRECTORY).normalize();
+        Path target = directory.resolve(filename).normalize();
+        if (target.getParent() != null && target.getParent().equals(directory)) {
+            Files.deleteIfExists(target);
+        }
+    }
+
     private String validateImage(MultipartFile thumbnail) throws IOException {
         if (thumbnail == null || thumbnail.isEmpty()) {
             throw invalidThumbnail("empty");
