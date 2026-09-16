@@ -1,7 +1,7 @@
 package com.codeit.modoo_playlist.moduleapi.domain.recommendation.controller;
 
 import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.RecommendationQuery;
-import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.SimilarContentDto;
+import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.RecommendedContentDto;
 import com.codeit.modoo_playlist.moduleapi.domain.recommendation.service.RecommendationService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -20,7 +20,9 @@ public class RecommendationController {
   private final RecommendationService recommendationService;
 
   @GetMapping("/contents")
-  public ResponseEntity<List<SimilarContentDto>> getSimilarContents(@Valid @ModelAttribute RecommendationQuery query) {
+  public ResponseEntity<List<RecommendedContentDto>> getSimilarContents(@Valid @ModelAttribute RecommendationQuery query) {
     return ResponseEntity.ok(recommendationService.getSimilarContents(query.contentId(), query.limit()));
   }
+
+  
 }
