@@ -79,6 +79,14 @@ public class SecurityConfig {
 
             // 사용자 수정
             .requestMatchers(HttpMethod.PATCH, "/api/users/*").authenticated()
+
+            // 관리자 기능
+            .requestMatchers(
+                HttpMethod.PATCH,
+                "/api/users/*/role",
+                "/api/users/*/locked"
+            ).authenticated()
+
             // 그 외 요청은 현재는 개발 편의를 위해 모두 허용
             .anyRequest().permitAll()
         )

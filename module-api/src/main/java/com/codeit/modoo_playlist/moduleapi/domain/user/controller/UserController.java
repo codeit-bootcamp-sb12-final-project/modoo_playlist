@@ -93,25 +93,41 @@ public class UserController {
     return ResponseEntity.ok(userService.getAllUsers(request));
   }
 
+  @PreAuthorize("hasRole('ADMIN')")
   @PatchMapping(
       name = "[ADMIN 권한] 권한 수정",
       value = "/{userId}/role"
   )
   public ResponseEntity<Void> updateUserRole(
       @PathVariable UUID userId,
-      @RequestBody UserRoleUpdateRequest request
+      @Valid @RequestBody UserRoleUpdateRequest request,
+      @AuthenticationPrincipal UserDetails principal
   ) {
-    throw new UnsupportedOperationException("구현 예정");
+    userService.updateRole(
+        principal.getUserDto().id(),
+        userId,
+        request.role()
+    );
+
+    return ResponseEntity.noContent().build();
   }
 
+  @PreAuthorize("hasRole('ADMIN')")
   @PatchMapping(
       name = "[ADMIN 권한] 계정 잠금 상태 변경",
       value = "/{userId}/locked"
   )
   public ResponseEntity<Void> updateUserLock(
       @PathVariable UUID userId,
-      @RequestBody UserLockUpdateRequest request
+      @Valid @RequestBody UserLockUpdateRequest request,
+      @AuthenticationPrincipal UserDetails principal
   ) {
-    throw new UnsupportedOperationException("구현 예정");
+    userService.updateLocked(
+        principal.getUserDto().id(),
+        userId,
+        request.locked()
+    );
+
+    return ResponseEntity.noContent().build();
   }
 }

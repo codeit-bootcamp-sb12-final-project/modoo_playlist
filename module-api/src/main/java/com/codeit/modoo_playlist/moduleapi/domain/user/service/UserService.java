@@ -1,5 +1,6 @@
 package com.codeit.modoo_playlist.moduleapi.domain.user.service;
 
+import com.codeit.modoo_playlist.core.domain.user.entity.UserRole;
 import com.codeit.modoo_playlist.moduleapi.dto.UserDto;
 import com.codeit.modoo_playlist.moduleapi.dto.request.UserCreateRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.request.UserListRequest;
@@ -22,4 +23,8 @@ public interface UserService {
       UserProfileUpdateRequest request,
       MultipartFile image
   );
+
+  void updateRole(UUID actorId, UUID userId, UserRole role);
+
+  void updateLocked(UUID actorId, UUID userId, boolean locked);
 }

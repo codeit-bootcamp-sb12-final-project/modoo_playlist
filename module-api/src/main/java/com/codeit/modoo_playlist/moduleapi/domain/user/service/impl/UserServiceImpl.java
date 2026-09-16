@@ -1,6 +1,7 @@
 package com.codeit.modoo_playlist.moduleapi.domain.user.service.impl;
 
 import com.codeit.modoo_playlist.core.domain.user.entity.User;
+import com.codeit.modoo_playlist.core.domain.user.entity.UserRole;
 import com.codeit.modoo_playlist.core.global.exception.BaseException;
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
@@ -120,8 +121,77 @@ public class UserServiceImpl implements UserService {
     return userMapper.toDto(user);
   }
 
+  @Transactional
+  @Override
+  public void updateRole(
+      UUID actorId,
+      UUID userId,
+      UserRole role
+  ) {
+    validateAssignableRole(role);
+    validateNotSelf(actorId, userId);
+
+    User user = userRepository.findByIdForUpdate(userId)
+        .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+
+    validateManageableUser(user);
+
+    if (user.getRole() == role) {
+      return;
+    }
+
+    user.changeRole(role);
+    loginSessionStore.invalidateAll(userId);
+  }
+
+  @Transactional
+  @Override
+  public void updateLocked(
+      UUID actorId,
+      UUID userId,
+      boolean locked
+  ) {
+    validateNotSelf(actorId, userId);
+
+    User user = userRepository.findByIdForUpdate(userId)
+        .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+
+    validateManageableUser(user);
+
+    if (user.isLocked() == locked) {
+      return;
+    }
+
+    user.changeLocked(locked);
+
+    if (locked) {
+      loginSessionStore.invalidateAll(userId);
+    }
+  }
+
   private void validateOwner(UUID actorId, UUID userId) {
     if (!Objects.equals(actorId, userId)) {
+      throw new BaseException(ErrorCode.ACCESS_DENIED);
+    }
+  }
+
+  //  BOT은 권한 변경 막음
+  private void validateAssignableRole(UserRole role) {
+    if (role != UserRole.ADMIN && role != UserRole.USER) {
+      throw new BaseException(ErrorCode.INVALID_REQUEST);
+    }
+  }
+
+  //  admin이 본인 변경은 막음
+  private void validateNotSelf(UUID actorId, UUID userId) {
+    if (actorId == null || Objects.equals(actorId, userId)) {
+      throw new BaseException(ErrorCode.ACCESS_DENIED);
+    }
+  }
+
+  //  BOT -> 나머지 역할로의 접근 방지
+  private void validateManageableUser(User user) {
+    if (user.getRole() == UserRole.BOT) {
       throw new BaseException(ErrorCode.ACCESS_DENIED);
     }
   }
