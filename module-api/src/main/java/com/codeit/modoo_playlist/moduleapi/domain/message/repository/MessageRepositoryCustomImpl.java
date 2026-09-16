@@ -20,7 +20,7 @@ import java.util.UUID;
 
 @Repository
 @RequiredArgsConstructor
-public class MessageRepositoryImpl implements MessageRepositoryCustom {
+public class MessageRepositoryCustomImpl implements MessageRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
     private final MessageMapper messageMapper;
