@@ -9,4 +9,8 @@ public interface RecommendationService {
   List<RecommendedContentDto> getSimilarContents(UUID contentId, Integer limit);
 
   List<RecommendedContentDto> getRecommendationsForMe(UUID userId, Integer limit);
+
+  List<RecommendedContentDto> getTrendingContents(Integer limit);
+
+  List<RecommendedContentDto> getTopTagMatchContents(UUID tagId, Integer limit);
 }

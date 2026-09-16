@@ -6,6 +6,8 @@ import com.codeit.modoo_playlist.moduleapi.domain.content.repository.jpa.Content
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.jpa.ContentTagRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.interaction.repository.UserContentInteractionRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.preference.dto.SimilarUserDto;
+import com.codeit.modoo_playlist.moduleapi.domain.preference.dto.UserPreferenceTagDto;
+import com.codeit.modoo_playlist.moduleapi.domain.preference.repository.UserPreferenceTagRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.preference.repository.UserSimilarityRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.RecommendedContentDto;
 import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.SimilarUserInteractionProjection;
@@ -37,6 +39,7 @@ public class RecommendationServiceImpl implements RecommendationService {
   private final ContentRepository contentRepository;
   private final UserSimilarityRepository userSimilarityRepository;
   private final UserContentInteractionRepository userContentInteractionRepository;
+  private final UserPreferenceTagRepository userPreferenceTagRepository;
 
   @Override
   public List<RecommendedContentDto> getSimilarContents(UUID contentId, Integer limit) {
@@ -46,11 +49,13 @@ public class RecommendationServiceImpl implements RecommendationService {
       return List.of();
     }
 
-    List<UUID> ids = new ArrayList<>(candidates.stream().map(RecommendedContentDto::contentId).toList());
+    List<UUID> ids = new ArrayList<>(
+        candidates.stream().map(RecommendedContentDto::contentId).toList());
     ids.add(contentId);
 
     long totalContentCount = contentRepository.count();
-    Map<UUID, Map<UUID, Double>> weightsByContent = contentTagRepository.findAllWithTagByContentIds(ids).stream()
+    Map<UUID, Map<UUID, Double>> weightsByContent = contentTagRepository.findAllWithTagByContentIds(
+            ids).stream()
         .collect(Collectors.groupingBy(
             ct -> ct.getId().getContentId(),
             Collectors.toMap(
@@ -74,7 +79,8 @@ public class RecommendationServiceImpl implements RecommendationService {
   @Override
   public List<RecommendedContentDto> getRecommendationsForMe(UUID userId, Integer limit) {
     List<SimilarUserDto> similarUsers =
-        userSimilarityRepository.findTopSimilarUsersByUserId(userId, PageRequest.of(0, SIMILAR_USER_POOL_SIZE));
+        userSimilarityRepository.findTopSimilarUsersByUserId(userId,
+            PageRequest.of(0, SIMILAR_USER_POOL_SIZE));
     if (similarUsers.isEmpty()) {
       return List.of();
     }
@@ -107,8 +113,22 @@ public class RecommendationServiceImpl implements RecommendationService {
         .limit(limit)
         .map(e -> {
           SimilarUserInteractionProjection c = firstSeenByContent.get(e.getKey());
-          return new RecommendedContentDto(c.contentId(), c.title(), c.thumbnailUrl(), e.getValue());
+          return new RecommendedContentDto(c.contentId(), c.title(), c.thumbnailUrl(),
+              e.getValue());
         })
         .toList();
+  }
+
+  @Override
+  public List<RecommendedContentDto> getTrendingContents(Integer limit) {
+    return contentRepository.findTopRated(PageRequest.of(0, limit)).stream()
+        .map(c -> new RecommendedContentDto(
+            c.getId(), c.getTitle(), c.getThumbnailUrl(), c.getAverageRating().doubleValue()))
+        .toList();
+  }
+
+  @Override
+  public List<RecommendedContentDto> getTopTagMatchContents(UUID tagId, Integer limit) {
+    return contentTagRepository.findContentsByTagId(tagId, PageRequest.of(0, limit));
   }
 }
