@@ -13,16 +13,13 @@ import com.codeit.modoo_playlist.moduleapi.domain.conversation.repository.Conver
 import com.codeit.modoo_playlist.moduleapi.domain.message.repository.MessageRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
 import com.codeit.modoo_playlist.moduleapi.dto.MessageDto;
-import com.codeit.modoo_playlist.moduleapi.dto.UserDto;
 import com.codeit.modoo_playlist.moduleapi.dto.chat.ContentChatDto;
 import com.codeit.modoo_playlist.moduleapi.dto.chat.ContentChatSendRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.chat.DirectMessageSendRequest;
 import com.codeit.modoo_playlist.moduleapi.mapper.MessageMapper;
 import com.codeit.modoo_playlist.moduleapi.mapper.UserMapper;
-import com.codeit.modoo_playlist.moduleapi.security.UserDetails;
 import lombok.RequiredArgsConstructor;
 //import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

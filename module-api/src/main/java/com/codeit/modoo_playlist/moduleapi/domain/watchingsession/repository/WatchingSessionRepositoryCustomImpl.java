@@ -32,7 +32,6 @@ public class WatchingSessionRepositoryCustomImpl implements WatchingSessionRepos
     private final ContentTagRepository contentTagRepository;
 
     private static final QWatchingSession ws = QWatchingSession.watchingSession;
-    private static final QUser u =  QUser.user;
 
     @Override
     public Optional<WatchingSession> findActiveByWatcherId(UUID watcherId) {
