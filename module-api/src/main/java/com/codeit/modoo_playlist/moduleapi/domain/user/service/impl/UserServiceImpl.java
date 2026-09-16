@@ -4,11 +4,16 @@ import com.codeit.modoo_playlist.core.domain.user.entity.User;
 import com.codeit.modoo_playlist.core.global.exception.BaseException;
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
+import com.codeit.modoo_playlist.moduleapi.domain.user.repository.query.UserQueryPage;
 import com.codeit.modoo_playlist.moduleapi.domain.user.service.UserService;
 import com.codeit.modoo_playlist.moduleapi.dto.UserDto;
 import com.codeit.modoo_playlist.moduleapi.dto.request.UserCreateRequest;
+import com.codeit.modoo_playlist.moduleapi.dto.request.UserListRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.request.UserProfileUpdateRequest;
+import com.codeit.modoo_playlist.moduleapi.dto.response.CursorResponseUserDto;
 import com.codeit.modoo_playlist.moduleapi.mapper.UserMapper;
+import com.codeit.modoo_playlist.moduleapi.security.jwt.LoginSessionStore;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +29,7 @@ public class UserServiceImpl implements UserService {
   private final UserRepository userRepository;
   private final PasswordEncoder passwordEncoder;
   private final UserMapper userMapper;
+  private final LoginSessionStore loginSessionStore;
 
   @Transactional
   @Override
@@ -67,6 +73,28 @@ public class UserServiceImpl implements UserService {
         .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
 
     return userMapper.toDto(user);
+  }
+
+  @Transactional(readOnly = true)
+  @Override
+  public CursorResponseUserDto getAllUsers(
+      UserListRequest request
+  ) {
+    UserQueryPage page = userRepository.findAllUsers(request);
+
+    List<UserDto> data = page.users().stream()
+        .map(userMapper::toDto)
+        .toList();
+
+    return new CursorResponseUserDto(
+        data,
+        page.nextCursor(),
+        page.nextIdAfter(),
+        page.hasNext(),
+        page.totalCount(),
+        request.sortBy(),
+        request.sortDirection()
+    );
   }
 
   @Transactional
