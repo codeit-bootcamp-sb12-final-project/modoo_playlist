@@ -82,6 +82,11 @@ public class AuthServiceImpl implements AuthService {
         throw new BaseException(ErrorCode.INVALID_TOKEN);
       }
 
+//      유저 잠금 방어 코드
+      if (!userDetails.isAccountNonLocked()) {
+        throw new BaseException(ErrorCode.USER_ACCOUNT_LOCKED);
+      }
+
       String currentRefreshHash =
           refreshTokenHasher.hash(refreshToken);
 
