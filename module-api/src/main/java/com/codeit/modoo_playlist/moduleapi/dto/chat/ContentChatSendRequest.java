@@ -1,8 +1,8 @@
 package com.codeit.modoo_playlist.moduleapi.dto.chat;
 
-import java.util.UUID;
+import jakarta.validation.constraints.NotBlank;
 
 public record ContentChatSendRequest (
-        UUID ContentId
+        @NotBlank String content
 ){
 }

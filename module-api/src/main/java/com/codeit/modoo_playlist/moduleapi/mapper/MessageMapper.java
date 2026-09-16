@@ -1,6 +1,7 @@
 package com.codeit.modoo_playlist.moduleapi.mapper;
 
 import com.codeit.modoo_playlist.core.domain.message.entity.Message;
+import com.codeit.modoo_playlist.core.global.common.dto.MessageResponse;
 import com.codeit.modoo_playlist.moduleapi.dto.MessageDto;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -12,4 +13,6 @@ public interface MessageMapper {
     @Mapping(target = "conversationId", source = "conversation.id")
     @Mapping(target = "content", source = "message")
     MessageDto toDto(Message message);
+
+    MessageResponse toResponse(Message message);
 }

@@ -34,8 +34,9 @@ public class Message extends BaseEntity {
     @JoinColumn(name = "content_id")
     private Content content;
 
+    // DM 대화 연결. 콘텐츠 채팅에서는 NULL
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "conversation_id", nullable = false)
+    @JoinColumn(name = "conversation_id")
     private Conversation conversation;
 
     @Enumerated(EnumType.STRING)
