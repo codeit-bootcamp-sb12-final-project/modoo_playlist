@@ -5,6 +5,7 @@ import com.codeit.modoo_playlist.moduleapi.dto.UserDto;
 import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserCreateRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserListRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserLockUpdateRequest;
+import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserPasswordUpdateRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserProfileUpdateRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserRoleUpdateRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.user.response.CursorResponseUserDto;
@@ -78,9 +79,17 @@ public class UserController {
       value = "/{userId}/password"
   )
   public ResponseEntity<Void> updateUserPassword(
-      @PathVariable("userId") UUID userId
+      @PathVariable UUID userId,
+      @Valid @RequestBody UserPasswordUpdateRequest request,
+      @AuthenticationPrincipal UserDetails principal
   ) {
-    throw new UnsupportedOperationException("구현 예정");
+    userService.updatePassword(
+        principal.getUserDto().id(),
+        userId,
+        request.password()
+    );
+
+    return ResponseEntity.noContent().build();
   }
 
   @PreAuthorize("hasRole('ADMIN')")

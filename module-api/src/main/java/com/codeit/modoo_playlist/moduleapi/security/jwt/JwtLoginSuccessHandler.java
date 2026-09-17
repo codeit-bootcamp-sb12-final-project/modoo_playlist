@@ -5,6 +5,8 @@ import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import com.codeit.modoo_playlist.moduleapi.domain.user.service.AuthService;
 import com.codeit.modoo_playlist.moduleapi.dto.jwt.JwtDto;
 import com.codeit.modoo_playlist.moduleapi.dto.jwt.LoginIssueResult;
+import com.codeit.modoo_playlist.moduleapi.dto.jwt.LoginState;
+import com.codeit.modoo_playlist.moduleapi.security.LoginCredentialType;
 import com.codeit.modoo_playlist.moduleapi.security.SecurityErrorResponseWriter;
 import com.codeit.modoo_playlist.moduleapi.security.UserDetails;
 import jakarta.servlet.http.Cookie;
@@ -69,17 +71,26 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
 
     try {
       LoginIssueResult result = authService.issueLogin(
-          userDetails.getUserDto().id()
+          userDetails.getUserDto().id(),
+          userDetails.getCredentialType()
       );
 
-      refreshCookie = tokenProvider.generateRefreshTokenCookie(
-          result.refreshToken(),
-          result.expiresAt()
-      );
+      boolean temporaryLogin =
+          userDetails.getCredentialType() == LoginCredentialType.TEMPORARY;
+
+      refreshCookie = temporaryLogin
+          ? null
+          : tokenProvider.generateRefreshTokenCookie(
+              result.refreshToken(),
+              result.expiresAt()
+          );
 
       JwtDto jwtDto = new JwtDto(
           result.userDto(),
-          result.accessToken()
+          result.accessToken(),
+          temporaryLogin
+              ? LoginState.PASSWORD_CHANGE_REQUIRED
+              : LoginState.AUTHENTICATED
       );
 
       responseBody = objectMapper.writeValueAsString(jwtDto);
@@ -113,7 +124,9 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
 
     // 응답 전송 중 발생한 IOException은 위의 준비·저장 실패와 구분한다.
     response.setStatus(HttpServletResponse.SC_OK);
-    response.addCookie(refreshCookie);
+    if (refreshCookie != null) {
+      response.addCookie(refreshCookie);
+    }
     response.getWriter().write(responseBody);
   }
 }

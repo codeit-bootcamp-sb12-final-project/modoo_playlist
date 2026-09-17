@@ -61,7 +61,7 @@ module-api:
       same-site: ${AUTH_COOKIE_SAME_SITE:Lax} # 다른 사이트에서 보내느 요청에 refresh 토큰 전달 방지
       path: ${AUTH_COOKIE_PATH:/api/auth}
     temporary-password:
-      value: ${TEMPORARY_PASSWORD:temporary1!!}
+      length: ${TEMPORARY_PASSWORD_LENGTH:8}
       expiration: ${TEMPORARY_PASSWORD_EXPIRATION:3m}
   mail:
     from: ${MAIL_FROM}

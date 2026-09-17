@@ -31,7 +31,9 @@ public class LoginFailureHandler implements AuthenticationFailureHandler {
   ) throws IOException {
     ErrorCode errorCode;
 
-    if (exception instanceof LockedException) {
+    if (exception instanceof CodedAuthenticationException codedException) {
+      errorCode = codedException.getErrorCode();
+    } else if (exception instanceof LockedException) {
       errorCode = ErrorCode.USER_ACCOUNT_LOCKED;
     } else if (isInvalidCredentials(exception)) {
       errorCode = ErrorCode.INVALID_CREDENTIALS;

@@ -20,6 +20,9 @@ public enum ErrorCode {
 
   // Auth - 인증 및 인가
   INVALID_CREDENTIALS(401, "이메일 또는 비밀번호가 올바르지 않습니다."),
+  TEMP_PASSWORD_ACTIVE(401, "임시 비밀번호가 발급된 계정입니다. 이메일로 전달된 임시 비밀번호를 사용해 주세요."),
+  TEMP_PASSWORD_EXPIRED(401, "임시 비밀번호가 만료되었습니다. 비밀번호 초기화를 다시 요청해 주세요."),
+  PASSWORD_CHANGE_REQUIRED(403, "비밀번호 변경이 필요합니다."),
   AUTHENTICATION_REQUIRED(401, "로그인이 필요합니다."),
   ACCESS_DENIED(403, "접근 권한이 없습니다."),
   INVALID_CSRF_TOKEN(403, "CSRF 토큰이 없거나 유효하지 않습니다."),

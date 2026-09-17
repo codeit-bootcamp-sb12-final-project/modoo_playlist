@@ -5,17 +5,30 @@ import java.util.Collection;
 import java.util.List;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 @EqualsAndHashCode(of = "userDto")
 @Getter
-@RequiredArgsConstructor
 public class UserDetails implements org.springframework.security.core.userdetails.UserDetails {
 
   private final UserDto userDto;
   private final String password;
+  private final LoginCredentialType credentialType;
+
+  public UserDetails(UserDto userDto, String password) {
+    this(userDto, password, LoginCredentialType.PERMANENT);
+  }
+
+  public UserDetails(
+      UserDto userDto,
+      String password,
+      LoginCredentialType credentialType
+  ) {
+    this.userDto = userDto;
+    this.password = password;
+    this.credentialType = credentialType;
+  }
 
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {

@@ -5,12 +5,14 @@ import com.codeit.modoo_playlist.core.global.exception.BaseException;
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.user.service.AuthService;
+import com.codeit.modoo_playlist.moduleapi.domain.user.service.TemporaryPasswordGenerator;
 import com.codeit.modoo_playlist.moduleapi.domain.user.service.TemporaryPasswordSender;
 import com.codeit.modoo_playlist.moduleapi.dto.UserDto;
 import com.codeit.modoo_playlist.moduleapi.dto.jwt.LoginIssueResult;
 import com.codeit.modoo_playlist.moduleapi.dto.jwt.LoginSession;
 import com.codeit.modoo_playlist.moduleapi.dto.jwt.TokenRefreshResult;
 import com.codeit.modoo_playlist.moduleapi.mapper.UserMapper;
+import com.codeit.modoo_playlist.moduleapi.security.LoginCredentialType;
 import com.codeit.modoo_playlist.moduleapi.security.UserDetails;
 import com.codeit.modoo_playlist.moduleapi.security.UserDetailsService;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtTokenProvider;
@@ -41,12 +43,10 @@ public class AuthServiceImpl implements AuthService {
   private final RefreshTokenHasher refreshTokenHasher;
   private final UserRepository userRepository;
   private final PasswordEncoder passwordEncoder;
+  private final TemporaryPasswordGenerator temporaryPasswordGenerator;
   private final TemporaryPasswordSender temporaryPasswordSender;
   private final Clock clock;
   private final UserMapper userMapper;
-
-  @Value("${module-api.auth.temporary-password.value}")
-  private String temporaryPassword;
 
   @Value("${module-api.auth.temporary-password.expiration}")
   private Duration temporaryPasswordExpiration;
@@ -71,18 +71,23 @@ public class AuthServiceImpl implements AuthService {
       throw new BaseException(ErrorCode.USER_ACCOUNT_LOCKED);
     }
 
+    String temporaryPassword = temporaryPasswordGenerator.generate();
     String encodedTemporaryPassword = passwordEncoder.encode(temporaryPassword);
     Instant expiresAt = clock.instant().plus(temporaryPasswordExpiration);
 
     user.issueTemporaryPassword(encodedTemporaryPassword, expiresAt);
     userRepository.saveAndFlush(user);
     temporaryPasswordSender.send(user.getEmail(), temporaryPassword, expiresAt);
+    loginSessionStore.invalidateAll(user.getId());
   }
 
   //  잠금 -> 잠금 및 역할 재 확인 -> 토큰 생성 및 세션 등록 -> 종료
   @Transactional
   @Override
-  public LoginIssueResult issueLogin(UUID userId) {
+  public LoginIssueResult issueLogin(
+      UUID userId,
+      LoginCredentialType credentialType
+  ) {
     User user = userRepository.findByIdForUpdate(userId)
         .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
 
@@ -91,22 +96,54 @@ public class AuthServiceImpl implements AuthService {
       throw new BaseException(ErrorCode.USER_ACCOUNT_LOCKED);
     }
 
+    Instant now = clock.instant();
+
+    if (credentialType == LoginCredentialType.TEMPORARY
+        && !user.hasActiveTemporaryPassword(now)) {
+      throw new BaseException(ErrorCode.TEMP_PASSWORD_EXPIRED);
+    }
+
+    if (credentialType == LoginCredentialType.PERMANENT
+        && user.hasActiveTemporaryPassword(now)) {
+      throw new BaseException(ErrorCode.TEMP_PASSWORD_ACTIVE);
+    }
+
+    if (credentialType == LoginCredentialType.PERMANENT
+        && user.getTempPasswordExpiresAt() != null) {
+      user.clearTemporaryPassword();
+    }
+
     UserDto currentUserDto = userMapper.toDto(user);
 
     UserDetails currentUserDetails = new UserDetails(
         currentUserDto,
-        user.getPassword()
+        credentialType == LoginCredentialType.TEMPORARY
+            ? user.getTempPassword()
+            : user.getPassword(),
+        credentialType
     );
 
-    Instant createdAt = clock.instant().truncatedTo(ChronoUnit.SECONDS);
+    Instant createdAt = now.truncatedTo(ChronoUnit.SECONDS);
 
-    Instant expiresAt = createdAt.plusMillis(refreshTokenExpirationMs)
+    Instant normalExpiresAt = createdAt.plusMillis(refreshTokenExpirationMs)
         .truncatedTo(ChronoUnit.SECONDS);
+
+    Instant expiresAt = credentialType == LoginCredentialType.TEMPORARY
+        ? user.getTempPasswordExpiresAt().truncatedTo(ChronoUnit.SECONDS)
+        : normalExpiresAt;
+
+    if (expiresAt.isAfter(normalExpiresAt)) {
+      expiresAt = normalExpiresAt;
+    }
+
+    if (!expiresAt.isAfter(createdAt)) {
+      throw new BaseException(ErrorCode.TEMP_PASSWORD_EXPIRED);
+    }
 
     UUID sid = UUID.randomUUID();
 
     String accessToken;
-    String refreshToken;
+    String refreshToken = null;
 
     try {
       accessToken = tokenProvider.generateAccessToken(
@@ -115,20 +152,26 @@ public class AuthServiceImpl implements AuthService {
           expiresAt
       );
 
-      refreshToken = tokenProvider.generateRefreshToken(
-          currentUserDetails,
-          sid,
-          expiresAt
-      );
+      if (credentialType == LoginCredentialType.PERMANENT) {
+        refreshToken = tokenProvider.generateRefreshToken(
+            currentUserDetails,
+            sid,
+            expiresAt
+        );
+      }
 
     } catch (JOSEException e) {
       throw new BaseException(ErrorCode.TOKEN_GENERATION_FAILED, e);
     }
 
+    String refreshTokenHash = refreshToken == null
+        ? ""
+        : refreshTokenHasher.hash(refreshToken);
+
     LoginSession session = new LoginSession(
         sid,
         userId,
-        refreshTokenHasher.hash(refreshToken),
+        refreshTokenHash,
         createdAt,
         expiresAt
     );

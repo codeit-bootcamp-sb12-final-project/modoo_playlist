@@ -123,6 +123,25 @@ public class UserServiceImpl implements UserService {
 
   @Transactional
   @Override
+  public void updatePassword(
+      UUID actorId,
+      UUID userId,
+      String newPassword
+  ) {
+    validateOwner(actorId, userId);
+
+    User user = userRepository.findByIdForUpdate(userId)
+        .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+
+    String encodedPassword = passwordEncoder.encode(newPassword);
+
+    user.changePassword(encodedPassword);
+
+    loginSessionStore.invalidateAll(userId);
+  }
+
+  @Transactional
+  @Override
   public void updateRole(
       UUID actorId,
       UUID userId,

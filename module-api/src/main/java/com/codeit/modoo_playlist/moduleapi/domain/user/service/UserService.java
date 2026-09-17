@@ -24,6 +24,8 @@ public interface UserService {
       MultipartFile image
   );
 
+  void updatePassword(UUID actorId, UUID userId, String newPassword);
+
   void updateRole(UUID actorId, UUID userId, UserRole role);
 
   void updateLocked(UUID actorId, UUID userId, boolean locked);
