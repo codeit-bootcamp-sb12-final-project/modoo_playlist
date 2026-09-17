@@ -87,7 +87,7 @@ batch:
     zone: Asia/Seoul
   review-summary:
     enabled: ${REVIEW_SUMMARY_BATCH_ENABLED:true}
-    cron: ${REVIEW_SUMMARY_BATCH_CRON:0 40 17 * * *}
+    cron: ${REVIEW_SUMMARY_BATCH_CRON:0 30 1 * * *}
     zone: Asia/Seoul
     min-reviews: ${REVIEW_SUMMARY_MIN_REVIEWS:3}
     max-reviews-per-content: ${REVIEW_SUMMARY_MAX_REVIEWS_PER_CONTENT:30}
