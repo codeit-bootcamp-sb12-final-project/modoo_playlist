@@ -3,10 +3,10 @@ package com.codeit.modoo_playlist.moduleapi.domain.user.service.impl;
 import com.codeit.modoo_playlist.core.domain.user.entity.User;
 import com.codeit.modoo_playlist.core.global.exception.BaseException;
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
+import com.codeit.modoo_playlist.moduleapi.domain.user.event.TemporaryPasswordIssuedEvent;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.user.service.AuthService;
 import com.codeit.modoo_playlist.moduleapi.domain.user.service.TemporaryPasswordGenerator;
-import com.codeit.modoo_playlist.moduleapi.domain.user.service.TemporaryPasswordSender;
 import com.codeit.modoo_playlist.moduleapi.dto.UserDto;
 import com.codeit.modoo_playlist.moduleapi.dto.jwt.LoginIssueResult;
 import com.codeit.modoo_playlist.moduleapi.dto.jwt.LoginSession;
@@ -27,6 +27,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataAccessException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -46,7 +47,7 @@ public class AuthServiceImpl implements AuthService {
   private final UserRepository userRepository;
   private final PasswordEncoder passwordEncoder;
   private final TemporaryPasswordGenerator temporaryPasswordGenerator;
-  private final TemporaryPasswordSender temporaryPasswordSender;
+  private final ApplicationEventPublisher eventPublisher;
   private final Clock clock;
   private final UserMapper userMapper;
 
@@ -91,8 +92,14 @@ public class AuthServiceImpl implements AuthService {
 
     user.issueTemporaryPassword(encodedTemporaryPassword, expiresAt);
     userRepository.saveAndFlush(user);
-    temporaryPasswordSender.send(user.getEmail(), temporaryPassword, expiresAt);
-    loginSessionStore.invalidateAll(user.getId());
+    eventPublisher.publishEvent(
+        new TemporaryPasswordIssuedEvent(
+            user.getId(),
+            user.getEmail(),
+            temporaryPassword,
+            expiresAt
+        )
+    );
   }
 
   //  잠금 -> 잠금 및 역할 재 확인 -> 토큰 생성 및 세션 등록 -> 종료
