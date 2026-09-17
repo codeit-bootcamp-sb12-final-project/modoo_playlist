@@ -20,7 +20,6 @@ import com.codeit.modoo_playlist.moduleapi.dto.user.response.UserSummaryResponse
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -155,7 +154,7 @@ public class ReviewServiceImpl implements ReviewService {
 
     private Content getExistingContent(UUID contentId) {
         return contentRepository.findByIdAndDeletedAtIsNull(contentId)
-                .orElseThrow(() -> new NoSuchElementException("콘텐츠를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BaseException(ErrorCode.CONTENT_NOT_FOUND));
     }
 
 }

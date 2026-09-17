@@ -42,6 +42,7 @@ public enum ErrorCode {
   REVIEW_NOT_FOUND(404, "리뷰를 찾을 수 없습니다."),
   REVIEW_ALREADY_EXISTS(409, "이미 이 콘텐츠에 리뷰를 작성했습니다."),
   REVIEW_ACCESS_DENIED(403, "본인이 작성한 리뷰가 아닙니다."),
+  REVIEW_QUERY_INVALID(400, "리뷰 조회 조건이 올바르지 않습니다."),
 
   // Playlist
   PLAYLIST_NOT_FOUND(404, "플레이리스트를 찾을 수 없습니다."),
@@ -50,6 +51,7 @@ public enum ErrorCode {
   PLAYLIST_CONTENT_ALREADY_EXISTS(409, "이미 플레이리스트에 등록된 콘텐츠입니다."),
   PLAYLIST_SUBSCRIPTION_NOT_FOUND(404, "구독 관계를 찾을 수 없습니다."),
   PLAYLIST_SUBSCRIPTION_ALREADY_EXISTS(409, "이미 구독 중인 플레이리스트입니다."),
+  PLAYLIST_QUERY_INVALID(400, "플레이리스트 조회 조건이 올바르지 않습니다."),
 
   // Conversation
   CONVERSATION_NOT_FOUND(404, "대화를 찾을 수 없습니다."),
