@@ -116,7 +116,10 @@ public class ContentServiceImpl implements ContentService {
         Content content = contentRepository.findByIdAndDeletedAtIsNull(contentId)
                 .orElseThrow(() -> new BaseException(ErrorCode.CONTENT_NOT_FOUND));
         InteractionType myReaction = userContentInteractionRepository
-                .findByUserIdAndContentIdAndTypeIn(userId, contentId, REACTION_TYPES)
+                .findAllByUserIdAndContentIdAndTypeInOrderByUpdatedAtDescIdDesc(
+                        userId, contentId, REACTION_TYPES)
+                .stream()
+                .findFirst()
                 .map(interaction -> interaction.getType())
                 .orElse(null);
 

@@ -241,9 +241,9 @@ class ContentServiceImplTest {
         ContentDetailResponse expected = detail(content.getId(), InteractionType.LIKE);
         when(contentRepository.findByIdAndDeletedAtIsNull(content.getId()))
                 .thenReturn(Optional.of(content));
-        when(userContentInteractionRepository.findByUserIdAndContentIdAndTypeIn(
+        when(userContentInteractionRepository.findAllByUserIdAndContentIdAndTypeInOrderByUpdatedAtDescIdDesc(
                 eq(userId), eq(content.getId()), any()))
-                .thenReturn(Optional.of(interaction));
+                .thenReturn(List.of(interaction));
         when(contentPersonRepository.findAllByContent_IdOrderByDisplayOrderAsc(content.getId()))
                 .thenReturn(List.of());
         when(contentVideoRepository.findById(content.getId())).thenReturn(Optional.empty());

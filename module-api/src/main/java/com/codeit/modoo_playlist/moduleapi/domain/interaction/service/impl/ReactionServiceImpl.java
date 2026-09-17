@@ -11,6 +11,7 @@ import com.codeit.modoo_playlist.moduleapi.domain.interaction.repository.UserCon
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.interaction.service.ReactionService;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -37,11 +38,18 @@ public class ReactionServiceImpl implements ReactionService {
     if (!REACTION_TYPES.contains(type)) {
       throw new BaseException(ErrorCode.REACTION_TYPE_INVALID);
     }
-    UserContentInteraction userContentInteraction = userContentInteractionRepository
-        .findByUserIdAndContentIdAndTypeIn(userId, contentId, REACTION_TYPES).orElse(null);
+    User user = userRepository.findByIdForUpdate(userId)
+        .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+    List<UserContentInteraction> reactions = userContentInteractionRepository
+        .findAllByUserIdAndContentIdAndTypeInOrderByUpdatedAtDescIdDesc(
+            userId, contentId, REACTION_TYPES);
+    UserContentInteraction userContentInteraction = reactions.stream().findFirst().orElse(null);
+
+    if (reactions.size() > 1) {
+      userContentInteractionRepository.deleteAllInBatch(reactions.subList(1, reactions.size()));
+    }
+
     if (userContentInteraction == null) {
-      User user = userRepository.findById(userId)
-          .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
       Content content = contentRepository.findById(contentId)
           .orElseThrow(() -> new BaseException(ErrorCode.CONTENT_NOT_FOUND));
       userContentInteractionRepository.save(
