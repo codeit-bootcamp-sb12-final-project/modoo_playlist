@@ -3,6 +3,8 @@ package com.codeit.modoo_playlist.moduleapi.domain.playlist.repository;
 import com.codeit.modoo_playlist.core.domain.playlist.entity.PlaylistSubscription;
 import com.codeit.modoo_playlist.core.domain.playlist.entity.PlaylistSubscriptionId;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.UUID;
@@ -13,4 +15,6 @@ public interface PlaylistSubscriptionRepository extends JpaRepository<PlaylistSu
 
     List<PlaylistSubscription> findAllById_PlaylistIdIn(List<UUID> playlistIds);
 
+    @Query("select ps.id.subscriberId from PlaylistSubscription ps where ps.id.playlistId = :playlistId")
+    List<UUID> findSubscriberIdsByPlaylistId(@Param("playlistId") UUID playlistId);
 }
