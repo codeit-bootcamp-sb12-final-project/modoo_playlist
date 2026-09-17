@@ -7,6 +7,9 @@ import com.codeit.modoo_playlist.moduleapi.domain.search.document.ContentDocumen
 import com.codeit.modoo_playlist.moduleapi.domain.search.repository.ContentSearchRepository;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.function.Consumer;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -47,27 +50,27 @@ class SearchServiceTest {
   @Test
   @DisplayName("제목에 포함된 검색어로 콘텐츠를 검색한다")
   void searchByTitle() {
-    SearchHits<ContentDocument> results =
-        contentSearchService.search("인터스텔라");
+    withSearchDocument(document -> {
+      SearchHits<ContentDocument> results =
+        contentSearchService.search("인터스텔라", "movie", document.getTags(), 20);
 
-    assertThat(results)
-        .anySatisfy(hit -> {
-          assertThat(hit.getId()).isEqualTo(TEST_CONTENT_ID);
-          assertThat(hit.getContent().getTitle()).isEqualTo("인터스텔라");
+    assertThat(results.getSearchHits())
+        .extracting(hit -> hit.getContent().getId())
+        .containsExactly(TEST_CONTENT_ID);
         });
   }
 
   @Test
   @DisplayName("설명에 포함된 검색어로 콘텐츠를 검색한다")
   void searchByDescription() {
-    SearchHits<ContentDocument> results =
-        contentSearchService.search("우주");
+    withSearchDocument(document -> {
+      SearchHits<ContentDocument> results =
+          contentSearchService.search("우주", "movie", document.getTags(), 20);
 
-    assertThat(results)
-        .anySatisfy(hit -> {
-          assertThat(hit.getId()).isEqualTo(TEST_CONTENT_ID);
-          assertThat(hit.getContent().getTitle()).isEqualTo("인터스텔라");
-        });
+      assertThat(results.getSearchHits())
+          .extracting(hit -> hit.getContent().getId())
+          .containsExactly(TEST_CONTENT_ID);
+    });
   }
 
   @Test
@@ -261,6 +264,37 @@ class SearchServiceTest {
       deleteDocuments(documents);
     }
   }
+
+  private void withSearchDocument(Consumer<ContentDocument> assertion) {
+    Optional<ContentDocument> original = contentSearchRepository.findById(TEST_CONTENT_ID);
+    String testTag = "search-test-" + UUID.randomUUID();
+
+    ContentDocument document = ContentDocument.builder()
+        .id(TEST_CONTENT_ID)
+        .type(ContentType.MOVIE)
+        .title("인터스텔라")
+        .description("우주 탐험 이야기")
+        .tags(List.of(testTag))
+        .averageRating(0)
+        .reviewCount(0)
+        .watcherCount(0)
+        .createdAt(Instant.parse("2026-09-16T00:00:00Z"))
+        .build();
+
+    try {
+      contentSearchRepository.save(document);
+      refreshIndex();
+
+      assertion.accept(document);
+    } finally {
+      if (original.isPresent()) {
+        contentSearchRepository.save(original.get());
+      } else {
+        contentSearchRepository.deleteById(TEST_CONTENT_ID);
+      }
+      refreshIndex();
+    }
+  } 
 
   private ContentDocument createDocument(
       String suffix,
