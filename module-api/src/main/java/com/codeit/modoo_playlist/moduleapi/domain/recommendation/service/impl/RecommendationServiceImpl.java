@@ -2,6 +2,8 @@ package com.codeit.modoo_playlist.moduleapi.domain.recommendation.service.impl;
 
 import com.codeit.modoo_playlist.core.global.common.util.CosineSimilarity;
 import com.codeit.modoo_playlist.core.global.common.util.ScoringEngine;
+import com.codeit.modoo_playlist.core.global.exception.BaseException;
+import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.jpa.ContentRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.jpa.ContentTagRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.interaction.repository.UserContentInteractionRepository;
@@ -47,6 +49,9 @@ public class RecommendationServiceImpl implements RecommendationService {
 
   @Override
   public List<RecommendedContentDto> getSimilarContents(UUID contentId, Integer limit) {
+    if (!contentRepository.existsById(contentId)) {
+      throw new BaseException(ErrorCode.CONTENT_NOT_FOUND);
+    }
     List<RecommendedContentDto> candidates =
         contentTagRepository.findSimilarContents(contentId, PageRequest.of(0, CANDIDATE_POOL_SIZE));
     if (candidates.isEmpty()) {

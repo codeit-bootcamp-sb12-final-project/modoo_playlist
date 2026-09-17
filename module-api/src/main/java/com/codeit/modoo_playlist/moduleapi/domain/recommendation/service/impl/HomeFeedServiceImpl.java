@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
+import java.util.function.Supplier;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -39,17 +40,24 @@ public class HomeFeedServiceImpl implements HomeFeedService {
   @Override
   public HomeFeedResponse getHomeFeed(UUID userId) {
     List<HomeRowDto> rows = new ArrayList<>();
-    addIfPresent(rows, liveWatchingRow());
+    addIfPresent(rows, "지금 함께 보는 중", this::liveWatchingRow);
     if (userId != null) {
-      addIfPresent(rows, topTagMatchRow(userId));
-      addIfPresent(rows, todayRecommendationRow(userId));
-      addIfPresent(rows, followingActivityRow(userId));
+      addIfPresent(rows, "취향과 맞아요", () -> topTagMatchRow(userId));
+      addIfPresent(rows, "오늘의 추천", () -> todayRecommendationRow(userId));
+      addIfPresent(rows, "팔로우한 사람들이 본", () -> followingActivityRow(userId));
     }
-    addIfPresent(rows, trendingRow());
+    addIfPresent(rows, "인기 콘텐츠", this::trendingRow);
     return new HomeFeedResponse(rows);
   }
 
-  private void addIfPresent(List<HomeRowDto> rows, HomeRowDto row) {
+  private void addIfPresent(List<HomeRowDto> rows, String rowName, Supplier<HomeRowDto> supplier) {
+    HomeRowDto row;
+    try {
+      row = supplier.get();
+    } catch (Exception e) {
+      log.error("홈 피드 행 생성 실패: {}", rowName, e);
+      return;
+    }
     if (row != null && row.contents() != null && !row.contents().isEmpty()) {
       rows.add(row);
     }
