@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.codeit.modoo_playlist.modulebatch.reviewsummary.persistence.ReviewSummaryMapper">
+
+  <select id="findContentsNeedingSummary"
+    resultType="com.codeit.modoo_playlist.modulebatch.reviewsummary.model.ReviewSummaryCandidate">
+    SELECT BIN_TO_UUID(c.id) AS contentId,
+           c.title AS title
+    FROM contents c
+    JOIN reviews r ON r.content_id = c.id
+    LEFT JOIN content_review_summaries s ON s.content_id = c.id
+    WHERE c.deleted_at IS NULL
+      AND c.review_count >= #{minReviews}
+    <if test="lastContentId != null">
+      AND c.id &gt; UUID_TO_BIN(#{lastContentId})
+    </if>
+    GROUP BY c.id, c.title
+    HAVING MAX(s.updated_at) IS NULL OR MAX(r.updated_at) > MAX(s.updated_at)
+    ORDER BY c.id
+    LIMIT #{limit}
+  </select>
+
+  <select id="findReviewsForContents"
+    resultType="com.codeit.modoo_playlist.modulebatch.reviewsummary.model.ReviewSummaryReviewRow">
+    SELECT t.contentId AS contentId, t.text AS text, t.rating AS rating
+    FROM (
+      SELECT BIN_TO_UUID(r.content_id) AS contentId,
+             r.text AS text,
+             r.rating AS rating,
+             ROW_NUMBER() OVER (PARTITION BY r.content_id ORDER BY r.updated_at DESC) AS rn
+      FROM reviews r
+      WHERE r.content_id IN
+      <foreach item="contentId" collection="contentIds" open="(" separator="," close=")">
+        UUID_TO_BIN(#{contentId})
+      </foreach>
+    ) t
+    WHERE t.rn &lt;= #{maxReviewsPerContent}
+    ORDER BY t.contentId, t.rn
+  </select>
+
+  <insert id="upsertSummary">
+    INSERT INTO content_review_summaries (content_id, summary)
+    VALUES (UUID_TO_BIN(#{contentId}), #{summary})
+    ON DUPLICATE KEY UPDATE summary = VALUES(summary)
+  </insert>
+</mapper>
