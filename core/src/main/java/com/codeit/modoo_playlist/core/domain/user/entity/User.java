@@ -63,11 +63,46 @@ public class User extends BaseUpdatableEntity {
     return user;
   }
 
+  public static User createBot(
+      String email,
+      String username
+  ) {
+    User user = new User();
+    user.email = email;
+    user.username = username;
+    user.password = null;
+    user.role = UserRole.BOT;
+    user.locked = false;
+    return user;
+  }
+
   public void updateProfile(String username, String profileImageUrl) {
     this.username = username;
 
     if (profileImageUrl != null) {
       this.profileImageUrl = profileImageUrl;
     }
+  }
+  
+  public void synchronizeBot(
+      String email,
+      String username
+  ) {
+    if (this.role != UserRole.BOT) {
+      throw new IllegalStateException("BOT 계정만 동기화할 수 있습니다.");
+    }
+
+    this.email = email;
+    this.username = username;
+    this.password = null;
+    this.locked = false;
+  }
+
+  public void changeRole(UserRole role) {
+    this.role = role;
+  }
+
+  public void changeLocked(boolean locked) {
+    this.locked = locked;
   }
 }

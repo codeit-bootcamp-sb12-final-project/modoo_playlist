@@ -1,10 +1,15 @@
 package com.codeit.modoo_playlist.moduleapi.domain.user.service.impl;
 
+import com.codeit.modoo_playlist.core.domain.user.entity.User;
 import com.codeit.modoo_playlist.core.global.exception.BaseException;
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
+import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.user.service.AuthService;
+import com.codeit.modoo_playlist.moduleapi.dto.UserDto;
+import com.codeit.modoo_playlist.moduleapi.dto.jwt.LoginIssueResult;
 import com.codeit.modoo_playlist.moduleapi.dto.jwt.LoginSession;
 import com.codeit.modoo_playlist.moduleapi.dto.jwt.TokenRefreshResult;
+import com.codeit.modoo_playlist.moduleapi.mapper.UserMapper;
 import com.codeit.modoo_playlist.moduleapi.security.UserDetails;
 import com.codeit.modoo_playlist.moduleapi.security.UserDetailsService;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtTokenProvider;
@@ -19,6 +24,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataAccessException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 @Service
@@ -29,12 +35,79 @@ public class AuthServiceImpl implements AuthService {
   private final LoginSessionStore loginSessionStore;
   private final UserDetailsService userDetailsService;
   private final RefreshTokenHasher refreshTokenHasher;
+  private final UserRepository userRepository;
+  private final UserMapper userMapper;
 
   @Value("${module-api.jwt.refresh-token.expiration-ms}")
   private long refreshTokenExpirationMs;
 
   @Value("${module-api.jwt.refresh-token.max-expiration-ms}")
   private long maxRefreshTokenExpirationMs;
+
+  //  잠금 -> 잠금 및 역할 재 확인 -> 토큰 생성 및 세션 등록 -> 종료
+  @Transactional
+  @Override
+  public LoginIssueResult issueLogin(UUID userId) {
+    User user = userRepository.findByIdForUpdate(userId)
+        .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+
+    // 최초 인증 이후 관리자가 계정을 잠갔는지 다시 확인
+    if (user.isLocked()) {
+      throw new BaseException(ErrorCode.USER_ACCOUNT_LOCKED);
+    }
+
+    UserDto currentUserDto = userMapper.toDto(user);
+
+    UserDetails currentUserDetails = new UserDetails(
+        currentUserDto,
+        user.getPassword()
+    );
+
+    Instant createdAt = Instant.now().truncatedTo(ChronoUnit.SECONDS);
+
+    Instant expiresAt = createdAt.plusMillis(refreshTokenExpirationMs)
+        .truncatedTo(ChronoUnit.SECONDS);
+
+    UUID sid = UUID.randomUUID();
+
+    String accessToken;
+    String refreshToken;
+
+    try {
+      accessToken = tokenProvider.generateAccessToken(
+          currentUserDetails,
+          sid,
+          expiresAt
+      );
+
+      refreshToken = tokenProvider.generateRefreshToken(
+          currentUserDetails,
+          sid,
+          expiresAt
+      );
+
+    } catch (JOSEException e) {
+      throw new BaseException(ErrorCode.TOKEN_GENERATION_FAILED, e);
+    }
+
+    LoginSession session = new LoginSession(
+        sid,
+        userId,
+        refreshTokenHasher.hash(refreshToken),
+        createdAt,
+        expiresAt
+    );
+
+    // 사용자 행 잠금을 보유한 상태에서 Redis 세션 등록
+    loginSessionStore.register(session);
+
+    return new LoginIssueResult(
+        currentUserDto,
+        accessToken,
+        refreshToken,
+        expiresAt
+    );
+  }
 
   @Override
   public TokenRefreshResult refresh(String refreshToken) {
@@ -80,6 +153,11 @@ public class AuthServiceImpl implements AuthService {
       // 토큰 사용자와 DB 사용자 비교
       if (!tokenUserId.equals(userDetails.getUserDto().id())) {
         throw new BaseException(ErrorCode.INVALID_TOKEN);
+      }
+
+//      유저 잠금 방어 코드
+      if (!userDetails.isAccountNonLocked()) {
+        throw new BaseException(ErrorCode.USER_ACCOUNT_LOCKED);
       }
 
       String currentRefreshHash =

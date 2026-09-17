@@ -20,4 +20,6 @@ public interface LoginSessionStore {
   );
 
   void invalidate(UUID userId, UUID sid);
+
+  void invalidateAll(UUID userId);
 }

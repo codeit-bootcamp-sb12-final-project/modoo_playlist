@@ -80,6 +80,13 @@ public class SecurityConfig {
             // 사용자 수정
             .requestMatchers(HttpMethod.PATCH, "/api/users/*").authenticated()
 
+            // 관리자 기능
+            .requestMatchers(
+                HttpMethod.PATCH,
+                "/api/users/*/role",
+                "/api/users/*/locked"
+            ).authenticated()
+                               
             // 로그인 필수 — 내 취향/유사 사용자 조회, 콘텐츠 반응
             .requestMatchers(HttpMethod.PUT, "/api/contents/*/reaction").authenticated()
             .requestMatchers("/api/users/preferences/tags/me").authenticated()

@@ -19,6 +19,7 @@ import com.codeit.modoo_playlist.moduleapi.dto.UserDto;
 import com.codeit.modoo_playlist.moduleapi.dto.request.UserCreateRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.request.UserProfileUpdateRequest;
 import com.codeit.modoo_playlist.moduleapi.mapper.UserMapper;
+import com.codeit.modoo_playlist.moduleapi.security.jwt.LoginSessionStore;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
@@ -49,6 +50,9 @@ class UserServiceTest {
   @Mock
   UserRepository userRepository;
 
+  @Mock
+  LoginSessionStore loginSessionStore;
+
   private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
   private UUID userId;
   private UserServiceImpl service;
@@ -65,7 +69,12 @@ class UserServiceTest {
     createRequest = new UserCreateRequest(EMAIL, USERNAME, PASSWORD);
     updateRequest = new UserProfileUpdateRequest(CHANGED_USERNAME);
     // 저장소만 대체하고 암호화 및 DTO 매핑은 실제 구현을 사용한다.
-    service = new UserServiceImpl(userRepository, encoder, Mappers.getMapper(UserMapper.class));
+    service = new UserServiceImpl(
+        userRepository,
+        encoder,
+        Mappers.getMapper(UserMapper.class),
+        loginSessionStore
+    );
   }
 
   @Test
@@ -202,6 +211,71 @@ class UserServiceTest {
             e -> assertThat(e.getErrorCode()).isEqualTo(ErrorCode.USER_NOT_FOUND));
 
     verify(userRepository, never()).save(any());
+  }
+
+  @Test
+  @DisplayName("관리자가 사용자 역할 변경시 로그인 세션 무효화.")
+  void adminChangesRoleAndInvalidatesSession() {
+    UUID adminId = UUID.randomUUID();
+    when(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.of(existingUser));
+
+    service.updateRole(adminId, userId, UserRole.ADMIN);
+
+    assertThat(existingUser.getRole()).isEqualTo(UserRole.ADMIN);
+
+    verify(loginSessionStore).invalidateAll(userId);
+  }
+
+  @Test
+  @DisplayName("관리자가 사용자를 잠그면 로그인 세션을 무효화")
+  void adminLocksUserAndInvalidatesSession() {
+    UUID adminId = UUID.randomUUID();
+    when(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.of(existingUser));
+
+    service.updateLocked(adminId, userId, true);
+
+    assertThat(existingUser.isLocked()).isTrue();
+
+    verify(loginSessionStore).invalidateAll(userId);
+  }
+
+  @Test
+  @DisplayName("관리자가 존재하지 않는 사용자를 수정시 USER_NOT_FOUND.")
+  void adminCannotUpdateMissingUser() {
+    UUID adminId = UUID.randomUUID();
+    when(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> service.updateLocked(adminId, userId, true))
+        .isInstanceOfSatisfying(BaseException.class,
+            e -> assertThat(e.getErrorCode()).isEqualTo(ErrorCode.USER_NOT_FOUND));
+
+    verifyNoInteractions(loginSessionStore);
+  }
+
+  @Test
+  @DisplayName("관리자는 자신의 역할 변경 불가.")
+  void adminCannotChangeOwnRole() {
+    assertThatThrownBy(() -> service.updateRole(userId, userId, UserRole.USER))
+        .isInstanceOfSatisfying(BaseException.class,
+            e -> assertThat(e.getErrorCode()).isEqualTo(ErrorCode.ACCESS_DENIED));
+
+    verifyNoInteractions(userRepository, loginSessionStore);
+  }
+
+  @Test
+  @DisplayName("관리자는 BOT 계정의 잠금 상태 변경 불가")
+  void adminCannotLockBot() {
+    UUID adminId = UUID.randomUUID();
+    User bot = User.createBot("bot@example.com", "bot");
+    ReflectionTestUtils.setField(bot, "id", userId);
+    
+    when(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.of(bot));
+
+    assertThatThrownBy(() -> service.updateLocked(adminId, userId, true))
+        .isInstanceOfSatisfying(BaseException.class,
+            e -> assertThat(e.getErrorCode()).isEqualTo(ErrorCode.ACCESS_DENIED));
+
+    verifyNoInteractions(loginSessionStore);
   }
 
   private void assertUnchangedAccountFields(User user) {

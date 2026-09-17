@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -11,6 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.codeit.modoo_playlist.core.domain.user.entity.User;
+import com.codeit.modoo_playlist.core.domain.user.entity.UserRole;
 import com.codeit.modoo_playlist.core.global.exception.BaseException;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
 import com.codeit.modoo_playlist.moduleapi.dto.jwt.LoginSession;
@@ -465,6 +467,83 @@ class AuthApiIntegrationTest {
     }
   }
 
+  @Test
+  @DisplayName("일반 사용자는 관리자 사용자 목록 API 호출 불가")
+  void normalUserCannotCallAdminApi() throws Exception {
+    Login login = registeredLogin();
+
+    mvc.perform(get("/api/users")
+            .param("limit", "20")
+            .param("sortDirection", "ASCENDING")
+            .param("sortBy", "email")
+            .header("Authorization", "Bearer " + login.access()))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
+  }
+
+  @Test
+  @DisplayName("관리자가 존재하지 않는 사용자를 수정하면 USER_NOT_FOUND.")
+  void adminCannotUpdateMissingUser() throws Exception {
+    Login admin = adminLogin();
+
+    mvc.perform(withCsrf(patch("/api/users/{userId}/role", UUID.randomUUID()))
+            .header("Authorization", "Bearer " + admin.access())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(json.writeValueAsString(Map.of("role", "ADMIN"))))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.code").value("USER_NOT_FOUND"));
+  }
+
+  @Test
+  @DisplayName("로그인 중인 사용자를 잠그면 바로 세션 무효화.")
+  void lockingLoggedInUserInvalidatesSessionAndRejectsLogin() throws Exception {
+    Login target = registeredLogin();
+    Login admin = adminLogin();
+
+    mvc.perform(withCsrf(patch("/api/users/{userId}/locked", target.userId()))
+            .header("Authorization", "Bearer " + admin.access())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(json.writeValueAsString(Map.of("locked", true))))
+        .andExpect(status().isNoContent());
+
+    mvc.perform(withCsrf(profile(target.userId(), "rejected"))
+            .header("Authorization", "Bearer " + target.access()))
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.code").value("LOGIN_SESSION_INVALIDATED"));
+
+    signIn(email, PASSWORD)
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value("USER_ACCOUNT_LOCKED"));
+  }
+
+  @Test
+  @DisplayName("로그인 중 역할을 변경시 세션 무효화.")
+  void promotingLoggedInUserRequiresLoginAgain() throws Exception {
+    Login target = registeredLogin();
+    Login admin = adminLogin();
+
+    mvc.perform(withCsrf(patch("/api/users/{userId}/role", target.userId()))
+            .header("Authorization", "Bearer " + admin.access())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(json.writeValueAsString(Map.of("role", "ADMIN"))))
+        .andExpect(status().isNoContent());
+
+    mvc.perform(withCsrf(profile(target.userId(), "rejected"))
+            .header("Authorization", "Bearer " + target.access()))
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.code").value("LOGIN_SESSION_INVALIDATED"));
+
+    Login promoted = readLogin(
+        signIn(email, PASSWORD).andExpect(status().isOk()).andReturn().getResponse());
+
+    mvc.perform(get("/api/users")
+            .param("limit", "20")
+            .param("sortDirection", "ASCENDING")
+            .param("sortBy", "email")
+            .header("Authorization", "Bearer " + promoted.access()))
+        .andExpect(status().isOk());
+  }
+
   private ResultActions signup() throws Exception {
     return mvc.perform(withCsrf(post("/api/users")).contentType(MediaType.APPLICATION_JSON)
         .content(json.writeValueAsString(signupRequest)));
@@ -487,6 +566,16 @@ class AuthApiIntegrationTest {
     return readLogin(signIn(email, PASSWORD).andExpect(status().isOk())
         .andExpect(header().string("Cache-Control", "no-store"))
         .andExpect(jsonPath("$.userDto.password").doesNotExist()).andReturn().getResponse());
+  }
+
+  private Login adminLogin() throws Exception {
+    String adminEmail = UUID.randomUUID() + "@example.com";
+    signup(adminEmail).andExpect(status().isOk());
+    User admin = users.findByEmail(adminEmail).orElseThrow();
+    admin.changeRole(UserRole.ADMIN);
+    users.saveAndFlush(admin);
+    return readLogin(
+        signIn(adminEmail, PASSWORD).andExpect(status().isOk()).andReturn().getResponse());
   }
 
   private Login readLogin(MockHttpServletResponse response) throws Exception {

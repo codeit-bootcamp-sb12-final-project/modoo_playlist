@@ -2,7 +2,7 @@ package com.codeit.modoo_playlist.moduleapi.security.jwt;
 
 import com.codeit.modoo_playlist.core.global.exception.BaseException;
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
-import com.codeit.modoo_playlist.moduleapi.config.AuthCookieProperties;
+import com.codeit.modoo_playlist.moduleapi.config.properties.AuthCookieProperties;
 import com.codeit.modoo_playlist.moduleapi.dto.UserDto;
 import com.codeit.modoo_playlist.moduleapi.security.UserDetails;
 import com.nimbusds.jose.JOSEException;
