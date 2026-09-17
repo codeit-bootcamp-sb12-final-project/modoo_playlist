@@ -2,18 +2,15 @@ package com.codeit.modoo_playlist.moduleapi.security.jwt;
 
 import com.codeit.modoo_playlist.core.global.exception.BaseException;
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
+import com.codeit.modoo_playlist.moduleapi.domain.user.service.AuthService;
 import com.codeit.modoo_playlist.moduleapi.dto.jwt.JwtDto;
-import com.codeit.modoo_playlist.moduleapi.dto.jwt.LoginSession;
+import com.codeit.modoo_playlist.moduleapi.dto.jwt.LoginIssueResult;
 import com.codeit.modoo_playlist.moduleapi.security.SecurityErrorResponseWriter;
 import com.codeit.modoo_playlist.moduleapi.security.UserDetails;
-import com.nimbusds.jose.JOSEException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
@@ -31,8 +28,7 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
 
   private final JsonMapper objectMapper;
   private final JwtTokenProvider tokenProvider;
-  private final LoginSessionStore loginSessionStore;
-  private final RefreshTokenHasher refreshTokenHasher;
+  private final AuthService authService;
   private final SecurityErrorResponseWriter errorResponseWriter;
 
   /*
@@ -72,45 +68,21 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
     String responseBody;
 
     try {
-      Instant createdAt = Instant.now()
-          .truncatedTo(ChronoUnit.SECONDS);
-
-      UUID sid = UUID.randomUUID();
-
-      Instant expiresAt = createdAt
-          .plusMillis(tokenProvider.getRefreshTokenExpirationMs())
-          .truncatedTo(ChronoUnit.SECONDS);
-
-      String accessToken = tokenProvider.generateAccessToken(
-          userDetails, sid, expiresAt
+      LoginIssueResult result = authService.issueLogin(
+          userDetails.getUserDto().id()
       );
 
-      String refreshToken = tokenProvider.generateRefreshToken(
-          userDetails, sid, expiresAt
-      );
-
-      LoginSession session = new LoginSession(
-          sid,
-          userDetails.getUserDto().id(),
-          refreshTokenHasher.hash(refreshToken),
-          createdAt,
-          expiresAt
-      );
-
-//      브라우저에 전달할 쿠키와 jwtdto.
       refreshCookie = tokenProvider.generateRefreshTokenCookie(
-          refreshToken, expiresAt
+          result.refreshToken(),
+          result.expiresAt()
       );
 
       JwtDto jwtDto = new JwtDto(
-          userDetails.getUserDto(),
-          accessToken
+          result.userDto(),
+          result.accessToken()
       );
 
       responseBody = objectMapper.writeValueAsString(jwtDto);
-
-      loginSessionStore.register(session);
-
     } catch (BaseException e) {
       SecurityContextHolder.clearContext();
       log.error("Login processing failed: {}", e.getErrorCode(), e);
@@ -125,16 +97,6 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
       errorResponseWriter.write(
           response,
           ErrorCode.AUTHENTICATION_SERVICE_UNAVAILABLE
-      );
-      return;
-
-    } catch (JOSEException e) {
-      SecurityContextHolder.clearContext();
-      log.error("Failed to generate login tokens", e);
-
-      errorResponseWriter.write(
-          response,
-          ErrorCode.TOKEN_GENERATION_FAILED
       );
       return;
 
