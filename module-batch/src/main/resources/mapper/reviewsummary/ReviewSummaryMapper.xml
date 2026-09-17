@@ -43,6 +43,8 @@
   <insert id="upsertSummary">
     INSERT INTO content_review_summaries (content_id, summary)
     VALUES (UUID_TO_BIN(#{contentId}), #{summary})
-    ON DUPLICATE KEY UPDATE summary = VALUES(summary)
+    ON DUPLICATE KEY UPDATE
+      summary = VALUES(summary),
+      updated_at = CURRENT_TIMESTAMP(6)
   </insert>
 </mapper>
