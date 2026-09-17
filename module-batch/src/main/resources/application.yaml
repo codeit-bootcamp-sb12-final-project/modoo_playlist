@@ -21,9 +21,15 @@ spring:
     connection-timeout: ${ELASTICSEARCH_CONNECTION_TIMEOUT:2s}
     socket-timeout: ${ELASTICSEARCH_SOCKET_TIMEOUT:30s}
   ai:
+    retry:
+      on-http-codes:
+        - 429
     google:
       genai:
         api-key: ${GEMINI_API_KEY}
+        chat:
+          model: gemini-3.7-flash
+          thinking-level: LOW
         embedding:
           api-key: ${GEMINI_API_KEY}
           text:
@@ -77,8 +83,16 @@ batch:
   embedding:
     enabled: ${EMBEDDING_BATCH_ENABLED:true}
     max-items-per-run: ${EMBEDDING_MAX_ITEMS_PER_RUN:100000}
-    cron: ${EMBEDDING_BATCH_CRON:0 31 13 * * *}
+    cron: ${EMBEDDING_BATCH_CRON:0 0 1 * * *}
     zone: Asia/Seoul
+  review-summary:
+    enabled: ${REVIEW_SUMMARY_BATCH_ENABLED:true}
+    cron: ${REVIEW_SUMMARY_BATCH_CRON:0 30 1 * * *}
+    zone: Asia/Seoul
+    min-reviews: ${REVIEW_SUMMARY_MIN_REVIEWS:3}
+    max-reviews-per-content: ${REVIEW_SUMMARY_MAX_REVIEWS_PER_CONTENT:30}
+    max-items-per-run: ${REVIEW_SUMMARY_MAX_ITEMS_PER_RUN:5000}
+    skip-limit: ${REVIEW_SUMMARY_SKIP_LIMIT:20}
   tmdb:
     enabled: ${TMDB_BATCH_ENABLED:true}
     cron: ${TMDB_BATCH_CRON:0 0 0,12 * * *}

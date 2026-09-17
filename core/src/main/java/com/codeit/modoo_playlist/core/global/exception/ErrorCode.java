@@ -120,6 +120,9 @@ public enum ErrorCode {
   SPORTSDB_DISCOVERY_FAILED(503, "TheSportsDB 경기 목록을 가져오지 못했습니다."),
   SPORTSDB_AUTHENTICATION_FAILED(502, "TheSportsDB 인증에 실패했습니다."),
 
+  // Batch - Review summary
+  REVIEW_SUMMARY_GENERATION_FAILED(502, "리뷰 요약 생성에 실패했습니다."),
+
   // Common
   INVALID_REQUEST(400, "잘못된 요청입니다."),
   CONFLICT(409, "이미 존재하는 데이터입니다."),
