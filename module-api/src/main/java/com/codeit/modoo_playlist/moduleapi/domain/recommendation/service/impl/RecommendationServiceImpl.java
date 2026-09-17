@@ -44,7 +44,7 @@ public class RecommendationServiceImpl implements RecommendationService {
 
   @Override
   public List<RecommendedContentDto> getSimilarContents(UUID contentId, Integer limit) {
-    if (!contentRepository.existsById(contentId)) {
+    if (!contentRepository.existsByIdAndDeletedAtIsNull(contentId)) {
       throw new BaseException(ErrorCode.CONTENT_NOT_FOUND);
     }
     List<RecommendedContentDto> candidates =

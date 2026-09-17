@@ -16,16 +16,19 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import com.codeit.modoo_playlist.core.domain.follow.entity.Follow;
 import com.codeit.modoo_playlist.core.global.exception.BaseException;
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import com.codeit.modoo_playlist.moduleapi.domain.follow.repository.FollowRepository;
+import com.codeit.modoo_playlist.moduleapi.domain.notification.event.FollowedEvent;
 
 @ExtendWith(MockitoExtension.class)
 class FollowServiceImplTest {
 
     @Mock private FollowRepository followRepository;
+    @Mock private ApplicationEventPublisher eventPublisher;
     @InjectMocks private FollowServiceImpl followService;
 
     @Test
@@ -45,6 +48,7 @@ class FollowServiceImplTest {
         verify(followRepository).save(captor.capture());
         assertThat(captor.getValue().getFollowerId()).isEqualTo(followerId);
         assertThat(captor.getValue().getFolloweeId()).isEqualTo(followeeId);
+        verify(eventPublisher).publishEvent(new FollowedEvent(followerId, followeeId));
     }
 
     @Test

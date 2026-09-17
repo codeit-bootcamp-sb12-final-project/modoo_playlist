@@ -18,6 +18,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.codeit.modoo_playlist.core.domain.content.entity.Content;
@@ -33,6 +34,9 @@ import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import com.codeit.modoo_playlist.moduleapi.domain.content.mapper.ContentMapper;
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.jpa.ContentRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.jpa.ContentTagRepository;
+import com.codeit.modoo_playlist.moduleapi.domain.notification.event.PlaylistContentAddedEvent;
+import com.codeit.modoo_playlist.moduleapi.domain.notification.event.PlaylistCreatedEvent;
+import com.codeit.modoo_playlist.moduleapi.domain.notification.event.PlaylistSubscribedEvent;
 import com.codeit.modoo_playlist.moduleapi.domain.playlist.mapper.PlaylistMapper;
 import com.codeit.modoo_playlist.moduleapi.domain.playlist.repository.PlaylistContentRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.playlist.repository.PlaylistRepository;
@@ -57,6 +61,7 @@ class PlaylistServiceImplTest {
     @Mock private ContentTagRepository contentTagRepository;
     @Mock private PlaylistMapper playlistMapper;
     @Mock private ContentMapper contentMapper;
+    @Mock private ApplicationEventPublisher eventPublisher;
     @InjectMocks private PlaylistServiceImpl playlistService;
 
     @Test
@@ -75,6 +80,7 @@ class PlaylistServiceImplTest {
         assertThat(captor.getValue().getTitle()).isEqualTo("제목");
         assertThat(captor.getValue().getDescription()).isEqualTo("설명");
         assertThat(captor.getValue().getGeneratedBy()).isEqualTo(GeneratedBy.USER);
+        verify(eventPublisher).publishEvent(new PlaylistCreatedEvent(playlistId, ownerId));
     }
 
     @Test
@@ -194,6 +200,7 @@ class PlaylistServiceImplTest {
         ArgumentCaptor<PlaylistContent> captor = ArgumentCaptor.forClass(PlaylistContent.class);
         verify(playlistContentRepository).save(captor.capture());
         assertThat(captor.getValue().getId()).isEqualTo(id);
+        verify(eventPublisher).publishEvent(new PlaylistContentAddedEvent(playlistId, contentId));
     }
 
     @Test
@@ -259,9 +266,11 @@ class PlaylistServiceImplTest {
     @Test
     void 구독하면_저장된다() {
         UUID playlistId = UUID.randomUUID();
+        UUID ownerId = UUID.randomUUID();
         UUID subscriberId = UUID.randomUUID();
+        Playlist playlist = playlist(playlistId, ownerId, "제목", "설명");
         PlaylistSubscriptionId id = new PlaylistSubscriptionId(playlistId, subscriberId);
-        when(playlistRepository.existsById(playlistId)).thenReturn(true);
+        when(playlistRepository.findById(playlistId)).thenReturn(Optional.of(playlist));
         when(playlistSubscriptionRepository.existsById(id)).thenReturn(false);
 
         playlistService.subscribe(playlistId, subscriberId);
@@ -269,12 +278,13 @@ class PlaylistServiceImplTest {
         ArgumentCaptor<PlaylistSubscription> captor = ArgumentCaptor.forClass(PlaylistSubscription.class);
         verify(playlistSubscriptionRepository).save(captor.capture());
         assertThat(captor.getValue().getId()).isEqualTo(id);
+        verify(eventPublisher).publishEvent(new PlaylistSubscribedEvent(playlistId, ownerId, subscriberId));
     }
 
     @Test
     void 존재하지_않는_플레이리스트를_구독하면_PLAYLIST_NOT_FOUND를_반환한다() {
         UUID playlistId = UUID.randomUUID();
-        when(playlistRepository.existsById(playlistId)).thenReturn(false);
+        when(playlistRepository.findById(playlistId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> playlistService.subscribe(playlistId, UUID.randomUUID()))
                 .isInstanceOfSatisfying(BaseException.class, exception ->
@@ -286,8 +296,9 @@ class PlaylistServiceImplTest {
     void 이미_구독중이면_PLAYLIST_SUBSCRIPTION_ALREADY_EXISTS를_반환한다() {
         UUID playlistId = UUID.randomUUID();
         UUID subscriberId = UUID.randomUUID();
+        Playlist playlist = playlist(playlistId, UUID.randomUUID(), "제목", "설명");
         PlaylistSubscriptionId id = new PlaylistSubscriptionId(playlistId, subscriberId);
-        when(playlistRepository.existsById(playlistId)).thenReturn(true);
+        when(playlistRepository.findById(playlistId)).thenReturn(Optional.of(playlist));
         when(playlistSubscriptionRepository.existsById(id)).thenReturn(true);
 
         assertThatThrownBy(() -> playlistService.subscribe(playlistId, subscriberId))
