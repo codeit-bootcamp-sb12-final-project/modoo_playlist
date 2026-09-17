@@ -14,7 +14,7 @@ public interface ContentService {
 
     ContentCursorResponse getContents(ContentListRequest request, UUID userId);
 
-    ContentDetailResponse getContent(UUID contentId);
+    ContentDetailResponse getContent(UUID contentId, UUID userId);
 
     ContentDetailResponse createContent(
             ContentCreateRequest request,
