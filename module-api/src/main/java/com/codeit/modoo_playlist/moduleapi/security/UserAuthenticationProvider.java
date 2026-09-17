@@ -39,15 +39,19 @@ public class UserAuthenticationProvider implements AuthenticationProvider {
             ErrorCode.INVALID_CREDENTIALS.getMessage()
         ));
 
-    if (user.isLocked()) {
-      throw new LockedException(ErrorCode.USER_ACCOUNT_LOCKED.getMessage());
-    }
-
     Instant now = clock.instant();
     boolean temporaryMatches = user.getTempPassword() != null
         && passwordEncoder.matches(rawPassword, user.getTempPassword());
     boolean permanentMatches = user.getPassword() != null
         && passwordEncoder.matches(rawPassword, user.getPassword());
+
+    if (!temporaryMatches && !permanentMatches) {
+      throw invalidCredentials();
+    }
+
+    if (user.isLocked()) {
+      throw new LockedException(ErrorCode.USER_ACCOUNT_LOCKED.getMessage());
+    }
 
     LoginCredentialType credentialType;
 

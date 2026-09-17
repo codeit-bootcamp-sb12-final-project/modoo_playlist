@@ -25,6 +25,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataAccessException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -35,6 +36,7 @@ import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthServiceImpl implements AuthService {
 
   private final JwtTokenProvider tokenProvider;
@@ -60,15 +62,27 @@ public class AuthServiceImpl implements AuthService {
   @Override
   @Transactional
   public void resetPassword(String email) {
-    User user = userRepository.findByEmail(email)
-        .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+    User user = userRepository.findByEmail(email).orElse(null);
+
+    if (user == null) {
+      log.info("Password reset request ignored: reason=USER_NOT_FOUND");
+      return;
+    }
 
     if (user.getPassword() == null) {
-      throw new BaseException(ErrorCode.PASSWORD_RESET_NOT_SUPPORTED);
+      log.info(
+          "Password reset request ignored: reason=PASSWORD_RESET_NOT_SUPPORTED, userId={}",
+          user.getId()
+      );
+      return;
     }
 
     if (user.isLocked()) {
-      throw new BaseException(ErrorCode.USER_ACCOUNT_LOCKED);
+      log.info(
+          "Password reset request ignored: reason=USER_ACCOUNT_LOCKED, userId={}",
+          user.getId()
+      );
+      return;
     }
 
     String temporaryPassword = temporaryPasswordGenerator.generate();
