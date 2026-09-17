@@ -1,10 +1,14 @@
 package com.codeit.modoo_playlist.moduleapi.domain.watchingsession.repository;
 
+import com.codeit.modoo_playlist.core.domain.content.entity.Content;
 import com.codeit.modoo_playlist.core.domain.conversation.entity.SortDirection;
 import com.codeit.modoo_playlist.core.domain.user.entity.QUser;
 import com.codeit.modoo_playlist.core.domain.watchingSession.entity.QWatchingSession;
 import com.codeit.modoo_playlist.core.domain.watchingSession.entity.WatchingSession;
+import com.codeit.modoo_playlist.moduleapi.domain.content.mapper.ContentMapper;
+import com.codeit.modoo_playlist.moduleapi.domain.content.repository.jpa.ContentTagRepository;
 import com.codeit.modoo_playlist.moduleapi.dto.WatchingSessionDto;
+import com.codeit.modoo_playlist.moduleapi.dto.content.response.ContentSummaryResponse;
 import com.codeit.modoo_playlist.moduleapi.dto.conversation.request.SliceCursorRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.watchingsession.response.CursorResponseWatchingSessionDto;
 import com.codeit.modoo_playlist.moduleapi.mapper.WatchingSessionMapper;
@@ -23,9 +27,11 @@ public class WatchingSessionRepositoryCustomImpl implements WatchingSessionRepos
 
     private final JPAQueryFactory queryFactory;
     private final WatchingSessionMapper watchingSessionMapper;
+    private final ContentMapper contentMapper;
+
+    private final ContentTagRepository contentTagRepository;
 
     private static final QWatchingSession ws = QWatchingSession.watchingSession;
-    private static final QUser u =  QUser.user;
 
     @Override
     public Optional<WatchingSession> findActiveByWatcherId(UUID watcherId) {
@@ -76,9 +82,26 @@ public class WatchingSessionRepositoryCustomImpl implements WatchingSessionRepos
             rows = rows.subList(0, limit);
         }
 
-        List<WatchingSessionDto> data = rows.stream()
-                .map(watchingSessionMapper::toDto)
-                .toList();
+
+
+        List<WatchingSessionDto> data = List.of();
+
+        if (!rows.isEmpty()) {
+            Content content = rows.get(0).getContent();
+
+            List<String> tags = contentTagRepository
+                    .findAllWithTagByContentIds(List.of(contentId))
+                    .stream()
+                    .map(contentTag -> contentTag.getTag().getName())
+                    .toList();
+
+            ContentSummaryResponse summary =
+                    contentMapper.toSummary(content, tags);
+
+            data = rows.stream()
+                    .map(row -> watchingSessionMapper.toDto(row, summary))
+                    .toList();
+        }
 
         String nextCursor = null;
         UUID nextIdAfter = null;
@@ -176,7 +199,7 @@ public class WatchingSessionRepositoryCustomImpl implements WatchingSessionRepos
     }
 
     private boolean isAscending(SliceCursorRequest request) {
-        if (request.limit() <= 0) {
+        if (request.limit() < 1) {
             throw new IllegalArgumentException("limit은 0보다 커야합니다.");
         }
         if (request.sortBy() != null

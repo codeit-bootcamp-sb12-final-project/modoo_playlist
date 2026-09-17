@@ -5,10 +5,13 @@ import com.codeit.modoo_playlist.core.domain.user.entity.User;
 import com.codeit.modoo_playlist.core.domain.watchingSession.entity.WatchingSession;
 import com.codeit.modoo_playlist.core.global.exception.BaseException;
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
+import com.codeit.modoo_playlist.moduleapi.domain.content.mapper.ContentMapper;
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.jpa.ContentRepository;
+import com.codeit.modoo_playlist.moduleapi.domain.content.repository.jpa.ContentTagRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.watchingsession.repository.WatchingSessionRepository;
 import com.codeit.modoo_playlist.moduleapi.dto.WatchingSessionDto;
+import com.codeit.modoo_playlist.moduleapi.dto.content.response.ContentSummaryResponse;
 import com.codeit.modoo_playlist.moduleapi.dto.conversation.request.SliceCursorRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.watchingsession.*;
 
@@ -31,8 +34,10 @@ public class WatchingSessionService {
     private final WatchingSessionRepository watchingSessionRepository;
     private final UserRepository userRepository;
     private final ContentRepository contentRepository;
+    private final ContentTagRepository contentTagRepository;
 
     private final WatchingSessionMapper watchingSessionMapper;
+    private final ContentMapper contentMapper;
 
     @Transactional(readOnly = true)
     public WatchingSessionDto findByUser(UUID watcherId) {
@@ -44,7 +49,7 @@ public class WatchingSessionService {
         }
 
         return watchingSessionRepository.findActiveByWatcherId(watcherId)
-                .map(watchingSessionMapper::toDto)
+                .map(this::toDto)
                 .orElse(null);
     }
 
@@ -161,8 +166,23 @@ public class WatchingSessionService {
 
         return new WatchingSessionChange(
                 type,
-                watchingSessionMapper.toDto(session),
+                toDto(session),
                 watcherCount
         );
+    }
+
+    private WatchingSessionDto toDto(WatchingSession session){
+        Content content = session.getContent();
+
+        List<String> tags = contentTagRepository
+                .findAllWithTagByContentIds(List.of(content.getId()))
+                .stream()
+                .map(contentTag -> contentTag.getTag().getName())
+                .toList();
+
+        ContentSummaryResponse summary =
+                contentMapper.toSummary(content,tags);
+
+        return watchingSessionMapper.toDto(session, summary);
     }
 }
