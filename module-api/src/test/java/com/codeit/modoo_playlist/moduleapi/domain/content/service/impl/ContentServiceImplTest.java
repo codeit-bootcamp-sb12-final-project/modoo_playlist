@@ -33,6 +33,8 @@ import com.codeit.modoo_playlist.core.domain.content.entity.ContentSports;
 import com.codeit.modoo_playlist.core.domain.content.entity.ContentVideo;
 import com.codeit.modoo_playlist.core.domain.content.type.ContentSource;
 import com.codeit.modoo_playlist.core.domain.content.type.ContentType;
+import com.codeit.modoo_playlist.core.domain.interaction.entity.UserContentInteraction;
+import com.codeit.modoo_playlist.core.domain.interaction.enums.InteractionType;
 import com.codeit.modoo_playlist.core.domain.tag.entity.Tag;
 import com.codeit.modoo_playlist.core.domain.tag.type.TagKind;
 import com.codeit.modoo_playlist.core.global.exception.BaseException;
@@ -47,6 +49,7 @@ import com.codeit.modoo_playlist.moduleapi.domain.content.repository.query.Conte
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.query.ContentQueryPage;
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.query.ContentQueryPage.ContentItem;
 import com.codeit.modoo_playlist.moduleapi.domain.content.storage.ThumbnailStorage;
+import com.codeit.modoo_playlist.moduleapi.domain.interaction.repository.UserContentInteractionRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.tag.service.TagService;
 import com.codeit.modoo_playlist.moduleapi.dto.content.request.ContentListRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.content.request.ContentCreateRequest;
@@ -68,6 +71,7 @@ class ContentServiceImplTest {
     @Mock private ContentVideoRepository contentVideoRepository;
     @Mock private ContentSportsRepository contentSportsRepository;
     @Mock private ContentPersonRepository contentPersonRepository;
+    @Mock private UserContentInteractionRepository userContentInteractionRepository;
     @Mock private TagService tagService;
     @Mock private ContentMapper contentMapper;
     @Mock private ThumbnailStorage thumbnailStorage;
@@ -168,7 +172,7 @@ class ContentServiceImplTest {
         when(contentPersonRepository.findAllByContent_IdOrderByDisplayOrderAsc(content.getId()))
                 .thenReturn(List.of());
         when(contentVideoRepository.findById(content.getId())).thenReturn(Optional.empty());
-        when(contentMapper.toDetail(eq(content), anyList(), eq(0L), isNull(), isNull(), anyList()))
+        when(contentMapper.toDetail(eq(content), anyList(), eq(0L), isNull(), isNull(), anyList(), isNull()))
                 .thenReturn(expected);
 
         ContentDetailResponse result = contentService.updateContent(
@@ -223,9 +227,33 @@ class ContentServiceImplTest {
         UUID id = UUID.randomUUID();
         when(contentRepository.findByIdAndDeletedAtIsNull(id)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> contentService.getContent(id))
+        assertThatThrownBy(() -> contentService.getContent(id, userId))
                 .isInstanceOfSatisfying(BaseException.class, exception ->
                         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.CONTENT_NOT_FOUND));
+    }
+
+    @Test
+    void 콘텐츠_상세조회는_현재_사용자의_반응을_포함한다() {
+        Content content = content(ContentType.MOVIE, null);
+        UserContentInteraction interaction = UserContentInteraction.builder()
+                .type(InteractionType.LIKE)
+                .build();
+        ContentDetailResponse expected = detail(content.getId(), InteractionType.LIKE);
+        when(contentRepository.findByIdAndDeletedAtIsNull(content.getId()))
+                .thenReturn(Optional.of(content));
+        when(userContentInteractionRepository.findByUserIdAndContentIdAndTypeIn(
+                eq(userId), eq(content.getId()), any()))
+                .thenReturn(Optional.of(interaction));
+        when(contentPersonRepository.findAllByContent_IdOrderByDisplayOrderAsc(content.getId()))
+                .thenReturn(List.of());
+        when(contentVideoRepository.findById(content.getId())).thenReturn(Optional.empty());
+        when(contentMapper.toDetail(
+                eq(content), anyList(), eq(0L), isNull(), isNull(), anyList(), eq(InteractionType.LIKE)))
+                .thenReturn(expected);
+
+        ContentDetailResponse result = contentService.getContent(content.getId(), userId);
+
+        assertThat(result.myReaction()).isEqualTo(InteractionType.LIKE);
     }
 
     @Test
@@ -247,7 +275,7 @@ class ContentServiceImplTest {
         when(contentSportsRepository.findAllById(List.of())).thenReturn(List.of());
         when(contentPersonRepository.findAllByContent_IdOrderByDisplayOrderAsc(id)).thenReturn(List.of());
         when(contentVideoRepository.findById(id)).thenReturn(Optional.empty());
-        when(contentMapper.toDetail(any(Content.class), anyList(), eq(0L), isNull(), isNull(), anyList()))
+        when(contentMapper.toDetail(any(Content.class), anyList(), eq(0L), isNull(), isNull(), anyList(), isNull()))
                 .thenReturn(expected);
 
         ContentDetailResponse result = contentService.createContent(
@@ -383,7 +411,7 @@ class ContentServiceImplTest {
         when(contentPersonRepository.findAllByContent_IdOrderByDisplayOrderAsc(content.getId()))
                 .thenReturn(List.of());
         when(contentVideoRepository.findById(content.getId())).thenReturn(Optional.empty());
-        when(contentMapper.toDetail(eq(content), anyList(), eq(0L), isNull(), isNull(), anyList()))
+        when(contentMapper.toDetail(eq(content), anyList(), eq(0L), isNull(), isNull(), anyList(), isNull()))
                 .thenReturn(expected);
 
         contentService.updateContent(
@@ -414,7 +442,7 @@ class ContentServiceImplTest {
         when(contentPersonRepository.findAllByContent_IdOrderByDisplayOrderAsc(content.getId()))
                 .thenReturn(List.of());
         when(contentVideoRepository.findById(content.getId())).thenReturn(Optional.of(video));
-        when(contentMapper.toDetail(eq(content), anyList(), eq(0L), eq(video), isNull(), anyList()))
+        when(contentMapper.toDetail(eq(content), anyList(), eq(0L), eq(video), isNull(), anyList(), isNull()))
                 .thenReturn(expected);
 
         contentService.updateContent(content.getId(), new ContentUpdateRequest(
@@ -446,7 +474,7 @@ class ContentServiceImplTest {
         when(contentPersonRepository.findAllByContent_IdOrderByDisplayOrderAsc(content.getId()))
                 .thenReturn(List.of());
         when(contentVideoRepository.findById(content.getId())).thenReturn(Optional.empty());
-        when(contentMapper.toDetail(eq(content), anyList(), eq(0L), isNull(), isNull(), anyList()))
+        when(contentMapper.toDetail(eq(content), anyList(), eq(0L), isNull(), isNull(), anyList(), isNull()))
                 .thenReturn(expected);
 
         contentService.updateContent(content.getId(), new ContentUpdateRequest(
@@ -560,9 +588,13 @@ class ContentServiceImplTest {
     }
 
     private ContentDetailResponse detail(UUID id) {
+        return detail(id, null);
+    }
+
+    private ContentDetailResponse detail(UUID id, InteractionType myReaction) {
         return new ContentDetailResponse(
                 id, "movie", "제목", null, null, List.of(), BigDecimal.ZERO,
-                0, 0, null, null, null, null, List.of()
+                0, 0, null, null, null, null, List.of(), myReaction
         );
     }
 }

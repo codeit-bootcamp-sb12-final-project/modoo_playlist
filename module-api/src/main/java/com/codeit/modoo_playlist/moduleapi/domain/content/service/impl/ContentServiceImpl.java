@@ -4,6 +4,7 @@ import com.codeit.modoo_playlist.moduleapi.domain.search.event.ContentIndexReque
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -26,6 +27,7 @@ import com.codeit.modoo_playlist.core.domain.content.entity.ContentTagId;
 import com.codeit.modoo_playlist.core.domain.content.entity.ContentVideo;
 import com.codeit.modoo_playlist.core.domain.content.type.ContentType;
 import com.codeit.modoo_playlist.core.domain.content.type.SportsStatus;
+import com.codeit.modoo_playlist.core.domain.interaction.enums.InteractionType;
 import com.codeit.modoo_playlist.core.domain.tag.entity.Tag;
 import com.codeit.modoo_playlist.core.domain.tag.type.TagKind;
 import com.codeit.modoo_playlist.core.global.exception.BaseException;
@@ -43,6 +45,7 @@ import com.codeit.modoo_playlist.moduleapi.domain.content.repository.query.Conte
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.query.ContentQueryPage.ContentItem;
 import com.codeit.modoo_playlist.moduleapi.domain.content.service.ContentService;
 import com.codeit.modoo_playlist.moduleapi.domain.content.storage.ThumbnailStorage;
+import com.codeit.modoo_playlist.moduleapi.domain.interaction.repository.UserContentInteractionRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.tag.service.TagService;
 import com.codeit.modoo_playlist.moduleapi.dto.content.request.ContentCreateRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.content.request.ContentListRequest;
@@ -66,12 +69,18 @@ public class ContentServiceImpl implements ContentService {
     private static final int TV_GENRE_LIMIT = 3;
     private static final String DEFAULT_SORT_BY = "watcherCount";
     private static final String DEFAULT_SORT_DIRECTION = "DESCENDING";
+    private static final Set<InteractionType> REACTION_TYPES = EnumSet.of(
+            InteractionType.LIKE,
+            InteractionType.DISLIKE,
+            InteractionType.NOT_INTERESTED
+    );
 
     private final ContentRepository contentRepository;
     private final ContentTagRepository contentTagRepository;
     private final ContentVideoRepository contentVideoRepository;
     private final ContentSportsRepository contentSportsRepository;
     private final ContentPersonRepository contentPersonRepository;
+    private final UserContentInteractionRepository userContentInteractionRepository;
     private final TagService tagService;
     private final ContentMapper contentMapper;
     private final ThumbnailStorage thumbnailStorage;
@@ -103,11 +112,15 @@ public class ContentServiceImpl implements ContentService {
     }
 
     @Override
-    public ContentDetailResponse getContent(UUID contentId) {
+    public ContentDetailResponse getContent(UUID contentId, UUID userId) {
         Content content = contentRepository.findByIdAndDeletedAtIsNull(contentId)
                 .orElseThrow(() -> new BaseException(ErrorCode.CONTENT_NOT_FOUND));
+        InteractionType myReaction = userContentInteractionRepository
+                .findByUserIdAndContentIdAndTypeIn(userId, contentId, REACTION_TYPES)
+                .map(interaction -> interaction.getType())
+                .orElse(null);
 
-        return createDetailResponse(content);
+        return createDetailResponse(content, myReaction);
     }
 
     @Override
@@ -195,6 +208,13 @@ public class ContentServiceImpl implements ContentService {
     }
 
     private ContentDetailResponse createDetailResponse(Content content) {
+        return createDetailResponse(content, null);
+    }
+
+    private ContentDetailResponse createDetailResponse(
+            Content content,
+            InteractionType myReaction
+    ) {
         UUID contentId = content.getId();
         List<String> tags = loadDisplayTagsByContentId(List.of(content))
                 .getOrDefault(contentId, List.of());
@@ -217,7 +237,8 @@ public class ContentServiceImpl implements ContentService {
                 watcherCount,
                 video,
                 sports,
-                people
+                people,
+                myReaction
         );
     }
 
