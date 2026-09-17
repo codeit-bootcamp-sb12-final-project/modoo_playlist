@@ -12,11 +12,6 @@ import com.codeit.modoo_playlist.moduleapi.domain.preference.repository.UserPref
 import com.codeit.modoo_playlist.moduleapi.domain.preference.repository.UserSimilarityRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.RecommendedContentDto;
 import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.SimilarUserInteractionProjection;
-import com.codeit.modoo_playlist.moduleapi.domain.interaction.repository.UserContentInteractionRepository;
-import com.codeit.modoo_playlist.moduleapi.domain.preference.dto.SimilarUserDto;
-import com.codeit.modoo_playlist.moduleapi.domain.preference.repository.UserSimilarityRepository;
-import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.SimilarContentDto;
-import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.SimilarUserInteractionProjection;
 import com.codeit.modoo_playlist.moduleapi.domain.recommendation.service.RecommendationService;
 import java.util.ArrayList;
 import java.util.Comparator;
