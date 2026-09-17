@@ -10,6 +10,14 @@ public enum ErrorCode {
   // Social
   // 추후 추가
 
+  // System account initialization
+  MULTIPLE_BOT_ACCOUNTS(500, "BOT 계정이 둘 이상 존재하여 초기화할 수 없습니다."),
+  BOT_EMAIL_CONFLICT(500, "설정된 BOT 이메일을 다른 사용자가 사용 중입니다."),
+  BOT_CONFIGURATION_INVALID(500, "BOT 초기화 설정에 BOT_EMAIL과 BOT_NAME이 필요합니다."),
+  ADMIN_EMAIL_CONFLICT(500, "설정된 관리자 이메일을 다른 사용자가 사용 중입니다."),
+  ADMIN_CONFIGURATION_INVALID(500, "관리자 초기화 설정에 ADMIN_EMAIL과 ADMIN_PASSWORD가 필요합니다."),
+  BOT_SERVICE_UNAVAILABLE(503, "챗봇 서비스를 일시적으로 사용할 수 없습니다."),
+
   // Auth - 인증 및 인가
   INVALID_CREDENTIALS(401, "이메일 또는 비밀번호가 올바르지 않습니다."),
   AUTHENTICATION_REQUIRED(401, "로그인이 필요합니다."),
@@ -42,6 +50,7 @@ public enum ErrorCode {
   REVIEW_NOT_FOUND(404, "리뷰를 찾을 수 없습니다."),
   REVIEW_ALREADY_EXISTS(409, "이미 이 콘텐츠에 리뷰를 작성했습니다."),
   REVIEW_ACCESS_DENIED(403, "본인이 작성한 리뷰가 아닙니다."),
+  REVIEW_QUERY_INVALID(400, "리뷰 조회 조건이 올바르지 않습니다."),
 
   // Playlist
   PLAYLIST_NOT_FOUND(404, "플레이리스트를 찾을 수 없습니다."),
@@ -50,18 +59,22 @@ public enum ErrorCode {
   PLAYLIST_CONTENT_ALREADY_EXISTS(409, "이미 플레이리스트에 등록된 콘텐츠입니다."),
   PLAYLIST_SUBSCRIPTION_NOT_FOUND(404, "구독 관계를 찾을 수 없습니다."),
   PLAYLIST_SUBSCRIPTION_ALREADY_EXISTS(409, "이미 구독 중인 플레이리스트입니다."),
+  PLAYLIST_QUERY_INVALID(400, "플레이리스트 조회 조건이 올바르지 않습니다."),
 
   // Conversation
   CONVERSATION_NOT_FOUND(404, "대화를 찾을 수 없습니다."),
   CONVERSATION_ACCESS_DENIED(403, "해당 대화에 접근할 권한이 없습니다."),
-  SELF_CONVERSATION_NOT_ALLOWED(400,"생성될 수 없는 대화 형식입니다."),
-  REQUIRED_WITH_USER(400,"상대 사용자 ID는 필수입니다."),
+  SELF_CONVERSATION_NOT_ALLOWED(400, "생성될 수 없는 대화 형식입니다."),
+  REQUIRED_WITH_USER(400, "상대 사용자 ID는 필수입니다."),
 
   // Message
-  MESSAGE_NOT_FOUND(404,"메시지를 찾을 수 없습니다."),
+  MESSAGE_NOT_FOUND(404, "메시지를 찾을 수 없습니다."),
 
   // WatchingSession
-  WATCHING_SESSION_NOT_FOUND(404,"시청 세션을 찾을 수 없습니다."),
+  WATCHING_SESSION_NOT_FOUND(404, "시청 세션을 찾을 수 없습니다."),
+
+  // Chat
+  AI_BOT_ACCOUNT_NOT_FOUND(500, "AI 봇 계정을 찾을 수 없습니다."),
 
   // File
   FILE_SAVE_FAILED(500, "파일 저장에 실패했습니다."),
@@ -77,6 +90,9 @@ public enum ErrorCode {
   CONTENT_CURSOR_INVALID(400, "콘텐츠 커서 형식이 올바르지 않습니다."),
   CONTENT_DETAIL_INVALID(400, "콘텐츠 타입별 상세 정보가 올바르지 않습니다."),
   THUMBNAIL_INVALID(400, "올바른 썸네일 이미지가 아닙니다."),
+
+  // Reaction
+  REACTION_TYPE_INVALID(400, "반응 타입은 LIKE, DISLIKE, NOT_INTERESTED만 가능합니다."),
 
   // Tag
   TAG_NAME_INVALID(400, "태그 이름이 올바르지 않습니다."),

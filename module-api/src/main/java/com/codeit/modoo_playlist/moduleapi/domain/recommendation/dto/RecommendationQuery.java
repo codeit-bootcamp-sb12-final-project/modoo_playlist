@@ -12,6 +12,7 @@ public record RecommendationQuery(
     @Max(100)
     Integer limit
 ) {
+
   public RecommendationQuery {
     if (limit == null) {
       limit = 10;

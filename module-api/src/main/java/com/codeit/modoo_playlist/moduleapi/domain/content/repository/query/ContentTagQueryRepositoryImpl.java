@@ -68,6 +68,27 @@ public class ContentTagQueryRepositoryImpl implements ContentTagQueryRepository 
     }
 
     @Override
+    public List<RecommendedContentDto> findContentsByTagId(UUID tagId, Pageable pageable) {
+        return queryFactory
+                .select(Projections.constructor(
+                        RecommendedContentDto.class,
+                        content.id,
+                        content.title,
+                        content.thumbnailUrl,
+                        content.averageRating.doubleValue()
+                ))
+                .from(contentTag)
+                .join(content)
+                .on(content.id.eq(contentTag.content.id))
+                .where(contentTag.tag.id.eq(tagId))
+                .where(content.deletedAt.isNull())
+                .orderBy(content.averageRating.desc(), content.id.asc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+    }
+
+    @Override
     public void increaseTagContentCounts(Collection<UUID> tagIds) {
         if (tagIds.isEmpty()) {
             return;

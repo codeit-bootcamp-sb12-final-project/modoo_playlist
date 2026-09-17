@@ -17,7 +17,9 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.codeit.modoo_playlist.core.global.common.util.KeywordNormalizer;
 import com.codeit.modoo_playlist.moduleapi.domain.content.service.ContentService;
+import com.codeit.modoo_playlist.moduleapi.domain.search.service.ContentSearchService;
 import com.codeit.modoo_playlist.moduleapi.dto.content.request.ContentCreateRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.content.request.ContentListRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.content.request.ContentUpdateRequest;
@@ -35,6 +37,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 public class ContentController {
 
     private final ContentService contentService;
+    private final ContentSearchService contentSearchService;
 
     @PreAuthorize("hasRole('USER')")
     @GetMapping
@@ -42,6 +45,11 @@ public class ContentController {
             @Valid @ModelAttribute ContentListRequest request,
             @AuthenticationPrincipal UserDetails user
     ) {
+        // 검색어가 있으면 ES 검색으로 연결
+        String keyword = KeywordNormalizer.normalize(request.keywordLike());
+        if (!keyword.isEmpty()) {
+            return ResponseEntity.ok(contentSearchService.searchPage(request));
+        }
         return ResponseEntity.ok(contentService.getContents(request, user.getUserDto().id()));
     }
 

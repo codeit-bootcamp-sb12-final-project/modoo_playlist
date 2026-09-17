@@ -144,6 +144,11 @@ public class RedisLoginSessionStore implements LoginSessionStore {
     }
   }
 
+  @Override
+  public void invalidateAll(UUID userId) {
+    redisTemplate.delete(key(userId));
+  }
+
   /*
     value로 json 값 전달
     -> value가 없으면 0 반환(세션이 없거나, 로그아웃해서 세션 삭제 등)

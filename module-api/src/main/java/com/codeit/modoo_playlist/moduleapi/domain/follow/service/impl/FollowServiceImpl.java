@@ -5,8 +5,10 @@ import com.codeit.modoo_playlist.core.global.exception.BaseException;
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import com.codeit.modoo_playlist.moduleapi.domain.follow.repository.FollowRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.follow.service.FollowService;
+import com.codeit.modoo_playlist.moduleapi.domain.notification.event.FollowedEvent;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class FollowServiceImpl implements FollowService {
 
     private final FollowRepository followRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -32,7 +35,11 @@ public class FollowServiceImpl implements FollowService {
                 .followeeId(followeeId)
                 .build();
 
-        return followRepository.save(follow);
+        Follow saved = followRepository.save(follow);
+
+        eventPublisher.publishEvent(new FollowedEvent(followerId, followeeId));
+
+        return saved;
     }
 
     @Override

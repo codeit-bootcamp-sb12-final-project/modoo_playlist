@@ -4,6 +4,8 @@ import com.codeit.modoo_playlist.core.domain.content.entity.Content;
 import com.codeit.modoo_playlist.core.domain.interaction.entity.UserContentInteraction;
 import com.codeit.modoo_playlist.core.domain.interaction.enums.InteractionType;
 import com.codeit.modoo_playlist.core.domain.user.entity.User;
+import com.codeit.modoo_playlist.core.global.exception.BaseException;
+import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.jpa.ContentRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.interaction.repository.UserContentInteractionRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
@@ -33,16 +35,15 @@ public class ReactionServiceImpl implements ReactionService {
   @Transactional
   public void setReaction(UUID userId, UUID contentId, InteractionType type) {
     if (!REACTION_TYPES.contains(type)) {
-      throw new IllegalArgumentException(
-          "reaction type must be LIKE, DISLIKE, or NOT_INTERESTED: " + type);
+      throw new BaseException(ErrorCode.REACTION_TYPE_INVALID);
     }
     UserContentInteraction userContentInteraction = userContentInteractionRepository
         .findByUserIdAndContentIdAndTypeIn(userId, contentId, REACTION_TYPES).orElse(null);
     if (userContentInteraction == null) {
       User user = userRepository.findById(userId)
-          .orElseThrow(() -> new IllegalArgumentException("user not found: " + userId));
+          .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
       Content content = contentRepository.findById(contentId)
-          .orElseThrow(() -> new IllegalArgumentException("content not found: " + contentId));
+          .orElseThrow(() -> new BaseException(ErrorCode.CONTENT_NOT_FOUND));
       userContentInteractionRepository.save(
           UserContentInteraction.builder()
               .user(user)

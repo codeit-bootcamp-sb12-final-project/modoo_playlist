@@ -1,10 +1,12 @@
 package com.codeit.modoo_playlist.moduleapi.domain.watchingsession.service;
 
 import com.codeit.modoo_playlist.core.global.realtime.RealtimeNotifier;
+import com.codeit.modoo_playlist.moduleapi.domain.search.event.WatcherCountChangedEvent;
 import com.codeit.modoo_playlist.moduleapi.dto.watchingsession.response.StartResult;
 import com.codeit.modoo_playlist.moduleapi.dto.watchingsession.WatchingSessionChange;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -21,6 +23,7 @@ public class WatchingSessionRegistry {
 
     private final WatchingSessionService watchingSessionService;
     private final RealtimeNotifier realtimeNotifier;
+    private final ApplicationEventPublisher eventPublisher;
 
     private final Map<String, ConnectionState> connections =
             new ConcurrentHashMap<>();
@@ -283,6 +286,18 @@ public class WatchingSessionRegistry {
     private void broadcast(WatchingSessionChange change) {
         UUID contentId = change.watchingSession().content().id();
         String destination = "/sub/contents/" + contentId + "/watch";
+
+        // ES 반영을 위한 이벤트 발행
+        try {
+            eventPublisher.publishEvent(new WatcherCountChangedEvent(contentId));
+        } catch (RuntimeException exception) {
+            log.error(
+                "시청자 수 변경 이벤트 발행 실패: contentId={}, watcherCount={}",
+                contentId,
+                change.watcherCount(),
+                exception
+            );
+        }
 
         try {
             realtimeNotifier.notifyStomp(destination, change);

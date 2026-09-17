@@ -3,6 +3,7 @@ package com.codeit.modoo_playlist.moduleapi.domain.user.controller;
 import com.codeit.modoo_playlist.moduleapi.domain.user.service.UserService;
 import com.codeit.modoo_playlist.moduleapi.dto.UserDto;
 import com.codeit.modoo_playlist.moduleapi.dto.request.UserCreateRequest;
+import com.codeit.modoo_playlist.moduleapi.dto.request.UserListRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.request.UserLockUpdateRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.request.UserProfileUpdateRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.request.UserRoleUpdateRequest;
@@ -13,8 +14,10 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -80,32 +83,51 @@ public class UserController {
     throw new UnsupportedOperationException("구현 예정");
   }
 
+  @PreAuthorize("hasRole('ADMIN')")
   @GetMapping(
       name = "[ADMIN 권한] 사용자 목록 조회"
   )
-  public ResponseEntity<CursorResponseUserDto> getAllUsers() {
-    throw new UnsupportedOperationException("구현 예정");
+  public ResponseEntity<CursorResponseUserDto> getAllUsers(
+      @Valid @ModelAttribute UserListRequest request
+  ) {
+    return ResponseEntity.ok(userService.getAllUsers(request));
   }
 
+  @PreAuthorize("hasRole('ADMIN')")
   @PatchMapping(
       name = "[ADMIN 권한] 권한 수정",
       value = "/{userId}/role"
   )
   public ResponseEntity<Void> updateUserRole(
       @PathVariable UUID userId,
-      @RequestBody UserRoleUpdateRequest request
+      @Valid @RequestBody UserRoleUpdateRequest request,
+      @AuthenticationPrincipal UserDetails principal
   ) {
-    throw new UnsupportedOperationException("구현 예정");
+    userService.updateRole(
+        principal.getUserDto().id(),
+        userId,
+        request.role()
+    );
+
+    return ResponseEntity.noContent().build();
   }
 
+  @PreAuthorize("hasRole('ADMIN')")
   @PatchMapping(
       name = "[ADMIN 권한] 계정 잠금 상태 변경",
       value = "/{userId}/locked"
   )
   public ResponseEntity<Void> updateUserLock(
       @PathVariable UUID userId,
-      @RequestBody UserLockUpdateRequest request
+      @Valid @RequestBody UserLockUpdateRequest request,
+      @AuthenticationPrincipal UserDetails principal
   ) {
-    throw new UnsupportedOperationException("구현 예정");
+    userService.updateLocked(
+        principal.getUserDto().id(),
+        userId,
+        request.locked()
+    );
+
+    return ResponseEntity.noContent().build();
   }
 }

@@ -91,6 +91,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         throw new BaseException(ErrorCode.INVALID_TOKEN);
       }
 
+//      유저가 잠금일 경우 막는 방어 코드
+      if (!userDetails.isAccountNonLocked()) {
+        throw new BaseException(ErrorCode.USER_ACCOUNT_LOCKED);
+      }
+
       // 7. 현재 요청의 인증 정보 구성
       UsernamePasswordAuthenticationToken authentication =
           new UsernamePasswordAuthenticationToken(

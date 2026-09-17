@@ -32,4 +32,9 @@ public class UserDetails implements org.springframework.security.core.userdetail
   public String getUsername() {
     return userDto.email();
   }
+
+  @Override
+  public boolean isAccountNonLocked() {
+    return !userDto.locked();
+  }
 }

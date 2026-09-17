@@ -5,12 +5,13 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 public record SimilarUserInteractionProjection(
-		UUID contentId,
-		String title,
-		String thumbnailUrl,
-		UUID otherUserId,
-		InteractionType type,
-		BigDecimal value,
-		Integer occurrenceCount
+    UUID contentId,
+    String title,
+    String thumbnailUrl,
+    UUID otherUserId,
+    InteractionType type,
+    BigDecimal value,
+    Integer occurrenceCount
 ) {
+
 }

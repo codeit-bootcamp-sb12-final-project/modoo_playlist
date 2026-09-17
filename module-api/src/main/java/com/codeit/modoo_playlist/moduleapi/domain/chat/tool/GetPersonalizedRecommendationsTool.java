@@ -26,7 +26,14 @@ public class GetPersonalizedRecommendationsTool {
   public List<RecommendedContentDto> getPersonalizedRecommendations(ToolContext toolContext) {
     UUID userId = ChatToolContext.requireUserId(toolContext);
     log.info("get_personalized_recommendations 호출: userId={}", userId);
-    List<RecommendedContentDto> result = recommendationService.getRecommendationsForMe(userId, DEFAULT_LIMIT);
+
+    List<RecommendedContentDto> result;
+    try {
+      result = recommendationService.getRecommendationsForMe(userId, DEFAULT_LIMIT);
+    } catch (Exception e) {
+      log.error("get_personalized_recommendations 조회 실패: userId={}", userId, e);
+      return List.of();
+    }
     log.info("get_personalized_recommendations 결과: {}건", result.size());
 
     Object collector = toolContext.getContext().get(ChatToolContext.CARD_COLLECTOR);

@@ -2,7 +2,6 @@ package com.codeit.modoo_playlist.moduleapi.domain.search.service;
 
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.SortOptions;
-import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import com.codeit.modoo_playlist.core.domain.content.type.ContentType;
 import com.codeit.modoo_playlist.core.global.common.util.KeywordNormalizer;
@@ -11,8 +10,6 @@ import com.codeit.modoo_playlist.moduleapi.domain.search.mapper.ContentSearchRes
 import com.codeit.modoo_playlist.moduleapi.dto.content.request.ContentListRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.content.response.ContentCursorResponse;
 import com.codeit.modoo_playlist.moduleapi.dto.content.response.ContentListItemResponse;
-import java.time.Instant;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -34,10 +31,11 @@ public class ContentSearchService {
 
   private static final int DEFAULT_SEARCH_LIMIT = 20;
   private static final int MAX_SEARCH_LIMIT = 100;
-  private static final String ID_SORT_FIELD = "id.keyword";
+  private static final String DEFAULT_SORT_BY = "watcherCount";
 
   private final ElasticsearchOperations elasticsearchOperations;
   private final ContentSearchResponseMapper contentSearchResponseMapper;
+  private final ContentSearchSortService contentSearchSortService;
 
   // 검색어 전용 호출
   public SearchHits<ContentDocument> search(String rawKeyword) {
@@ -70,53 +68,37 @@ public class ContentSearchService {
       String sortDirection
   ) {
     int searchLimit = resolveLimit(limit);
-    List<SortOptions> sorts = createSortOptions(sortBy, sortDirection);
 
-    NativeQueryBuilder queryBuilder =
-        createQueryBuilder(rawKeyword, typeEqual, tagsIn)
-            .withPageable(PageRequest.of(0, searchLimit));
+    List<SortOptions> sorts = contentSearchSortService.createSortOptions(sortBy, sortDirection);
+    NativeQueryBuilder queryBuilder = createQueryBuilder(rawKeyword, typeEqual, tagsIn)
+        .withPageable(PageRequest.of(0, searchLimit));
 
     if (!sorts.isEmpty()) {
       queryBuilder.withSort(sorts);
     }
 
-    return elasticsearchOperations.search(
-        queryBuilder.build(),
-        ContentDocument.class
-    );
+    return elasticsearchOperations.search(queryBuilder.build(), ContentDocument.class);
   }
 
-  // 활성 DB 콘텐츠를 기준으로 결과를 모아 커서 페이지 구성
   public ContentCursorResponse searchPage(ContentListRequest request) {
     Objects.requireNonNull(request, "검색 요청은 필수입니다.");
 
     int limit = resolveLimit(request.limit());
-    String sortBy = trimToNull(request.sortBy());
+    String sortBy = resolvePageSortBy(request.sortBy());
+    String sortDirection = contentSearchSortService.resolveDirection(request.sortDirection());
 
-    if (sortBy == null) {
-      throw new IllegalArgumentException(
-          "커서 조회에는 createdAt, rate, averageRating 중 sortBy를 지정해야 합니다."
-      );
-    }
-
-    String sortDirection = resolveDirection(request.sortDirection());
-    List<SortOptions> sorts = createSortOptions(sortBy, sortDirection);
+    List<SortOptions> sorts = contentSearchSortService.createSortOptions(sortBy, sortDirection);
 
     String cursor = trimToNull(request.cursor());
     UUID idAfter = request.idAfter();
 
     if ((cursor == null) != (idAfter == null)) {
-      throw new IllegalArgumentException(
-          "cursor와 idAfter는 함께 전달해야 합니다."
-      );
+      throw new IllegalArgumentException("cursor와 idAfter는 함께 전달해야 합니다.");
     }
 
     List<Object> searchAfter = cursor == null
         ? List.of()
-        : List.of(
-            parseCursor(cursor, sortBy),
-            idAfter.toString()
-        );
+        : List.of(contentSearchSortService.parseCursor(cursor, sortBy), idAfter.toString());
 
     int fetchSize = limit + 1;
     List<MatchedContent> matchedContents = new ArrayList<>(fetchSize);
@@ -139,18 +121,14 @@ public class ContentSearchService {
       }
 
       SearchHits<ContentDocument> searchHits =
-          elasticsearchOperations.search(
-              queryBuilder.build(),
-              ContentDocument.class
-          );
+          elasticsearchOperations.search(queryBuilder.build(), ContentDocument.class);
 
       if (firstSearch) {
         totalCount = searchHits.getTotalHits();
         firstSearch = false;
       }
 
-      List<SearchHit<ContentDocument>> hits =
-          searchHits.getSearchHits();
+      List<SearchHit<ContentDocument>> hits = searchHits.getSearchHits();
 
       if (hits.isEmpty()) {
         break;
@@ -160,21 +138,14 @@ public class ContentSearchService {
           .map(SearchHit::getContent)
           .toList();
 
-      List<ContentListItemResponse> responses =
-          contentSearchResponseMapper.toResponses(documents);
+      List<ContentListItemResponse> responses = contentSearchResponseMapper.toResponses(documents);
 
-      Map<UUID, ContentListItemResponse> responsesById =
-          responses.stream()
-              .collect(Collectors.toMap(
-                  ContentListItemResponse::id,
-                  response -> response
-              ));
+      Map<UUID, ContentListItemResponse> responsesById = responses.stream()
+          .collect(Collectors.toMap(ContentListItemResponse::id, response -> response));
 
       for (SearchHit<ContentDocument> hit : hits) {
         UUID contentId = UUID.fromString(hit.getContent().getId());
-
-        ContentListItemResponse response =
-            responsesById.get(contentId);
+        ContentListItemResponse response = responsesById.get(contentId);
 
         if (response != null) {
           matchedContents.add(new MatchedContent(hit, response));
@@ -210,13 +181,10 @@ public class ContentSearchService {
     UUID nextIdAfter = null;
 
     if (hasNext) {
-      SearchHit<ContentDocument> lastHit =
-          pageContents.get(pageContents.size() - 1).hit();
+      SearchHit<ContentDocument> lastHit = pageContents.get(pageContents.size() - 1).hit();
 
       nextCursor = lastHit.getSortValues().get(0).toString();
-      nextIdAfter = UUID.fromString(
-          lastHit.getSortValues().get(1).toString()
-      );
+      nextIdAfter = UUID.fromString(lastHit.getSortValues().get(1).toString());
     }
 
     return new ContentCursorResponse(
@@ -236,12 +204,9 @@ public class ContentSearchService {
   ) {
   }
 
-  // 검색어·타입·태그 조건을 공통으로 구성
+  // 검색어·타입·태그 조건 구성
   private NativeQueryBuilder createQueryBuilder(
-      String rawKeyword,
-      String typeEqual,
-      List<String> tagsIn
-  ) {
+      String rawKeyword, String typeEqual, List<String> tagsIn) {
     String keyword = KeywordNormalizer.normalize(rawKeyword);
     ContentType type = toContentType(typeEqual);
     List<String> tags = normalizeTags(tagsIn);
@@ -252,120 +217,37 @@ public class ContentSearchService {
       boolQuery.must(q -> q.matchAll(m -> m));
     } else {
       boolQuery.must(q -> q.multiMatch(m -> m
-          .query(keyword)
-          .fields("title", "description")
-      ));
+          .query(keyword).fields("title", "description", "tags")));
     }
 
     if (type != null) {
       boolQuery.filter(q -> q.term(t -> t
-          .field("type")
-          .value(type.name())
-      ));
+          .field("type").value(type.name())));
     }
 
     if (!tags.isEmpty()) {
-      List<FieldValue> tagValues = tags.stream()
-          .map(FieldValue::of)
-          .toList();
+      List<FieldValue> tagValues = tags.stream().map(FieldValue::of).toList();
 
       boolQuery.filter(q -> q.terms(t -> t
-          .field("tags")
-          .terms(values -> values.value(tagValues))
-      ));
+          .field("tags").terms(values -> values.value(tagValues))));
     }
 
-    return NativeQuery.builder()
-        .withQuery(q -> q.bool(boolQuery.build()));
+    return NativeQuery.builder().withQuery(q -> q.bool(boolQuery.build()));
   }
 
-  // 주 정렬과 보조 ID 정렬 구성
-  private List<SortOptions> createSortOptions(
-      String sortBy,
-      String sortDirection
-  ) {
-    if (sortBy == null || sortBy.isBlank()) {
-      if (sortDirection != null && !sortDirection.isBlank()) {
-        throw new IllegalArgumentException(
-            "정렬 방향을 지정하려면 sortBy도 전달해야 합니다."
-        );
-      }
-      return List.of();
-    }
-
-    String field = switch (sortBy.trim()) {
-      case "createdAt" -> "createdAt";
-      case "rate", "averageRating" -> "averageRating";
-      default -> throw new IllegalArgumentException(
-          "현재 ES 검색은 createdAt, rate, averageRating 정렬을 지원합니다."
-      );
-    };
-
-    SortOrder order = switch (resolveDirection(sortDirection)) {
-      case "ASCENDING" -> SortOrder.Asc;
-      case "DESCENDING" -> SortOrder.Desc;
-      default -> throw new IllegalArgumentException(
-          "sortDirection은 ASCENDING 또는 DESCENDING이어야 합니다."
-      );
-    };
-
-    SortOptions primarySort = SortOptions.of(s -> s.field(f -> {
-      f.field(field).order(order);
-
-      if ("createdAt".equals(field)) {
-        f.format("strict_date_optional_time_nanos");
-      }
-
-      return f;
-    }));
-
-    SortOptions idSort = SortOptions.of(s -> s.field(f -> f
-        .field(ID_SORT_FIELD)
-        .order(order)
-    ));
-
-    return List.of(primarySort, idSort);
-  }
-
-  // 문자열 커서를 ES 정렬 필드에 맞는 값으로 변환
-  private Object parseCursor(String cursor, String sortBy) {
-    try {
-      if ("createdAt".equals(sortBy)) {
-        return Instant.parse(cursor).toString();
-      }
-
-      double rating = Double.parseDouble(cursor);
-
-      if (!Double.isFinite(rating)) {
-        throw new IllegalArgumentException(
-            "평점 커서는 유한한 숫자여야 합니다."
-        );
-      }
-
-      return rating;
-    } catch (DateTimeParseException | NumberFormatException exception) {
-      throw new IllegalArgumentException(
-          sortBy + " 커서 형식이 올바르지 않습니다.",
-          exception
-      );
-    }
+  private String resolvePageSortBy(String sortBy) {
+    String resolved = trimToNull(sortBy);
+    return resolved == null ? DEFAULT_SORT_BY : resolved;
   }
 
   private int resolveLimit(Integer limit) {
     int resolved = limit == null ? DEFAULT_SEARCH_LIMIT : limit;
 
     if (resolved < 1 || resolved > MAX_SEARCH_LIMIT) {
-      throw new IllegalArgumentException(
-          "limit은 1 이상 100 이하여야 합니다."
-      );
+      throw new IllegalArgumentException("limit은 1 이상 100 이하여야 합니다.");
     }
 
     return resolved;
-  }
-
-  private String resolveDirection(String sortDirection) {
-    String direction = trimToNull(sortDirection);
-    return direction == null ? "DESCENDING" : direction;
   }
 
   private ContentType toContentType(String typeEqual) {
@@ -377,9 +259,7 @@ public class ContentSearchService {
       case "movie" -> ContentType.MOVIE;
       case "tvSeries" -> ContentType.TV;
       case "sport" -> ContentType.SPORT;
-      default -> throw new IllegalArgumentException(
-          "typeEqual은 movie, tvSeries, sport 중 하나여야 합니다."
-      );
+      default -> throw new IllegalArgumentException("typeEqual은 movie, tvSeries, sport 중 하나여야 합니다.");
     };
   }
 

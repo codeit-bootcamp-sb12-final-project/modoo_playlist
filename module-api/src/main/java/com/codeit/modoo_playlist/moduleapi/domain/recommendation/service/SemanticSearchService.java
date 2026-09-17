@@ -4,5 +4,6 @@ import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.Recommended
 import java.util.List;
 
 public interface SemanticSearchService {
+
   List<RecommendedContentDto> search(String query, Integer limit);
 }

@@ -15,6 +15,8 @@ public interface ContentTagQueryRepository {
 
     List<RecommendedContentDto> findSimilarContents(UUID contentId, Pageable pageable);
 
+    List<RecommendedContentDto> findContentsByTagId(UUID tagId, Pageable pageable);
+
     void increaseTagContentCounts(Collection<UUID> tagIds);
 
     void decreaseTagContentCounts(Collection<UUID> tagIds);

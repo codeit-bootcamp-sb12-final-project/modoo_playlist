@@ -1,8 +1,9 @@
 package com.codeit.modoo_playlist.moduleapi.support;
 
 import com.codeit.modoo_playlist.core.domain.user.entity.User;
-import com.codeit.modoo_playlist.moduleapi.config.AuthCookieProperties;
 import com.codeit.modoo_playlist.moduleapi.config.SecurityConfig;
+import com.codeit.modoo_playlist.infra.config.QuerydslConfig;
+import com.codeit.modoo_playlist.moduleapi.config.properties.AuthCookieProperties;
 import com.codeit.modoo_playlist.moduleapi.domain.user.controller.AuthController;
 import com.codeit.modoo_playlist.moduleapi.domain.user.controller.UserController;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
@@ -44,6 +45,7 @@ import org.testcontainers.utility.DockerImageName;
 @EnableConfigurationProperties(AuthCookieProperties.class)
 @Import({
     SecurityConfig.class,
+    QuerydslConfig.class,
     UserController.class,
     AuthController.class,
     UserServiceImpl.class,

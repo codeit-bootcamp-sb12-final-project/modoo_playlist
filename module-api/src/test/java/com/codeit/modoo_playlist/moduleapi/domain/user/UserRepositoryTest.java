@@ -5,8 +5,12 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.codeit.modoo_playlist.core.domain.user.entity.User;
 import com.codeit.modoo_playlist.core.domain.user.entity.UserRole;
+import com.codeit.modoo_playlist.infra.config.QuerydslConfig;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
+import com.codeit.modoo_playlist.moduleapi.domain.user.repository.query.UserQueryPage;
+import com.codeit.modoo_playlist.moduleapi.dto.request.UserListRequest;
 import jakarta.persistence.EntityManager;
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -15,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.persistence.autoconfigure.EntityScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
@@ -38,6 +43,7 @@ class UserRepositoryTest {
   @EntityScan(basePackageClasses = User.class)
   @EnableJpaRepositories(basePackageClasses = UserRepository.class)
   @EnableJpaAuditing
+  @Import(QuerydslConfig.class)
   static class JpaConfig {
 
   }
@@ -120,5 +126,56 @@ class UserRepositoryTest {
 
     assertThat(users.findById(user.getId()).orElseThrow().getProfileImageUrl()).isEqualTo(
         ORIGINAL_IMAGE);
+  }
+
+  @Test
+  @DisplayName("사용자가 20명이하면 1페이지 조회.")
+  void exactlyTwentyUsersHasNoNextPage() {
+    saveUsers(20);
+
+    UserQueryPage page = users.findAllUsers(firstPage(20));
+
+    assertThat(page.users()).hasSize(20);
+    assertThat(page.hasNext()).isFalse();
+    assertThat(page.nextCursor()).isNull();
+    assertThat(page.nextIdAfter()).isNull();
+    assertThat(page.totalCount()).isEqualTo(20);
+  }
+
+  @Test
+  @DisplayName("사용자가 21명이상 첫 페이지 20명과 다음 페이지 1명을 조회.")
+  void twentyOneUsersHasOneUserOnNextPage() {
+    saveUsers(21);
+
+    UserQueryPage first = users.findAllUsers(firstPage(20));
+    UserQueryPage second = users.findAllUsers(new UserListRequest(
+        null, null, null, first.nextCursor(), first.nextIdAfter(),
+        20, "ASCENDING", "email"));
+
+    assertThat(first.users()).hasSize(20);
+    assertThat(first.hasNext()).isTrue();
+    assertThat(first.nextCursor()).isEqualTo("user19@example.com");
+    assertThat(first.nextIdAfter()).isNotNull();
+    assertThat(first.totalCount()).isEqualTo(21);
+    assertThat(second.users()).extracting(User::getEmail)
+        .containsExactly("user20@example.com");
+    assertThat(second.hasNext()).isFalse();
+    assertThat(second.totalCount()).isEqualTo(21);
+  }
+
+  private void saveUsers(int count) {
+    List<User> usersToSave = java.util.stream.IntStream.range(0, count)
+        .mapToObj(index -> User.create(
+            "user%02d@example.com".formatted(index),
+            "user%02d".formatted(index),
+            PASSWORD))
+        .toList();
+    users.saveAllAndFlush(usersToSave);
+    entityManager.clear();
+  }
+
+  private UserListRequest firstPage(int limit) {
+    return new UserListRequest(
+        null, null, null, null, null, limit, "ASCENDING", "email");
   }
 }

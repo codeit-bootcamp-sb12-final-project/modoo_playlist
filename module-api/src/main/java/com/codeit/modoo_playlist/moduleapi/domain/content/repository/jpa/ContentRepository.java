@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,4 +21,7 @@ public interface ContentRepository extends JpaRepository<Content, UUID>, Content
 
     @Query("select c.id from Content c where c.id in :ids and c.deletedAt is null")
     List<UUID> findAliveIds(@Param("ids") Collection<UUID> ids);
+
+    @Query("select c from Content c where c.deletedAt is null order by c.averageRating desc, c.reviewCount desc, c.id asc")
+    List<Content> findTopRated(Pageable pageable);
 }

@@ -1,8 +1,6 @@
 package com.codeit.modoo_playlist.moduleapi.domain.search.service;
 
 import com.codeit.modoo_playlist.moduleapi.domain.search.document.ContentDocument;
-import com.codeit.modoo_playlist.moduleapi.domain.search.repository.ContentIndexReader;
-import com.codeit.modoo_playlist.moduleapi.domain.search.repository.ContentSearchRepository;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -16,8 +14,7 @@ public class ContentInitialIndexService {
 
   private static final int BATCH_SIZE = 100;
 
-  private final ContentIndexReader contentIndexReader;
-  private final ContentSearchRepository contentSearchRepository;
+  private final ContentIndexService contentIndexService;
 
   @Transactional(propagation = Propagation.NOT_SUPPORTED)
   public long indexAll() {
@@ -26,13 +23,11 @@ public class ContentInitialIndexService {
 
     while (true) {
       List<ContentDocument> documents =
-          contentIndexReader.read(lastId, BATCH_SIZE);
+          contentIndexService.indexBatch(lastId, BATCH_SIZE);
 
       if (documents.isEmpty()) {
         return indexedCount;
       }
-
-      contentSearchRepository.saveAll(documents);
 
       indexedCount += documents.size();
       lastId = UUID.fromString(
