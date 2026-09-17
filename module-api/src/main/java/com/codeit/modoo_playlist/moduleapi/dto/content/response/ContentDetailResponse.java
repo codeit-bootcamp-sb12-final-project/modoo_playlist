@@ -5,6 +5,8 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
+import com.codeit.modoo_playlist.core.domain.interaction.enums.InteractionType;
+
 public record ContentDetailResponse(
         UUID id,
         String type,
@@ -19,6 +21,7 @@ public record ContentDetailResponse(
         String originCountry,
         ContentVideoResponse video,
         ContentSportsResponse sports,
-        List<ContentPersonResponse> people
+        List<ContentPersonResponse> people,
+        InteractionType myReaction
 ) {
 }

@@ -11,6 +11,7 @@ import com.codeit.modoo_playlist.core.domain.content.entity.ContentPerson;
 import com.codeit.modoo_playlist.core.domain.content.entity.ContentSports;
 import com.codeit.modoo_playlist.core.domain.content.entity.ContentVideo;
 import com.codeit.modoo_playlist.core.domain.content.type.ContentType;
+import com.codeit.modoo_playlist.core.domain.interaction.enums.InteractionType;
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.query.ContentQueryPage;
 
 @Mapper(componentModel = "spring")
@@ -30,7 +31,8 @@ public interface ContentMapper {
             long watcherCount,
             ContentVideo video,
             ContentSports sports,
-            List<ContentPerson> people
+            List<ContentPerson> people,
+            InteractionType myReaction
     );
 
     @Mapping(target = "nextCursor", source = "page.nextCursor")

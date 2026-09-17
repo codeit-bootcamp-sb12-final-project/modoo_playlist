@@ -56,9 +56,10 @@ public class ContentController {
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/{contentId}")
     public ResponseEntity<ContentDetailResponse> getContent(
-            @PathVariable UUID contentId
+            @PathVariable UUID contentId,
+            @AuthenticationPrincipal UserDetails user
     ) {
-        return ResponseEntity.ok(contentService.getContent(contentId));
+        return ResponseEntity.ok(contentService.getContent(contentId, user.getUserDto().id()));
     }
 
     @PreAuthorize("hasRole('ADMIN')")

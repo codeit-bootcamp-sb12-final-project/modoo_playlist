@@ -13,6 +13,9 @@ import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import com.codeit.modoo_playlist.moduleapi.domain.content.mapper.ContentMapper;
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.jpa.ContentRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.jpa.ContentTagRepository;
+import com.codeit.modoo_playlist.moduleapi.domain.notification.event.PlaylistContentAddedEvent;
+import com.codeit.modoo_playlist.moduleapi.domain.notification.event.PlaylistCreatedEvent;
+import com.codeit.modoo_playlist.moduleapi.domain.notification.event.PlaylistSubscribedEvent;
 import com.codeit.modoo_playlist.moduleapi.domain.playlist.mapper.PlaylistMapper;
 import com.codeit.modoo_playlist.moduleapi.domain.playlist.repository.PlaylistContentRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.playlist.repository.PlaylistRepository;
@@ -33,6 +36,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,6 +52,7 @@ public class PlaylistServiceImpl implements PlaylistService {
     private final ContentTagRepository contentTagRepository;
     private final PlaylistMapper playlistMapper;
     private final ContentMapper contentMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -59,7 +64,11 @@ public class PlaylistServiceImpl implements PlaylistService {
                 .generatedBy(GeneratedBy.USER)
                 .build();
 
-        return playlistRepository.save(playlist).getId();
+        UUID playlistId = playlistRepository.save(playlist).getId();
+
+        eventPublisher.publishEvent(new PlaylistCreatedEvent(playlistId, ownerId));
+
+        return playlistId;
     }
 
     @Override
@@ -99,6 +108,8 @@ public class PlaylistServiceImpl implements PlaylistService {
                 .build();
 
         playlistContentRepository.save(playlistContent);
+
+        eventPublisher.publishEvent(new PlaylistContentAddedEvent(playlistId, contentId));
     }
 
     @Override
@@ -117,9 +128,8 @@ public class PlaylistServiceImpl implements PlaylistService {
     @Override
     @Transactional
     public void subscribe(UUID playlistId, UUID subscriberId) {
-        if (!playlistRepository.existsById(playlistId)) {
-            throw new BaseException(ErrorCode.PLAYLIST_NOT_FOUND);
-        }
+        Playlist playlist = playlistRepository.findById(playlistId)
+                .orElseThrow(() -> new BaseException(ErrorCode.PLAYLIST_NOT_FOUND));
 
         PlaylistSubscriptionId id = new PlaylistSubscriptionId(playlistId, subscriberId);
 
@@ -132,6 +142,8 @@ public class PlaylistServiceImpl implements PlaylistService {
                 .build();
 
         playlistSubscriptionRepository.save(subscription);
+
+        eventPublisher.publishEvent(new PlaylistSubscribedEvent(playlistId, playlist.getOwnerId(), subscriberId));
     }
 
     @Override
