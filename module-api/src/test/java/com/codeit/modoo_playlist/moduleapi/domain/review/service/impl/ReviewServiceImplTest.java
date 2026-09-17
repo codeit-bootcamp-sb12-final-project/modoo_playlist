@@ -91,13 +91,14 @@ class ReviewServiceImplTest {
     }
 
     @Test
-    void 존재하지_않는_콘텐츠에_리뷰를_생성하면_NoSuchElementException이_발생한다() {
+    void 존재하지_않는_콘텐츠에_리뷰를_생성하면_CONTENT_NOT_FOUND를_반환한다() {
         UUID contentId = UUID.randomUUID();
         UUID authorId = UUID.randomUUID();
         when(contentRepository.findByIdAndDeletedAtIsNull(contentId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> reviewService.createReview(contentId, authorId, "재밌어요", BigDecimal.valueOf(4.5)))
-                .isInstanceOf(NoSuchElementException.class);
+                .isInstanceOfSatisfying(BaseException.class, exception ->
+                        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.CONTENT_NOT_FOUND));
         verify(reviewRepository, never()).save(any(Review.class));
     }
 
