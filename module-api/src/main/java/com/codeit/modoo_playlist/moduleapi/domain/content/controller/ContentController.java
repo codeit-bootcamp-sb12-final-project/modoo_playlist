@@ -17,15 +17,19 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.codeit.modoo_playlist.core.global.common.util.KeywordNormalizer;
 import com.codeit.modoo_playlist.moduleapi.domain.content.service.ContentService;
+import com.codeit.modoo_playlist.moduleapi.domain.search.service.ContentSearchService;
 import com.codeit.modoo_playlist.moduleapi.dto.content.request.ContentCreateRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.content.request.ContentListRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.content.request.ContentUpdateRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.content.response.ContentCursorResponse;
 import com.codeit.modoo_playlist.moduleapi.dto.content.response.ContentDetailResponse;
+import com.codeit.modoo_playlist.moduleapi.security.UserDetails;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 @RestController
 @RequestMapping("/api/contents")
@@ -33,13 +37,20 @@ import lombok.RequiredArgsConstructor;
 public class ContentController {
 
     private final ContentService contentService;
+    private final ContentSearchService contentSearchService;
 
     @PreAuthorize("hasRole('USER')")
     @GetMapping
     public ResponseEntity<ContentCursorResponse> getContents(
-            @Valid @ModelAttribute ContentListRequest request
+            @Valid @ModelAttribute ContentListRequest request,
+            @AuthenticationPrincipal UserDetails user
     ) {
-        return ResponseEntity.ok(contentService.getContents(request));
+        // 검색어가 있으면 ES 검색으로 연결
+        String keyword = KeywordNormalizer.normalize(request.keywordLike());
+        if (!keyword.isEmpty()) {
+            return ResponseEntity.ok(contentSearchService.searchPage(request));
+        }
+        return ResponseEntity.ok(contentService.getContents(request, user.getUserDto().id()));
     }
 
     @PreAuthorize("hasRole('USER')")

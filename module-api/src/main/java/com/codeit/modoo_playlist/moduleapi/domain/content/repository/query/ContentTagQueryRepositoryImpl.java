@@ -13,7 +13,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import com.codeit.modoo_playlist.core.domain.content.entity.ContentTag;
 import com.codeit.modoo_playlist.core.domain.content.entity.QContentTag;
-import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.SimilarContentDto;
+import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.RecommendedContentDto;
 
 import jakarta.persistence.EntityManager;
 import org.springframework.data.domain.Pageable;
@@ -40,13 +40,13 @@ public class ContentTagQueryRepositoryImpl implements ContentTagQueryRepository 
     }
 
     @Override
-    public List<SimilarContentDto> findSimilarContents(UUID contentId, Pageable pageable) {
+    public List<RecommendedContentDto> findSimilarContents(UUID contentId, Pageable pageable) {
         QContentTag targetContentTag = new QContentTag("targetContentTag");
         QContentTag candidateContentTag = new QContentTag("candidateContentTag");
 
         return queryFactory
                 .select(Projections.constructor(
-                        SimilarContentDto.class,
+                        RecommendedContentDto.class,
                         content.id,
                         content.title,
                         content.thumbnailUrl,
@@ -62,6 +62,27 @@ public class ContentTagQueryRepositoryImpl implements ContentTagQueryRepository 
                 .where(content.deletedAt.isNull())
                 .groupBy(content.id, content.title, content.thumbnailUrl)
                 .orderBy(candidateContentTag.count().desc(), content.id.asc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+    }
+
+    @Override
+    public List<RecommendedContentDto> findContentsByTagId(UUID tagId, Pageable pageable) {
+        return queryFactory
+                .select(Projections.constructor(
+                        RecommendedContentDto.class,
+                        content.id,
+                        content.title,
+                        content.thumbnailUrl,
+                        content.averageRating.doubleValue()
+                ))
+                .from(contentTag)
+                .join(content)
+                .on(content.id.eq(contentTag.content.id))
+                .where(contentTag.tag.id.eq(tagId))
+                .where(content.deletedAt.isNull())
+                .orderBy(content.averageRating.desc(), content.id.asc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();

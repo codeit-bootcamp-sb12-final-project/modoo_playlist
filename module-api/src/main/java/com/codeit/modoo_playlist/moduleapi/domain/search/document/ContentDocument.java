@@ -25,7 +25,6 @@ import org.springframework.data.elasticsearch.annotations.MultiField;
 @Setting(settingPath = "elasticsearch/content-settings.json")
 public class ContentDocument {
 
-  // 원본 콘텐츠 ID를 문서 ID로 사용하고, id.keyword를 보조 정렬에 사용
   @Id
   @MultiField(
       mainField = @Field(type = FieldType.Text),
@@ -59,6 +58,9 @@ public class ContentDocument {
 
   @Field(type = FieldType.Integer)
   private int reviewCount;
+
+  @Field(type = FieldType.Long)
+  private long watcherCount;
 
   @Field(
       type = FieldType.Date_Nanos,

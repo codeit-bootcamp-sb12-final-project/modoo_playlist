@@ -20,6 +20,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import com.codeit.modoo_playlist.modulebatch.support.ErrorCodeSkipPolicy;
+import com.codeit.modoo_playlist.modulebatch.monitoring.BatchMetricsListener;
 import com.codeit.modoo_playlist.modulebatch.tmdb.listener.TmdbSkipListener;
 import com.codeit.modoo_playlist.modulebatch.tmdb.listener.TmdbStepFailureListener;
 import com.codeit.modoo_playlist.modulebatch.tmdb.model.TmdbCandidate.MediaType;
@@ -46,9 +47,11 @@ public class TmdbBatchJobConfig {
             @Qualifier("tmdbMoviePopularStep") Step moviePopularStep,
             @Qualifier("tmdbTvActiveStep") Step tvActiveStep,
             @Qualifier("tmdbTvPopularStep") Step tvPopularStep,
-            @Qualifier("tmdbCompletionDecider") JobExecutionDecider completionDecider
+            @Qualifier("tmdbCompletionDecider") JobExecutionDecider completionDecider,
+            BatchMetricsListener metricsListener
     ) {
         return new JobBuilder("tmdbSyncJob", jobRepository)
+                .listener(metricsListener)
                 .start(movieActiveStep).on(FATAL_EXIT).fail()
                 .from(movieActiveStep).on("*").to(moviePopularStep)
                 .from(moviePopularStep).on(FATAL_EXIT).fail()

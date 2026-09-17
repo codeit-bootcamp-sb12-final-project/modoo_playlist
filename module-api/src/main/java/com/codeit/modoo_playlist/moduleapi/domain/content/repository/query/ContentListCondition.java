@@ -58,7 +58,8 @@ public record ContentListCondition(
     public enum SortType {
         WATCHER_COUNT,
         CREATED_AT,
-        AVERAGE_RATING
+        AVERAGE_RATING,
+        RECOMMENDED
     }
 
     public enum SortDirection {

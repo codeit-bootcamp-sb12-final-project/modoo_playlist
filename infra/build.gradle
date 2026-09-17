@@ -15,6 +15,9 @@ dependencies {
     // Redis
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
+    // ContentEmbeddingDocument 어노테이션용
+    api 'org.springframework.data:spring-data-elasticsearch'
+
     // MVC, Interceptor, ExceptionHandler
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
 
@@ -45,6 +48,10 @@ dependencies {
     api 'org.springframework.ai:spring-ai-starter-model-google-genai-embedding:2.0.1'
     api 'org.springframework.ai:spring-ai-starter-model-chat-memory-repository-redis:2.0.1'
 
+
+    // kafka, websocket
+    implementation 'org.springframework.boot:spring-boot-starter-kafka'
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
 }
 
 dependencyManagement {

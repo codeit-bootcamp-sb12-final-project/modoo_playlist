@@ -129,7 +129,7 @@ public class ConversationService {
 
         // 본인과의 대화 조회 방지
         if (requesterId.equals(userId)) {
-            throw new IllegalArgumentException("자기 자신과의 대화는 조회할 수 없습니다.");
+            throw new BaseException(ErrorCode.SELF_CONVERSATION_NOT_ALLOWED);
         }
 
         //상대방 사용자 존재 여부

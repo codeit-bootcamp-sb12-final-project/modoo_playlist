@@ -2,7 +2,7 @@ spring:
   application:
     name: module-batch
   main:
-    web-application-type: none
+    web-application-type: servlet
   config:
     import:
       - "optional:file:./.env[.properties]"
@@ -16,6 +16,10 @@ spring:
       enabled: false
     jdbc:
       initialize-schema: ${BATCH_SCHEMA_INITIALIZE:always}
+  elasticsearch:
+    uris: ${ELASTICSEARCH_URL:http://localhost:9200}
+    connection-timeout: ${ELASTICSEARCH_CONNECTION_TIMEOUT:2s}
+    socket-timeout: ${ELASTICSEARCH_SOCKET_TIMEOUT:30s}
   ai:
     google:
       genai:
@@ -27,6 +31,21 @@ spring:
 
 mybatis:
   mapper-locations: classpath*:mapper/**/*.xml
+
+server:
+  port: ${BATCH_MANAGEMENT_PORT:9091}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  endpoint:
+    health:
+      show-details: never
+  metrics:
+    tags:
+      application: ${spring.application.name}
 
 external:
   tmdb:
@@ -57,7 +76,8 @@ batch:
     zone: Asia/Seoul
   embedding:
     enabled: ${EMBEDDING_BATCH_ENABLED:true}
-    cron: ${EMBEDDING_BATCH_CRON:0 0 23 * * *}
+    max-items-per-run: ${EMBEDDING_MAX_ITEMS_PER_RUN:100000}
+    cron: ${EMBEDDING_BATCH_CRON:0 31 13 * * *}
     zone: Asia/Seoul
   tmdb:
     enabled: ${TMDB_BATCH_ENABLED:true}

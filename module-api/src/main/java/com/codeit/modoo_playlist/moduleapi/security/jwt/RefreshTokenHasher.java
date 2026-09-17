@@ -1,5 +1,7 @@
 package com.codeit.modoo_playlist.moduleapi.security.jwt;
 
+import com.codeit.modoo_playlist.core.global.exception.BaseException;
+import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -22,7 +24,10 @@ public class RefreshTokenHasher {
       return HexFormat.of().formatHex(hash);
 
     } catch (NoSuchAlgorithmException e) {
-      throw new IllegalStateException(e);
+      throw new BaseException(
+          ErrorCode.INTERNAL_SERVER_ERROR,
+          e
+      );
     }
   }
 }
