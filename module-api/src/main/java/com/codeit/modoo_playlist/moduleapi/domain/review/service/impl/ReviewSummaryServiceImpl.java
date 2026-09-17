@@ -25,7 +25,7 @@ public class ReviewSummaryServiceImpl implements ReviewSummaryService {
 
   @Override
   public ReviewSummaryDto getReviewSummary(UUID contentId) {
-    if (!contentRepository.existsById(contentId)) {
+    if (!contentRepository.existsByIdAndDeletedAtIsNull(contentId)) {
       throw new BaseException(ErrorCode.CONTENT_NOT_FOUND);
     }
 
