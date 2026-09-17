@@ -53,4 +53,20 @@ public class ContentVideo {
 
     @Column(name = "external_rating_count")
     private Integer externalRatingCount;
+
+    public void update(Integer runtimeMinutes, String collectionName, String imdbId,
+            VideoReleaseStatus releaseStatus, Integer numberOfSeasons, Integer numberOfEpisodes,
+            String originalLanguage, Float popularity, BigDecimal externalRating,
+            Integer externalRatingCount) {
+        this.runtimeMinutes = runtimeMinutes;
+        this.collectionName = collectionName;
+        this.imdbId = imdbId;
+        this.releaseStatus = releaseStatus;
+        this.numberOfSeasons = numberOfSeasons;
+        this.numberOfEpisodes = numberOfEpisodes;
+        this.originalLanguage = originalLanguage;
+        this.popularity = popularity;
+        this.externalRating = externalRating;
+        this.externalRatingCount = externalRatingCount;
+    }
 }

@@ -12,7 +12,7 @@ import com.codeit.modoo_playlist.moduleapi.dto.content.response.ContentDetailRes
 
 public interface ContentService {
 
-    ContentCursorResponse getContents(ContentListRequest request);
+    ContentCursorResponse getContents(ContentListRequest request, UUID userId);
 
     ContentDetailResponse getContent(UUID contentId);
 

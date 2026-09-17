@@ -18,6 +18,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import com.codeit.modoo_playlist.infra.client.sportsdb.dto.SportsDbEvent;
 import com.codeit.modoo_playlist.modulebatch.support.ErrorCodeSkipPolicy;
+import com.codeit.modoo_playlist.modulebatch.monitoring.BatchMetricsListener;
 import com.codeit.modoo_playlist.modulebatch.sports.listener.SportsSkipListener;
 import com.codeit.modoo_playlist.modulebatch.sports.model.SportsSyncContent;
 import com.codeit.modoo_playlist.modulebatch.sports.persistence.SportsContentMapper;
@@ -34,9 +35,11 @@ public class SportsBatchJobConfig {
     @Bean
     Job sportsSyncJob(
             JobRepository jobRepository,
-            @Qualifier("sportsSyncStep") Step sportsSyncStep
+            @Qualifier("sportsSyncStep") Step sportsSyncStep,
+            BatchMetricsListener metricsListener
     ) {
         return new JobBuilder("sportsSyncJob", jobRepository)
+                .listener(metricsListener)
                 .start(sportsSyncStep)
                 .build();
     }

@@ -82,6 +82,15 @@ public class Content extends BaseUpdatableEntity {
         }
     }
 
+    public void updateMetadata(LocalDate releaseDate, String originCountry) {
+        if (releaseDate != null) {
+            this.releaseDate = releaseDate;
+        }
+        if (originCountry != null) {
+            this.originCountry = originCountry;
+        }
+    }
+
     public void softDelete() {
         if (deletedAt == null) {
             deletedAt = Instant.now();

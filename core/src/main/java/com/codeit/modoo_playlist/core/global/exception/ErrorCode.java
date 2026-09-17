@@ -83,6 +83,7 @@ public enum ErrorCode {
   CONTENT_SORT_DIRECTION_INVALID(400, "지원하지 않는 정렬 방향입니다."),
   CONTENT_QUERY_INVALID(400, "콘텐츠 조회 조건이 올바르지 않습니다."),
   CONTENT_CURSOR_INVALID(400, "콘텐츠 커서 형식이 올바르지 않습니다."),
+  CONTENT_DETAIL_INVALID(400, "콘텐츠 타입별 상세 정보가 올바르지 않습니다."),
   THUMBNAIL_INVALID(400, "올바른 썸네일 이미지가 아닙니다."),
 
   // Tag

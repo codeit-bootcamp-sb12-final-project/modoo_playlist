@@ -52,4 +52,16 @@ public class ContentSports {
 
     @Column(name = "kickoff_at", nullable = false)
     private Instant kickoffAt;
+
+    public void update(String sportType, String league, String season, String homeTeam,
+            String awayTeam, String venue, SportsStatus status, Instant kickoffAt) {
+        this.sportType = sportType;
+        this.league = league;
+        this.season = season;
+        this.homeTeam = homeTeam;
+        this.awayTeam = awayTeam;
+        this.venue = venue;
+        this.status = status;
+        this.kickoffAt = kickoffAt;
+    }
 }

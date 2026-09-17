@@ -9,7 +9,7 @@ import java.util.UUID;
 public record SliceCursorRequest(
         String cursor,
         UUID idAfter,
-        @Min(0) @Max(100)
+        @Min(1) @Max(100)
         int limit,
         String sortDirection,
         String sortBy

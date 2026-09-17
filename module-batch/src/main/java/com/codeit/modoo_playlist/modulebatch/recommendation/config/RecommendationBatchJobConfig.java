@@ -3,6 +3,7 @@ package com.codeit.modoo_playlist.modulebatch.recommendation.config;
 import com.codeit.modoo_playlist.modulebatch.recommendation.persistence.RecommendationRecalcMapper;
 import com.codeit.modoo_playlist.modulebatch.recommendation.tasklet.PreferenceRecalcTasklet;
 import com.codeit.modoo_playlist.modulebatch.recommendation.tasklet.SimilarUserTasklet;
+import com.codeit.modoo_playlist.modulebatch.monitoring.BatchMetricsListener;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
@@ -19,9 +20,11 @@ public class RecommendationBatchJobConfig {
 	Job nightlyRecalcJob(
 			JobRepository jobRepository,
 			Step preferenceRecalcStep,
-			Step similarUserStep
+			Step similarUserStep,
+			BatchMetricsListener metricsListener
 	) {
 		return new JobBuilder("nightlyRecalcJob", jobRepository)
+				.listener(metricsListener)
 				.start(preferenceRecalcStep)
 				.next(similarUserStep)
 				.build();

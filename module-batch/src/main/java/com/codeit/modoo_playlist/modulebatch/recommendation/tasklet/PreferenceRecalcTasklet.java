@@ -1,10 +1,10 @@
 package com.codeit.modoo_playlist.modulebatch.recommendation.tasklet;
 
+import com.codeit.modoo_playlist.core.global.common.util.ScoringEngine;
 import com.codeit.modoo_playlist.modulebatch.recommendation.model.InteractionTagSignal;
 import com.codeit.modoo_playlist.modulebatch.recommendation.model.PreferenceTagRow;
 import com.codeit.modoo_playlist.modulebatch.recommendation.model.TagContentCount;
 import com.codeit.modoo_playlist.modulebatch.recommendation.persistence.RecommendationRecalcMapper;
-import com.codeit.modoo_playlist.modulebatch.recommendation.scoring.ScoringEngine;
 import com.codeit.modoo_playlist.modulebatch.recommendation.scoring.TagScoreCalculator;
 import java.time.Instant;
 import java.util.List;
