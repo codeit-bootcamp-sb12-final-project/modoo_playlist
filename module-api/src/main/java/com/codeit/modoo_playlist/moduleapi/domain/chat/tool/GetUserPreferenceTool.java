@@ -25,7 +25,14 @@ public class GetUserPreferenceTool {
   public List<UserPreferenceTagDto> getUserPreference(ToolContext toolContext) {
     UUID userId = ChatToolContext.requireUserId(toolContext);
     log.info("get_user_preference 호출: userId={}", userId);
-    List<UserPreferenceTagDto> result = userPreferenceTagService.getMyPreferenceTags(userId, DEFAULT_LIMIT);
+
+    List<UserPreferenceTagDto> result;
+    try {
+      result = userPreferenceTagService.getMyPreferenceTags(userId, DEFAULT_LIMIT);
+    } catch (Exception e) {
+      log.error("get_user_preference 조회 실패: userId={}", userId, e);
+      return List.of();
+    }
     log.info("get_user_preference 결과: {}건", result.size());
     return result;
   }

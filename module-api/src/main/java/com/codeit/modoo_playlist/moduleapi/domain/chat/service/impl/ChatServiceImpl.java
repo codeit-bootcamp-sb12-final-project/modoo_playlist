@@ -6,11 +6,14 @@ import com.codeit.modoo_playlist.core.domain.conversation.entity.ConversationTyp
 import com.codeit.modoo_playlist.core.domain.message.entity.Message;
 import com.codeit.modoo_playlist.core.domain.message.entity.MessageType;
 import com.codeit.modoo_playlist.core.domain.user.entity.User;
+import com.codeit.modoo_playlist.core.global.exception.BaseException;
+import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.dto.response.ChatCardsEvent;
 import com.codeit.modoo_playlist.core.domain.user.entity.UserRole;
 import com.codeit.modoo_playlist.core.global.exception.BaseException;
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.dto.response.ChatDoneEvent;
+import com.codeit.modoo_playlist.moduleapi.domain.chat.dto.response.ChatErrorEvent;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.dto.response.ContentCardDto;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.exception.ChatAccessDeniedException;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.exception.ChatNotFoundException;
@@ -104,9 +107,14 @@ public class ChatServiceImpl implements ChatService {
               .message(responseBuilder.toString())
               .build());
         })
-        .doOnError(e -> log.error("chat 스트림 오류: conversationId={}", conversation.getId(), e))
         .map(token -> ServerSentEvent.builder((Object) token)
-            .event("message").build());
+            .event("message").build())
+        .onErrorResume(e -> {
+          log.error("chat 스트림 오류: conversationId={}", conversation.getId(), e);
+          return Flux.just(ServerSentEvent.builder(
+                  (Object) new ChatErrorEvent("답변을 생성하지 못했어요. 잠시 후 다시 시도해 주세요."))
+              .event("error").build());
+        });
 
     Flux<ServerSentEvent<Object>> cardsEvent = cardsEvent(cardCollector);
 
@@ -132,9 +140,14 @@ public class ChatServiceImpl implements ChatService {
         .stream()
         .content()
         .doOnComplete(() -> log.info("chatAnonymous 완료: sessionId={}", sessionId))
-        .doOnError(e -> log.error("chatAnonymous 스트림 오류: sessionId={}", sessionId, e))
         .map(token -> ServerSentEvent.builder((Object) token)
-            .event("message").build());
+            .event("message").build())
+        .onErrorResume(e -> {
+          log.error("chatAnonymous 스트림 오류: sessionId={}", sessionId, e);
+          return Flux.just(ServerSentEvent.builder(
+                  (Object) new ChatErrorEvent("답변을 생성하지 못했어요. 잠시 후 다시 시도해 주세요."))
+              .event("error").build());
+        });
 
     Flux<ServerSentEvent<Object>> cardsEvent = cardsEvent(cardCollector);
 

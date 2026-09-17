@@ -1,6 +1,7 @@
 package com.codeit.modoo_playlist.moduleapi.domain.search.service;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import com.codeit.modoo_playlist.moduleapi.domain.search.document.ContentDocument;
 import com.codeit.modoo_playlist.moduleapi.domain.search.repository.ContentIndexReader;
 import com.codeit.modoo_playlist.moduleapi.domain.search.repository.ContentSearchRepository;
@@ -69,12 +70,19 @@ public class ContentIndexService {
 
       try {
         elasticsearchClient.update(
-            update -> update
-                .index(INDEX_NAME)
+            update -> update.index(INDEX_NAME)
                 .id(contentId.toString())
                 .doc(Map.of("watcherCount", watcherCount)),
             Object.class
         );
+      } catch (ElasticsearchException exception) {
+        if (exception.status() == 404
+            && "document_missing_exception".equals(exception.error().type())) {
+          index(contentId);
+          return;
+        }
+
+        throw exception;
       } catch (IOException exception) {
         throw new IllegalStateException("ES 시청자 수 갱신 요청에 실패했습니다. contentId=" + contentId, exception);
       }

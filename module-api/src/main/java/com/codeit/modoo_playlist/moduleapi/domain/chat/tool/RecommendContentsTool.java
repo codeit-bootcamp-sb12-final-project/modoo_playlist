@@ -29,9 +29,19 @@ public class RecommendContentsTool {
       @ToolParam(description = "기준이 되는 콘텐츠 ID (UUID)") String contentId,
       ToolContext toolContext
   ) {
-    UUID id = UUID.fromString(contentId);
+    UUID id = parseContentId(contentId);
+    if (id == null) {
+      return List.of();
+    }
     log.info("recommend_contents 호출: contentId={}", id);
-    List<RecommendedContentDto> result = recommendationService.getSimilarContents(id, DEFAULT_LIMIT);
+
+    List<RecommendedContentDto> result;
+    try {
+      result = recommendationService.getSimilarContents(id, DEFAULT_LIMIT);
+    } catch (Exception e) {
+      log.error("recommend_contents 조회 실패: contentId={}", id, e);
+      return List.of();
+    }
     log.info("recommend_contents 결과: {}건", result.size());
 
     Object collector = toolContext.getContext().get(ChatToolContext.CARD_COLLECTOR);
@@ -39,5 +49,18 @@ public class RecommendContentsTool {
       result.forEach(c -> cardCollector.add(c.contentId(), c.title(), c.thumbnailUrl()));
     }
     return result;
+  }
+
+  private UUID parseContentId(String contentId) {
+    if (contentId == null) {
+      log.warn("recommend_contents 호출: contentId가 없습니다");
+      return null;
+    }
+    try {
+      return UUID.fromString(contentId);
+    } catch (IllegalArgumentException e) {
+      log.warn("recommend_contents 호출: contentId 형식이 올바르지 않습니다. value={}", contentId);
+      return null;
+    }
   }
 }
