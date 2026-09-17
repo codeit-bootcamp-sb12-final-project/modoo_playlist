@@ -63,6 +63,9 @@ public enum ErrorCode {
   // WatchingSession
   WATCHING_SESSION_NOT_FOUND(404,"시청 세션을 찾을 수 없습니다."),
 
+  // Chat
+  AI_BOT_ACCOUNT_NOT_FOUND(500, "AI 봇 계정을 찾을 수 없습니다."),
+
   // File
   FILE_SAVE_FAILED(500, "파일 저장에 실패했습니다."),
   FILE_DELETE_FAILED(500, "파일 삭제에 실패했습니다."),
@@ -77,6 +80,9 @@ public enum ErrorCode {
   CONTENT_CURSOR_INVALID(400, "콘텐츠 커서 형식이 올바르지 않습니다."),
   CONTENT_DETAIL_INVALID(400, "콘텐츠 타입별 상세 정보가 올바르지 않습니다."),
   THUMBNAIL_INVALID(400, "올바른 썸네일 이미지가 아닙니다."),
+
+  // Reaction
+  REACTION_TYPE_INVALID(400, "반응 타입은 LIKE, DISLIKE, NOT_INTERESTED만 가능합니다."),
 
   // Tag
   TAG_NAME_INVALID(400, "태그 이름이 올바르지 않습니다."),

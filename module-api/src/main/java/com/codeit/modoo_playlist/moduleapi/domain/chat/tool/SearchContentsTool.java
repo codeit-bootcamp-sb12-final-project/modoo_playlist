@@ -28,8 +28,19 @@ public class SearchContentsTool {
       @ToolParam(description = "사용자가 찾고 있는 콘텐츠에 대한 자연어 설명") String query,
       ToolContext toolContext
   ) {
-    log.info("search_contents 호출: queryLength={}", query == null ? 0 : query.length());
-    List<RecommendedContentDto> result = semanticSearchService.search(query, DEFAULT_LIMIT);
+    if (query == null || query.isBlank()) {
+      log.warn("search_contents 호출: query가 비어 있어 검색을 건너뜁니다");
+      return List.of();
+    }
+    log.info("search_contents 호출: queryLength={}", query.length());
+
+    List<RecommendedContentDto> result;
+    try {
+      result = semanticSearchService.search(query, DEFAULT_LIMIT);
+    } catch (Exception e) {
+      log.error("search_contents 검색 실패", e);
+      return List.of();
+    }
     log.info("search_contents 결과: {}건", result.size());
 
     Object collector = toolContext.getContext().get(ChatToolContext.CARD_COLLECTOR);
