@@ -18,8 +18,8 @@ import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import com.codeit.modoo_playlist.moduleapi.domain.user.controller.UserController;
 import com.codeit.modoo_playlist.moduleapi.domain.user.service.UserService;
 import com.codeit.modoo_playlist.moduleapi.dto.UserDto;
-import com.codeit.modoo_playlist.moduleapi.dto.request.UserCreateRequest;
-import com.codeit.modoo_playlist.moduleapi.dto.request.UserProfileUpdateRequest;
+import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserCreateRequest;
+import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserProfileUpdateRequest;
 import com.codeit.modoo_playlist.moduleapi.exception.GlobalExceptionHandler;
 import com.codeit.modoo_playlist.moduleapi.security.UserDetails;
 import java.time.Instant;
@@ -58,7 +58,7 @@ class UserControllerTest {
 
   @Mock
   UserService userService;
-  
+
   private MockMvc mvc;
   private final JsonMapper json = JsonMapper.builder().build();
   private UUID id;

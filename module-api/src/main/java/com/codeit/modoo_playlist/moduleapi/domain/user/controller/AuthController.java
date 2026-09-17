@@ -3,7 +3,7 @@ package com.codeit.modoo_playlist.moduleapi.domain.user.controller;
 import com.codeit.modoo_playlist.moduleapi.domain.user.service.AuthService;
 import com.codeit.modoo_playlist.moduleapi.dto.jwt.JwtDto;
 import com.codeit.modoo_playlist.moduleapi.dto.jwt.TokenRefreshResult;
-import com.codeit.modoo_playlist.moduleapi.dto.request.ResetPasswordRequest;
+import com.codeit.modoo_playlist.moduleapi.dto.user.request.ResetPasswordRequest;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtTokenProvider;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -36,8 +36,8 @@ public class AuthController {
   public ResponseEntity<Void> resetPassword(
       @Valid @RequestBody ResetPasswordRequest request
   ) {
-    // TODO: 임시 비밀번호 발급 및 이메일 전송
-    throw new UnsupportedOperationException("구현 예정");
+    authService.resetPassword(request.email());
+    return ResponseEntity.noContent().build();
   }
 
   @PostMapping(

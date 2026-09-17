@@ -20,6 +20,9 @@ public enum ErrorCode {
 
   // Auth - 인증 및 인가
   INVALID_CREDENTIALS(401, "이메일 또는 비밀번호가 올바르지 않습니다."),
+  TEMP_PASSWORD_ACTIVE(401, "임시 비밀번호가 발급된 계정입니다. 이메일로 전달된 임시 비밀번호를 사용해 주세요."),
+  TEMP_PASSWORD_EXPIRED(401, "임시 비밀번호가 만료되었습니다. 비밀번호 초기화를 다시 요청해 주세요."),
+  PASSWORD_CHANGE_REQUIRED(403, "비밀번호 변경이 필요합니다."),
   AUTHENTICATION_REQUIRED(401, "로그인이 필요합니다."),
   ACCESS_DENIED(403, "접근 권한이 없습니다."),
   INVALID_CSRF_TOKEN(403, "CSRF 토큰이 없거나 유효하지 않습니다."),
@@ -33,6 +36,8 @@ public enum ErrorCode {
   USER_NOT_FOUND(404, "사용자를 찾을 수 없습니다."),
   EMAIL_ALREADY_EXISTS(409, "이미 사용 중인 이메일입니다."),
   USER_ACCOUNT_LOCKED(403, "잠긴 계정입니다."),
+  PASSWORD_RESET_NOT_SUPPORTED(400, "비밀번호를 초기화할 수 없는 계정입니다."),
+  EMAIL_SEND_FAILED(503, "임시 비밀번호 이메일을 전송하지 못했습니다."),
 
   // Post
   POST_NOT_FOUND(404, "게시글을 찾을 수 없습니다."),

@@ -3,6 +3,7 @@ package com.codeit.modoo_playlist.moduleapi.domain.user;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.assertArg;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -10,19 +11,28 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.codeit.modoo_playlist.core.domain.user.entity.User;
 import com.codeit.modoo_playlist.core.domain.user.entity.UserRole;
 import com.codeit.modoo_playlist.core.global.exception.BaseException;
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
+import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
+import com.codeit.modoo_playlist.moduleapi.domain.user.service.TemporaryPasswordGenerator;
+import com.codeit.modoo_playlist.moduleapi.domain.user.service.TemporaryPasswordSender;
 import com.codeit.modoo_playlist.moduleapi.domain.user.service.impl.AuthServiceImpl;
 import com.codeit.modoo_playlist.moduleapi.dto.UserDto;
+import com.codeit.modoo_playlist.moduleapi.dto.jwt.LoginIssueResult;
 import com.codeit.modoo_playlist.moduleapi.dto.jwt.LoginSession;
 import com.codeit.modoo_playlist.moduleapi.dto.jwt.TokenRefreshResult;
+import com.codeit.modoo_playlist.moduleapi.mapper.UserMapper;
+import com.codeit.modoo_playlist.moduleapi.security.LoginCredentialType;
 import com.codeit.modoo_playlist.moduleapi.security.UserDetails;
 import com.codeit.modoo_playlist.moduleapi.security.UserDetailsService;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtTokenProvider;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.LoginSessionStore;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.RefreshTokenHasher;
 import com.nimbusds.jose.JOSEException;
+import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
@@ -36,6 +46,7 @@ import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
@@ -45,6 +56,8 @@ class AuthServiceTest {
   private static final String OLD_REFRESH_TOKEN = "old";
   private static final String NEW_ACCESS_TOKEN = "new-access";
   private static final String NEW_REFRESH_TOKEN = "new-refresh";
+  private static final String TEMPORARY_PASSWORD = "temporary1!!";
+  private static final String ENCODED_TEMPORARY_PASSWORD = "encoded-temporary-password";
   private static final long REFRESH_EXPIRATION_MS = 3_600_000L;
   private static final long MAX_REFRESH_EXPIRATION_MS = 86_400_000L;
 
@@ -57,7 +70,23 @@ class AuthServiceTest {
   @Mock
   UserDetailsService users;
 
+  @Mock
+  UserRepository userRepository;
+
+  @Mock
+  PasswordEncoder passwordEncoder;
+
+  @Mock
+  TemporaryPasswordGenerator temporaryPasswordGenerator;
+
+  @Mock
+  TemporaryPasswordSender temporaryPasswordSender;
+
+  @Mock
+  UserMapper userMapper;
+
   private final RefreshTokenHasher hasher = new RefreshTokenHasher();
+  private final Clock clock = Clock.systemUTC();
   private UUID userId;
   private UUID sid;
   private AuthServiceImpl authService;
@@ -66,10 +95,74 @@ class AuthServiceTest {
   void setUp() {
     userId = UUID.randomUUID();
     sid = UUID.randomUUID();
-    authService = new AuthServiceImpl(tokens, sessions, users, hasher);
+    authService = new AuthServiceImpl(
+        tokens,
+        sessions,
+        users,
+        hasher,
+        userRepository,
+        passwordEncoder,
+        temporaryPasswordGenerator,
+        temporaryPasswordSender,
+        clock,
+        userMapper
+    );
     ReflectionTestUtils.setField(authService, "refreshTokenExpirationMs", REFRESH_EXPIRATION_MS);
     ReflectionTestUtils.setField(authService, "maxRefreshTokenExpirationMs",
         MAX_REFRESH_EXPIRATION_MS);
+    ReflectionTestUtils.setField(
+        authService,
+        "temporaryPasswordExpiration",
+        Duration.ofMinutes(3)
+    );
+  }
+
+  @Test
+  @DisplayName("비밀번호 초기화 시 임시 비밀번호를 저장하고 이메일을 전송한다")
+  void resetPasswordIssuesAndSendsTemporaryPassword() {
+    User user = user();
+    when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+    when(temporaryPasswordGenerator.generate()).thenReturn(TEMPORARY_PASSWORD);
+    when(passwordEncoder.encode(TEMPORARY_PASSWORD))
+        .thenReturn(ENCODED_TEMPORARY_PASSWORD);
+
+    authService.resetPassword(EMAIL);
+
+    assertThat(user.getTempPassword()).isEqualTo(ENCODED_TEMPORARY_PASSWORD);
+    assertThat(user.hasActiveTemporaryPassword(clock.instant())).isTrue();
+    verify(userRepository).saveAndFlush(user);
+    verify(temporaryPasswordSender).send(
+        EMAIL,
+        TEMPORARY_PASSWORD,
+        user.getTempPasswordExpiresAt()
+    );
+    verify(sessions).invalidateAll(userId);
+  }
+
+  @Test
+  @DisplayName("임시 로그인은 접근 토큰만 발급하고 갱신 토큰은 생성하지 않는다")
+  void temporaryLoginDoesNotIssueRefreshToken() throws Exception {
+    User user = user();
+    user.issueTemporaryPassword(
+        ENCODED_TEMPORARY_PASSWORD,
+        clock.instant().plusSeconds(180)
+    );
+    UserDto userDto = details(userId).getUserDto();
+
+    when(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.of(user));
+    when(userMapper.toDto(user)).thenReturn(userDto);
+    when(tokens.generateAccessToken(any(), any(), any()))
+        .thenReturn(NEW_ACCESS_TOKEN);
+
+    LoginIssueResult result =
+        authService.issueLogin(userId, LoginCredentialType.TEMPORARY);
+
+    assertThat(result.accessToken()).isEqualTo(NEW_ACCESS_TOKEN);
+    assertThat(result.refreshToken()).isNull();
+    verify(tokens, never()).generateRefreshToken(any(), any(), any());
+    verify(sessions).register(assertArg(session ->
+        assertThat(session.refreshTokenHash()).isEmpty()
+    ));
   }
 
   @ParameterizedTest
@@ -197,6 +290,12 @@ class AuthServiceTest {
   private UserDetails details(UUID id) {
     return new UserDetails(new UserDto(id, EMAIL, "test", null, UserRole.USER, false,
         Instant.now()), "hash");
+  }
+
+  private User user() {
+    User user = User.create(EMAIL, "test", "encoded-password");
+    ReflectionTestUtils.setField(user, "id", userId);
+    return user;
   }
 
   private void assertError(Runnable action, ErrorCode code) {

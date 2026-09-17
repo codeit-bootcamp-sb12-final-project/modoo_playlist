@@ -4,6 +4,7 @@ import com.codeit.modoo_playlist.core.global.exception.BaseException;
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import com.codeit.modoo_playlist.moduleapi.config.properties.AuthCookieProperties;
 import com.codeit.modoo_playlist.moduleapi.dto.UserDto;
+import com.codeit.modoo_playlist.moduleapi.security.LoginCredentialType;
 import com.codeit.modoo_playlist.moduleapi.security.UserDetails;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -140,6 +141,7 @@ public class JwtTokenProvider {
         .claim("userId", user.id().toString())
         .claim("sid", sid.toString())
         .claim("type", tokenType)
+        .claim("credentialType", userDetails.getCredentialType().name())
         .jwtID(UUID.randomUUID().toString())
         .issueTime(Date.from(issuedAt))
         .expirationTime(Date.from(expiresAt))
@@ -271,6 +273,22 @@ public class JwtTokenProvider {
       return UUID.fromString(sid);
     } catch (BaseException e) {
       throw e;
+    } catch (Exception e) {
+      throw new BaseException(ErrorCode.INVALID_TOKEN, e);
+    }
+  }
+
+  public LoginCredentialType getCredentialType(String token) {
+    try {
+      SignedJWT signedJWT = SignedJWT.parse(token);
+      String credentialType = signedJWT.getJWTClaimsSet()
+          .getStringClaim("credentialType");
+
+      if (credentialType == null) {
+        return LoginCredentialType.PERMANENT;
+      }
+
+      return LoginCredentialType.valueOf(credentialType);
     } catch (Exception e) {
       throw new BaseException(ErrorCode.INVALID_TOKEN, e);
     }

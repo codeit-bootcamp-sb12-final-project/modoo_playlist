@@ -1,4 +1,4 @@
-package com.codeit.modoo_playlist.moduleapi.dto.request;
+package com.codeit.modoo_playlist.moduleapi.dto.user.request;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;

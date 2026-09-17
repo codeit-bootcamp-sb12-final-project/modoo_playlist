@@ -9,11 +9,14 @@ import com.codeit.modoo_playlist.moduleapi.domain.user.controller.UserController
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.user.service.impl.AuthServiceImpl;
 import com.codeit.modoo_playlist.moduleapi.domain.user.service.impl.UserServiceImpl;
+import com.codeit.modoo_playlist.moduleapi.domain.user.service.TemporaryPasswordGenerator;
+import com.codeit.modoo_playlist.moduleapi.domain.user.service.TemporaryPasswordSender;
 import com.codeit.modoo_playlist.moduleapi.exception.GlobalExceptionHandler;
 import com.codeit.modoo_playlist.moduleapi.mapper.UserMapper;
 import com.codeit.modoo_playlist.moduleapi.security.Http403ForbiddenAccessDeniedHandler;
 import com.codeit.modoo_playlist.moduleapi.security.LoginFailureHandler;
 import com.codeit.modoo_playlist.moduleapi.security.SecurityErrorResponseWriter;
+import com.codeit.modoo_playlist.moduleapi.security.UserAuthenticationProvider;
 import com.codeit.modoo_playlist.moduleapi.security.UserDetailsService;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtAuthenticationFilter;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtLoginSuccessHandler;
@@ -21,6 +24,7 @@ import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtLogoutHandler;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtTokenProvider;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.RedisLoginSessionStore;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.RefreshTokenHasher;
+import java.time.Clock;
 import org.mapstruct.factory.Mappers;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -50,6 +54,7 @@ import org.testcontainers.utility.DockerImageName;
     AuthController.class,
     UserServiceImpl.class,
     AuthServiceImpl.class,
+    UserAuthenticationProvider.class,
     UserDetailsService.class,
     GlobalExceptionHandler.class,
     JwtTokenProvider.class,
@@ -66,6 +71,22 @@ public class AuthTestApplication {
   @Bean
   UserMapper userMapper() {
     return Mappers.getMapper(UserMapper.class);
+  }
+
+  @Bean
+  Clock clock() {
+    return Clock.systemUTC();
+  }
+
+  @Bean
+  TemporaryPasswordGenerator temporaryPasswordGenerator() {
+    return () -> "temporary1!!";
+  }
+
+  @Bean
+  TemporaryPasswordSender temporaryPasswordSender() {
+    return (email, temporaryPassword, expiresAt) -> {
+    };
   }
 
   @Bean(destroyMethod = "stop")

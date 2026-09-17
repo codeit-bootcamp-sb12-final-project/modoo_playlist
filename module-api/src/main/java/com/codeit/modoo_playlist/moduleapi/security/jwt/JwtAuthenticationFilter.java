@@ -3,6 +3,7 @@ package com.codeit.modoo_playlist.moduleapi.security.jwt;
 import com.codeit.modoo_playlist.core.global.exception.BaseException;
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import com.codeit.modoo_playlist.moduleapi.dto.jwt.LoginSession;
+import com.codeit.modoo_playlist.moduleapi.security.LoginCredentialType;
 import com.codeit.modoo_playlist.moduleapi.security.SecurityErrorResponseWriter;
 import com.codeit.modoo_playlist.moduleapi.security.UserDetails;
 import com.codeit.modoo_playlist.moduleapi.security.UserDetailsService;
@@ -39,6 +40,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   protected boolean shouldNotFilter(HttpServletRequest request) {
     String uri = request.getRequestURI();
     return uri.equals("/api/auth/sign-in")
+        || uri.equals("/api/auth/reset-password")
         || uri.equals("/api/auth/refresh")
         || uri.equals("/api/auth/csrf-token");
   }
@@ -70,6 +72,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 //      토큰에서 정보 추출
       UUID sid = tokenProvider.getSid(token);
       UUID tokenUserId = tokenProvider.getUserId(token);
+      LoginCredentialType credentialType = tokenProvider.getCredentialType(token);
 
 //      로그인 세션이 활성화 중인지 체크
 //      해당 메서드에서 사용자까지 비교함.
@@ -95,6 +98,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       if (!userDetails.isAccountNonLocked()) {
         throw new BaseException(ErrorCode.USER_ACCOUNT_LOCKED);
       }
+
+      if (credentialType == LoginCredentialType.TEMPORARY
+          && !isTemporaryPasswordRequestAllowed(request)) {
+        throw new BaseException(ErrorCode.PASSWORD_CHANGE_REQUIRED);
+      }
+
+      userDetails = new UserDetails(
+          userDetails.getUserDto(),
+          userDetails.getPassword(),
+          credentialType
+      );
 
       // 7. 현재 요청의 인증 정보 구성
       UsernamePasswordAuthenticationToken authentication =
@@ -157,5 +171,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       }
     }
     return null;
+  }
+
+  private boolean isTemporaryPasswordRequestAllowed(HttpServletRequest request) {
+    String uri = request.getRequestURI();
+
+    if ("POST".equals(request.getMethod())
+        && "/api/auth/sign-out".equals(uri)) {
+      return true;
+    }
+
+    return "PATCH".equals(request.getMethod())
+        && uri.matches("/api/users/[^/]+/password");
   }
 }

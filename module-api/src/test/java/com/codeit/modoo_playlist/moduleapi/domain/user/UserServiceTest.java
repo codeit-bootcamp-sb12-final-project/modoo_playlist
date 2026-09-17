@@ -16,8 +16,8 @@ import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.user.service.impl.UserServiceImpl;
 import com.codeit.modoo_playlist.moduleapi.dto.UserDto;
-import com.codeit.modoo_playlist.moduleapi.dto.request.UserCreateRequest;
-import com.codeit.modoo_playlist.moduleapi.dto.request.UserProfileUpdateRequest;
+import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserCreateRequest;
+import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserProfileUpdateRequest;
 import com.codeit.modoo_playlist.moduleapi.mapper.UserMapper;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.LoginSessionStore;
 import java.time.Instant;
@@ -211,6 +211,25 @@ class UserServiceTest {
             e -> assertThat(e.getErrorCode()).isEqualTo(ErrorCode.USER_NOT_FOUND));
 
     verify(userRepository, never()).save(any());
+  }
+
+  @Test
+  @DisplayName("비밀번호 변경 시 임시 비밀번호를 제거하고 로그인 세션을 무효화한다")
+  void updatePasswordClearsTemporaryPasswordAndInvalidatesSession() {
+    String newPassword = "ChangedPassword123!";
+    existingUser.issueTemporaryPassword(
+        "temporary-password-hash",
+        Instant.now().plusSeconds(180)
+    );
+    when(userRepository.findByIdForUpdate(userId))
+        .thenReturn(Optional.of(existingUser));
+
+    service.updatePassword(userId, userId, newPassword);
+
+    assertThat(encoder.matches(newPassword, existingUser.getPassword())).isTrue();
+    assertThat(existingUser.getTempPassword()).isNull();
+    assertThat(existingUser.getTempPasswordExpiresAt()).isNull();
+    verify(loginSessionStore).invalidateAll(userId);
   }
 
   @Test
