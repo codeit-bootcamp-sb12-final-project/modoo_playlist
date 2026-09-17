@@ -3,7 +3,7 @@ package com.codeit.modoo_playlist.moduleapi.domain.user.controller;
 import com.codeit.modoo_playlist.moduleapi.domain.user.service.AuthService;
 import com.codeit.modoo_playlist.moduleapi.dto.jwt.JwtDto;
 import com.codeit.modoo_playlist.moduleapi.dto.jwt.TokenRefreshResult;
-import com.codeit.modoo_playlist.moduleapi.dto.request.ResetPasswordRequest;
+import com.codeit.modoo_playlist.moduleapi.dto.user.request.ResetPasswordRequest;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtTokenProvider;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;

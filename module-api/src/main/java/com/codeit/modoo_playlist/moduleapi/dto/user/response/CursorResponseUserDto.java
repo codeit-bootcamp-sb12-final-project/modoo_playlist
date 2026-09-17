@@ -1,4 +1,4 @@
-package com.codeit.modoo_playlist.moduleapi.dto.response;
+package com.codeit.modoo_playlist.moduleapi.dto.user.response;
 
 import com.codeit.modoo_playlist.moduleapi.dto.UserDto;
 import java.util.List;

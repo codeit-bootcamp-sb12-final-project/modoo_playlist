@@ -2,12 +2,12 @@ package com.codeit.modoo_playlist.moduleapi.domain.user.controller;
 
 import com.codeit.modoo_playlist.moduleapi.domain.user.service.UserService;
 import com.codeit.modoo_playlist.moduleapi.dto.UserDto;
-import com.codeit.modoo_playlist.moduleapi.dto.request.UserCreateRequest;
-import com.codeit.modoo_playlist.moduleapi.dto.request.UserListRequest;
-import com.codeit.modoo_playlist.moduleapi.dto.request.UserLockUpdateRequest;
-import com.codeit.modoo_playlist.moduleapi.dto.request.UserProfileUpdateRequest;
-import com.codeit.modoo_playlist.moduleapi.dto.request.UserRoleUpdateRequest;
-import com.codeit.modoo_playlist.moduleapi.dto.response.CursorResponseUserDto;
+import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserCreateRequest;
+import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserListRequest;
+import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserLockUpdateRequest;
+import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserProfileUpdateRequest;
+import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserRoleUpdateRequest;
+import com.codeit.modoo_playlist.moduleapi.dto.user.response.CursorResponseUserDto;
 import com.codeit.modoo_playlist.moduleapi.security.UserDetails;
 import jakarta.validation.Valid;
 import java.util.UUID;

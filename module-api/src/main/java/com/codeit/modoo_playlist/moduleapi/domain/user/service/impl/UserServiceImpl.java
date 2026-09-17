@@ -8,10 +8,10 @@ import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.query.UserQueryPage;
 import com.codeit.modoo_playlist.moduleapi.domain.user.service.UserService;
 import com.codeit.modoo_playlist.moduleapi.dto.UserDto;
-import com.codeit.modoo_playlist.moduleapi.dto.request.UserCreateRequest;
-import com.codeit.modoo_playlist.moduleapi.dto.request.UserListRequest;
-import com.codeit.modoo_playlist.moduleapi.dto.request.UserProfileUpdateRequest;
-import com.codeit.modoo_playlist.moduleapi.dto.response.CursorResponseUserDto;
+import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserCreateRequest;
+import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserListRequest;
+import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserProfileUpdateRequest;
+import com.codeit.modoo_playlist.moduleapi.dto.user.response.CursorResponseUserDto;
 import com.codeit.modoo_playlist.moduleapi.mapper.UserMapper;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.LoginSessionStore;
 import java.util.List;
