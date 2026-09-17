@@ -16,8 +16,8 @@ import org.springframework.data.repository.query.Param;
 public interface UserContentInteractionRepository extends
     JpaRepository<UserContentInteraction, UUID> {
 
-  Optional<UserContentInteraction> findByUserIdAndContentIdAndTypeIn(UUID userId, UUID contentId,
-      Collection<InteractionType> types);
+  List<UserContentInteraction> findAllByUserIdAndContentIdAndTypeInOrderByUpdatedAtDescIdDesc(
+      UUID userId, UUID contentId, Collection<InteractionType> types);
 
   Optional<UserContentInteraction> findByUserIdAndContentIdAndType(UUID userId, UUID contentId,
       InteractionType type);

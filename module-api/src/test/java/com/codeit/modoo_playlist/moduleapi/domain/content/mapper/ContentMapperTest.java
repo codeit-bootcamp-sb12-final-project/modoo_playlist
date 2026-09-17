@@ -15,6 +15,7 @@ import com.codeit.modoo_playlist.core.domain.content.entity.Content;
 import com.codeit.modoo_playlist.core.domain.content.entity.ContentSports;
 import com.codeit.modoo_playlist.core.domain.content.type.ContentType;
 import com.codeit.modoo_playlist.core.domain.content.type.SportsStatus;
+import com.codeit.modoo_playlist.core.domain.interaction.enums.InteractionType;
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.query.ContentQueryPage;
 import com.codeit.modoo_playlist.moduleapi.dto.content.response.ContentCursorResponse;
 import com.codeit.modoo_playlist.moduleapi.dto.content.response.ContentDetailResponse;
@@ -52,12 +53,13 @@ class ContentMapperTest {
                 .status(SportsStatus.SCHEDULED).kickoffAt(kickoffAt).build();
 
         ContentDetailResponse response = mapper.toDetail(content, List.of("Soccer"), 3,
-                null, sports, List.of());
+                null, sports, List.of(), InteractionType.LIKE);
 
         assertThat(response.type()).isEqualTo("sport");
         assertThat(response.video()).isNull();
         assertThat(response.sports().sportType()).isEqualTo("Soccer");
         assertThat(response.sports().kickoffAt()).isEqualTo(kickoffAt);
+        assertThat(response.myReaction()).isEqualTo(InteractionType.LIKE);
     }
 
     @Test
