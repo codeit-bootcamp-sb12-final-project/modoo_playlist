@@ -33,6 +33,8 @@ public enum ErrorCode {
   USER_NOT_FOUND(404, "사용자를 찾을 수 없습니다."),
   EMAIL_ALREADY_EXISTS(409, "이미 사용 중인 이메일입니다."),
   USER_ACCOUNT_LOCKED(403, "잠긴 계정입니다."),
+  PASSWORD_RESET_NOT_SUPPORTED(400, "비밀번호를 초기화할 수 없는 계정입니다."),
+  EMAIL_SEND_FAILED(503, "임시 비밀번호 이메일을 전송하지 못했습니다."),
 
   // Post
   POST_NOT_FOUND(404, "게시글을 찾을 수 없습니다."),
