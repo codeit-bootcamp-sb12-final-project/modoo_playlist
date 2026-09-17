@@ -16,6 +16,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
@@ -39,6 +40,12 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(AccessDeniedException.class)
   public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException e) {
     return handleBaseException(new BaseException(ErrorCode.ACCESS_DENIED, e));
+  }
+
+  // 클라이언트가 이미 연결을 끊은 상태(SSE 등 비동기 응답 도중 탭 닫힘/새로고침) — 응답 쓸 대상이 없으니 무시
+  @ExceptionHandler(AsyncRequestNotUsableException.class)
+  public void handleAsyncRequestNotUsable(AsyncRequestNotUsableException e) {
+    log.debug("비동기 요청 처리 중 클라이언트 연결이 이미 끊어짐: {}", e.getMessage());
   }
 
   // 400 - @RequestBody @Valid 실패 → 필드별 에러맵 반환

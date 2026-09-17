@@ -66,6 +66,11 @@ public enum ErrorCode {
   PLAYLIST_SUBSCRIPTION_ALREADY_EXISTS(409, "이미 구독 중인 플레이리스트입니다."),
   PLAYLIST_QUERY_INVALID(400, "플레이리스트 조회 조건이 올바르지 않습니다."),
 
+  // Notification
+  NOTIFICATION_NOT_FOUND(404, "알림을 찾을 수 없습니다."),
+  NOTIFICATION_ACCESS_DENIED(403, "본인의 알림이 아닙니다."),
+  NOTIFICATION_QUERY_INVALID(400, "알림 조회 조건이 올바르지 않습니다."),
+
   // Conversation
   CONVERSATION_NOT_FOUND(404, "대화를 찾을 수 없습니다."),
   CONVERSATION_ACCESS_DENIED(403, "해당 대화에 접근할 권한이 없습니다."),
