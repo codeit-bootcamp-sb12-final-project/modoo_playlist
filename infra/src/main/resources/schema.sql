@@ -310,7 +310,7 @@ CREATE TABLE `messages` (
 	`sender_id`	BINARY(16)	NOT NULL,
 	`receiver_id`	BINARY(16)	NULL,
 	`content_id`	BINARY(16)	NULL,
-	`conversation_id`	BINARY(16)	NOT NULL,
+	`conversation_id`	BINARY(16)	NULL,
 	`type`	VARCHAR(20)	NOT NULL,
 	`message`	TEXT	NOT NULL,
 	`read_at`	DATETIME(6)	NULL,

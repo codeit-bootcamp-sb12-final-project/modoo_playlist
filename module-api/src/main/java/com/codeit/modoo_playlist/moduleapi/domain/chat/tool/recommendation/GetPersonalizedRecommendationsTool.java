@@ -1,6 +1,8 @@
-package com.codeit.modoo_playlist.moduleapi.domain.chat.tool;
+package com.codeit.modoo_playlist.moduleapi.domain.chat.tool.recommendation;
 
-import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.RecommendedContentDto;
+import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.ChatToolContext;
+import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.ContentCardCollector;
+import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.SimilarContentDto;
 import com.codeit.modoo_playlist.moduleapi.domain.recommendation.service.RecommendationService;
 import java.util.List;
 import java.util.UUID;
@@ -23,17 +25,10 @@ public class GetPersonalizedRecommendationsTool {
       description = "로그인한 사용자와 취향이 비슷한 사람들이 좋아한 콘텐츠 기반으로 개인화 추천을 합니다. "
           + "장르 등 기준이 명확하면 recommend_contents를, 취향 태그 자체가 궁금하면 get_user_preference를 쓰세요."
   )
-  public List<RecommendedContentDto> getPersonalizedRecommendations(ToolContext toolContext) {
+  public List<SimilarContentDto> getPersonalizedRecommendations(ToolContext toolContext) {
     UUID userId = ChatToolContext.requireUserId(toolContext);
     log.info("get_personalized_recommendations 호출: userId={}", userId);
-
-    List<RecommendedContentDto> result;
-    try {
-      result = recommendationService.getRecommendationsForMe(userId, DEFAULT_LIMIT);
-    } catch (Exception e) {
-      log.error("get_personalized_recommendations 조회 실패: userId={}", userId, e);
-      return List.of();
-    }
+    List<SimilarContentDto> result = recommendationService.getRecommendationsForMe(userId, DEFAULT_LIMIT);
     log.info("get_personalized_recommendations 결과: {}건", result.size());
 
     Object collector = toolContext.getContext().get(ChatToolContext.CARD_COLLECTOR);
