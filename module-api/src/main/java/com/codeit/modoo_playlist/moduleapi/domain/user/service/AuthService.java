@@ -6,6 +6,8 @@ import java.util.UUID;
 
 public interface AuthService {
 
+  void resetPassword(String email);
+
   LoginIssueResult issueLogin(UUID userId);
 
   TokenRefreshResult refresh(String refreshToken);

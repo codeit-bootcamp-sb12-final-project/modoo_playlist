@@ -5,6 +5,7 @@ import com.codeit.modoo_playlist.core.global.exception.BaseException;
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.user.service.AuthService;
+import com.codeit.modoo_playlist.moduleapi.domain.user.service.TemporaryPasswordSender;
 import com.codeit.modoo_playlist.moduleapi.dto.UserDto;
 import com.codeit.modoo_playlist.moduleapi.dto.jwt.LoginIssueResult;
 import com.codeit.modoo_playlist.moduleapi.dto.jwt.LoginSession;
@@ -16,6 +17,8 @@ import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtTokenProvider;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.LoginSessionStore;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.RefreshTokenHasher;
 import com.nimbusds.jose.JOSEException;
+import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
@@ -23,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataAccessException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -36,13 +40,44 @@ public class AuthServiceImpl implements AuthService {
   private final UserDetailsService userDetailsService;
   private final RefreshTokenHasher refreshTokenHasher;
   private final UserRepository userRepository;
+  private final PasswordEncoder passwordEncoder;
+  private final TemporaryPasswordSender temporaryPasswordSender;
+  private final Clock clock;
   private final UserMapper userMapper;
+
+  @Value("${module-api.auth.temporary-password.value}")
+  private String temporaryPassword;
+
+  @Value("${module-api.auth.temporary-password.expiration}")
+  private Duration temporaryPasswordExpiration;
 
   @Value("${module-api.jwt.refresh-token.expiration-ms}")
   private long refreshTokenExpirationMs;
 
   @Value("${module-api.jwt.refresh-token.max-expiration-ms}")
   private long maxRefreshTokenExpirationMs;
+
+  @Override
+  @Transactional
+  public void resetPassword(String email) {
+    User user = userRepository.findByEmail(email)
+        .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+
+    if (user.getPassword() == null) {
+      throw new BaseException(ErrorCode.PASSWORD_RESET_NOT_SUPPORTED);
+    }
+
+    if (user.isLocked()) {
+      throw new BaseException(ErrorCode.USER_ACCOUNT_LOCKED);
+    }
+
+    String encodedTemporaryPassword = passwordEncoder.encode(temporaryPassword);
+    Instant expiresAt = clock.instant().plus(temporaryPasswordExpiration);
+
+    user.issueTemporaryPassword(encodedTemporaryPassword, expiresAt);
+    userRepository.saveAndFlush(user);
+    temporaryPasswordSender.send(user.getEmail(), temporaryPassword, expiresAt);
+  }
 
   //  잠금 -> 잠금 및 역할 재 확인 -> 토큰 생성 및 세션 등록 -> 종료
   @Transactional
@@ -63,7 +98,7 @@ public class AuthServiceImpl implements AuthService {
         user.getPassword()
     );
 
-    Instant createdAt = Instant.now().truncatedTo(ChronoUnit.SECONDS);
+    Instant createdAt = clock.instant().truncatedTo(ChronoUnit.SECONDS);
 
     Instant expiresAt = createdAt.plusMillis(refreshTokenExpirationMs)
         .truncatedTo(ChronoUnit.SECONDS);

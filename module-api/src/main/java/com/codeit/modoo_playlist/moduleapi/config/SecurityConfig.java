@@ -70,6 +70,7 @@ public class SecurityConfig {
             // 인증 시작 및 복원
             .requestMatchers(
                 "/api/auth/sign-in",
+                "/api/auth/reset-password",
                 "/api/auth/refresh",
                 "/api/auth/csrf-token"
             ).permitAll()
