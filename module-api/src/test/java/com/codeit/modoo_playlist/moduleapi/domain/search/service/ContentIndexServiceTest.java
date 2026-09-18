@@ -30,6 +30,7 @@ import java.util.function.Function;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -244,6 +245,16 @@ class ContentIndexServiceTest {
       assertThat(document.getTitle()).isEqualTo("Index Test Movie");
       assertThat(document.getWatcherCount())
           .isEqualTo(contentRepository.countCurrentWatchers(TEST_CONTENT_ID));
+    }
+
+    @Test
+    @EnabledIfEnvironmentVariable(named = "MODOO_REINDEX", matches = "true")
+    @DisplayName("로컬 콘텐츠를 재색인한다")
+    void reindexLocalContents() {
+      long indexedCount = contentInitialIndexService.indexAll();
+
+      System.out.println("재색인한 콘텐츠 수: " + indexedCount);
+      assertThat(indexedCount).isPositive();
     }
 
     @Test
