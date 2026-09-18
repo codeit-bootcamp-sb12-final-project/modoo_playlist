@@ -10,7 +10,7 @@ import com.codeit.modoo_playlist.moduleapi.security.UserAuthenticationProvider;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtAuthenticationFilter;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtLoginSuccessHandler;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtLogoutHandler;
-import com.codeit.modoo_playlist.moduleapi.security.oauth.GoogleOidcUserService;
+import com.codeit.modoo_playlist.moduleapi.security.oauth.OAuthOidcUserService;
 import com.codeit.modoo_playlist.moduleapi.security.oauth.OAuthLoginSuccessHandler;
 import java.util.List;
 import java.util.stream.IntStream;
@@ -28,6 +28,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -52,8 +53,9 @@ public class SecurityConfig {
       JwtAuthenticationFilter jwtAuthenticationFilter,
       SecurityErrorResponseWriter securityErrorResponseWriter,
       UserAuthenticationProvider userAuthenticationProvider,
-      GoogleOidcUserService googleOidcUserService,
-      OAuthLoginSuccessHandler oauthLoginSuccessHandler
+      OAuthOidcUserService oauthOidcUserService,
+      OAuthLoginSuccessHandler oauthLoginSuccessHandler,
+      OAuth2AuthorizationRequestResolver oauth2AuthorizationRequestResolver
   ) throws Exception {
 
     http
@@ -120,14 +122,17 @@ public class SecurityConfig {
             .failureHandler(loginFailureHandler)
         )
 
-        // 4) Google OAuth 로그인
+        // 4) OIDC OAuth login
         .oauth2Login(oauth -> oauth
             // "/oauth2/authorization/google"
             // "/oauth2/authorization/kakao"
-            .authorizationEndpoint(auth -> auth.baseUri("/oauth2/authorization"))
-            // 구글 사용자를 매퍼를 이용해 OAuthUserProfile로 변환.
+            .authorizationEndpoint(auth -> auth
+                .baseUri("/oauth2/authorization")
+                .authorizationRequestResolver(oauth2AuthorizationRequestResolver)
+            )
+            // 공급자별 Claim을 공통 OAuthUserProfile로 변환.
             .userInfoEndpoint(userInfo -> userInfo
-                .oidcUserService(googleOidcUserService)
+                .oidcUserService(oauthOidcUserService)
             )
             .successHandler(oauthLoginSuccessHandler)
             .failureHandler(loginFailureHandler)

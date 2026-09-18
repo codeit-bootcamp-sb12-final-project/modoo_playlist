@@ -20,6 +20,22 @@ spring:
               - openid
               - profile
               - email
+          kakao:
+            client-id: ${KAKAO_CLIENT_ID}
+            client-secret: ${KAKAO_CLIENT_SECRET}
+            client-authentication-method: client_secret_post
+            authorization-grant-type: authorization_code
+            # redirect-uri는 기본으로 제공해 주지 않나?
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope:
+              - openid
+              - profile_nickname
+              - profile_image
+              - account_email
+            client-name: Kakao
+        provider:
+          kakao:
+            issuer-uri: https://kauth.kakao.com
   servlet:
     multipart:
       max-file-size: ${MULTIPART_MAX_FILE_SIZE:5MB}

@@ -70,7 +70,7 @@ public class OAuthLoginSuccessHandler implements AuthenticationSuccessHandler {
       response.sendRedirect(successRedirectUri);
     } catch (BaseException exception) {
       SecurityContextHolder.clearContext();
-      log.error("OAuth login processing failed: {}", exception.getErrorCode(), exception);
+      log.warn("OAuth login processing failed: {}", exception.getErrorCode(), exception);
       redirectFailure(response, exception.getErrorCode());
     } catch (DataAccessException exception) {
       SecurityContextHolder.clearContext();
