@@ -99,12 +99,16 @@ public class WatchingSessionRegistry {
 
         StartResult result;
 
+        boolean succeeded = false;
+
         try {
             // DB 호출: 잠금 밖
             result = watchingSessionService.start(watcherId, contentId);
-        } catch (RuntimeException exception) {
-            forget(state);
-            throw exception;
+            succeeded = true;
+        } finally{
+            if(!succeeded) {
+                forget(state);
+            }
         }
 
         synchronized (connection) {

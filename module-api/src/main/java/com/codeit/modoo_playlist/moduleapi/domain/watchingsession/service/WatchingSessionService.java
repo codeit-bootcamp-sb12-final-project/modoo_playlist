@@ -86,7 +86,7 @@ public class WatchingSessionService {
                 .build();
 
         // 새 세션 저장
-        watchingSessionRepository.saveAndFlush(session);
+        watchingSessionRepository.save(session);
 
         // JOIN 생성
         changes.add(change(ChangeType.JOIN, session));
