@@ -2,10 +2,10 @@ package com.codeit.modoo_playlist.moduleapi.domain.user.service;
 
 import com.codeit.modoo_playlist.core.domain.user.entity.UserRole;
 import com.codeit.modoo_playlist.moduleapi.dto.UserDto;
-import com.codeit.modoo_playlist.moduleapi.dto.request.UserCreateRequest;
-import com.codeit.modoo_playlist.moduleapi.dto.request.UserListRequest;
-import com.codeit.modoo_playlist.moduleapi.dto.request.UserProfileUpdateRequest;
-import com.codeit.modoo_playlist.moduleapi.dto.response.CursorResponseUserDto;
+import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserCreateRequest;
+import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserListRequest;
+import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserProfileUpdateRequest;
+import com.codeit.modoo_playlist.moduleapi.dto.user.response.CursorResponseUserDto;
 import java.util.UUID;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,6 +23,8 @@ public interface UserService {
       UserProfileUpdateRequest request,
       MultipartFile image
   );
+
+  void updatePassword(UUID actorId, UUID userId, String newPassword);
 
   void updateRole(UUID actorId, UUID userId, UserRole role);
 

@@ -7,6 +7,7 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -83,7 +84,7 @@ public class User extends BaseUpdatableEntity {
       this.profileImageUrl = profileImageUrl;
     }
   }
-  
+
   public void synchronizeBot(
       String email,
       String username
@@ -104,5 +105,42 @@ public class User extends BaseUpdatableEntity {
 
   public void changeLocked(boolean locked) {
     this.locked = locked;
+  }
+
+  public void issueTemporaryPassword(
+      String encodedTemporaryPassword,
+      Instant expiresAt
+  ) {
+    if (encodedTemporaryPassword == null || encodedTemporaryPassword.isBlank()) {
+      throw new IllegalArgumentException("임시 비밀번호는 비어 있을 수 없습니다.");
+    }
+
+    this.tempPassword = encodedTemporaryPassword;
+    this.tempPasswordExpiresAt = Objects.requireNonNull(
+        expiresAt,
+        "임시 비밀번호 만료 시각은 필수입니다."
+    );
+  }
+
+  public boolean hasActiveTemporaryPassword(Instant now) {
+    Objects.requireNonNull(now, "현재 시각은 필수입니다.");
+
+    return tempPassword != null
+        && tempPasswordExpiresAt != null
+        && now.isBefore(tempPasswordExpiresAt);
+  }
+
+  public void changePassword(String encodedPassword) {
+    if (encodedPassword == null || encodedPassword.isBlank()) {
+      throw new IllegalArgumentException("비밀번호는 비어 있을 수 없습니다.");
+    }
+
+    this.password = encodedPassword;
+    clearTemporaryPassword();
+  }
+
+  public void clearTemporaryPassword() {
+    this.tempPassword = null;
+    this.tempPasswordExpiresAt = null;
   }
 }

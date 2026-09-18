@@ -6,6 +6,7 @@ import com.codeit.modoo_playlist.moduleapi.security.Http403ForbiddenAccessDenied
 import com.codeit.modoo_playlist.moduleapi.security.LoginFailureHandler;
 import com.codeit.modoo_playlist.moduleapi.security.SecurityErrorResponseWriter;
 import com.codeit.modoo_playlist.moduleapi.security.SpaCsrfTokenRequestHandler;
+import com.codeit.modoo_playlist.moduleapi.security.UserAuthenticationProvider;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtAuthenticationFilter;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtLoginSuccessHandler;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtLogoutHandler;
@@ -21,6 +22,8 @@ import org.springframework.security.access.expression.method.DefaultMethodSecuri
 import org.springframework.security.access.expression.method.MethodSecurityExpressionHandler;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -47,10 +50,12 @@ public class SecurityConfig {
       JwtLogoutHandler jwtLogoutHandler,
       LoginFailureHandler loginFailureHandler,
       JwtAuthenticationFilter jwtAuthenticationFilter,
-      SecurityErrorResponseWriter securityErrorResponseWriter
+      SecurityErrorResponseWriter securityErrorResponseWriter,
+      AuthenticationManager authenticationManager
   ) throws Exception {
 
     http
+        .authenticationManager(authenticationManager)
         // 1) URL별 인가 설정
         .authorizeHttpRequests(auth -> auth
             // 정적 리소스
@@ -70,6 +75,7 @@ public class SecurityConfig {
             // 인증 시작 및 복원
             .requestMatchers(
                 "/api/auth/sign-in",
+                "/api/auth/reset-password",
                 "/api/auth/refresh",
                 "/api/auth/csrf-token"
             ).permitAll()
@@ -159,6 +165,13 @@ public class SecurityConfig {
   @Bean
   public PasswordEncoder passwordEncoder() {
     return new BCryptPasswordEncoder();
+  }
+
+  @Bean
+  public AuthenticationManager authenticationManager(
+      UserAuthenticationProvider authenticationProvider
+  ) {
+    return new ProviderManager(authenticationProvider);
   }
 
   @Bean

@@ -8,7 +8,7 @@ import com.codeit.modoo_playlist.core.domain.user.entity.UserRole;
 import com.codeit.modoo_playlist.infra.config.QuerydslConfig;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.query.UserQueryPage;
-import com.codeit.modoo_playlist.moduleapi.dto.request.UserListRequest;
+import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserListRequest;
 import jakarta.persistence.EntityManager;
 import java.util.List;
 import java.util.UUID;
