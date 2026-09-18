@@ -44,6 +44,9 @@ public class ContentDocument {
   @Field(type = FieldType.Text, analyzer = "nori_analyzer", searchAnalyzer = "nori_analyzer")
   private String title;
 
+  @Field(type = FieldType.Keyword)
+  private String normalizedTitle;
+
   @Field(type = FieldType.Text, analyzer = "nori_analyzer", searchAnalyzer = "nori_analyzer")
   private String description;
 

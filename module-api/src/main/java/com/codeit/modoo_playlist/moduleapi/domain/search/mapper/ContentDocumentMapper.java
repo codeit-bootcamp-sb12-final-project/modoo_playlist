@@ -1,6 +1,7 @@
 package com.codeit.modoo_playlist.moduleapi.domain.search.mapper;
 
 import com.codeit.modoo_playlist.core.domain.content.entity.Content;
+import com.codeit.modoo_playlist.core.global.common.util.KeywordNormalizer;
 import com.codeit.modoo_playlist.moduleapi.domain.search.document.ContentDocument;
 import java.util.List;
 import java.util.Objects;
@@ -22,6 +23,7 @@ public class ContentDocumentMapper {
         .id(content.getId().toString())
         .type(content.getType())
         .title(content.getTitle())
+        .normalizedTitle(KeywordNormalizer.normalize(content.getTitle()))
         .description(content.getDescription())
         .thumbnailUrl(content.getThumbnailUrl())
         .tags(List.copyOf(tagNames))
