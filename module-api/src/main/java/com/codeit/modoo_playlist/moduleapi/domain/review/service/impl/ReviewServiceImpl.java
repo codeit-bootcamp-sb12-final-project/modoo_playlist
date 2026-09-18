@@ -12,6 +12,7 @@ import com.codeit.modoo_playlist.moduleapi.domain.review.repository.ReviewReposi
 import com.codeit.modoo_playlist.moduleapi.domain.review.repository.query.ReviewListCondition;
 import com.codeit.modoo_playlist.moduleapi.domain.review.repository.query.ReviewQueryPage;
 import com.codeit.modoo_playlist.moduleapi.domain.review.service.ReviewService;
+import com.codeit.modoo_playlist.moduleapi.domain.search.event.ContentIndexRequestedEvent;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
 import com.codeit.modoo_playlist.moduleapi.dto.review.request.ReviewListRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.review.response.ReviewCursorResponse;
@@ -23,6 +24,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +36,7 @@ public class ReviewServiceImpl implements ReviewService {
     private final ContentRepository contentRepository;
     private final UserRepository userRepository;
     private final ReviewMapper reviewMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -55,6 +58,7 @@ public class ReviewServiceImpl implements ReviewService {
         Review saved = reviewRepository.save(review);
 
         content.addReview(rating);
+        eventPublisher.publishEvent(new ContentIndexRequestedEvent(contentId));
 
         return saved.getId();
     }
@@ -69,6 +73,7 @@ public class ReviewServiceImpl implements ReviewService {
 
         Content content = getExistingContent(review.getContentId());
         content.changeReview(oldRating, rating);
+        eventPublisher.publishEvent(new ContentIndexRequestedEvent(review.getContentId()));
 
         return getReviewResponse(reviewId);
     }
@@ -82,6 +87,7 @@ public class ReviewServiceImpl implements ReviewService {
 
         Content content = getExistingContent(review.getContentId());
         content.removeReview(review.getRating());
+        eventPublisher.publishEvent(new ContentIndexRequestedEvent(review.getContentId()));
     }
 
     @Override
