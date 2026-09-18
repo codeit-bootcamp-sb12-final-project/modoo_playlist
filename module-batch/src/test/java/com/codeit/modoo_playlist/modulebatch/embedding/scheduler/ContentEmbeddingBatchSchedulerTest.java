@@ -1,5 +1,6 @@
 package com.codeit.modoo_playlist.modulebatch.embedding.scheduler;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -8,10 +9,13 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.Instant;
+import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.batch.core.job.Job;
@@ -38,7 +42,29 @@ class ContentEmbeddingBatchSchedulerTest {
     new ContentEmbeddingBatchScheduler(jobOperator, jobRepository, contentEmbeddingJob).run();
 
     verify(jobOperator, never()).recover(any());
-    verify(jobOperator, times(1)).start(eq(contentEmbeddingJob), any(JobParameters.class));
+    ArgumentCaptor<JobParameters> captor = ArgumentCaptor.forClass(JobParameters.class);
+    verify(jobOperator, times(1)).start(eq(contentEmbeddingJob), captor.capture());
+    Instant scheduleSlot = Instant.parse(captor.getValue().getString("scheduleSlot"));
+    assertThat(scheduleSlot.getNano()).isZero();
+    assertThat(scheduleSlot.getEpochSecond() % 60).isZero();
+  }
+
+  @Test
+  void 같은_분_안에서_두번_실행해도_scheduleSlot은_동일하다() throws Exception {
+    when(contentEmbeddingJob.getName()).thenReturn("contentEmbeddingJob");
+    when(jobRepository.findRunningJobExecutions("contentEmbeddingJob")).thenReturn(Set.of());
+    ContentEmbeddingBatchScheduler scheduler =
+        new ContentEmbeddingBatchScheduler(jobOperator, jobRepository, contentEmbeddingJob);
+
+    scheduler.run();
+    scheduler.run();
+
+    ArgumentCaptor<JobParameters> captor = ArgumentCaptor.forClass(JobParameters.class);
+    verify(jobOperator, times(2)).start(eq(contentEmbeddingJob), captor.capture());
+    List<String> scheduleSlots = captor.getAllValues().stream()
+        .map(params -> params.getString("scheduleSlot"))
+        .toList();
+    assertThat(scheduleSlots.get(0)).isEqualTo(scheduleSlots.get(1));
   }
 
   @Test
@@ -49,7 +75,11 @@ class ContentEmbeddingBatchSchedulerTest {
     new ContentEmbeddingBatchScheduler(jobOperator, jobRepository, contentEmbeddingJob).run();
 
     verify(jobOperator).recover(staleExecution);
-    verify(jobOperator, times(1)).start(eq(contentEmbeddingJob), any(JobParameters.class));
+    ArgumentCaptor<JobParameters> captor = ArgumentCaptor.forClass(JobParameters.class);
+    verify(jobOperator, times(1)).start(eq(contentEmbeddingJob), captor.capture());
+    Instant scheduleSlot = Instant.parse(captor.getValue().getString("scheduleSlot"));
+    assertThat(scheduleSlot.getNano()).isZero();
+    assertThat(scheduleSlot.getEpochSecond() % 60).isZero();
   }
 
   @Test
@@ -62,6 +92,12 @@ class ContentEmbeddingBatchSchedulerTest {
     assertThatCode(
         () -> new ContentEmbeddingBatchScheduler(jobOperator, jobRepository, contentEmbeddingJob).run()
     ).doesNotThrowAnyException();
+
+    ArgumentCaptor<JobParameters> captor = ArgumentCaptor.forClass(JobParameters.class);
+    verify(jobOperator).start(eq(contentEmbeddingJob), captor.capture());
+    Instant scheduleSlot = Instant.parse(captor.getValue().getString("scheduleSlot"));
+    assertThat(scheduleSlot.getNano()).isZero();
+    assertThat(scheduleSlot.getEpochSecond() % 60).isZero();
   }
 
   @Test
@@ -74,5 +110,11 @@ class ContentEmbeddingBatchSchedulerTest {
     assertThatCode(
         () -> new ContentEmbeddingBatchScheduler(jobOperator, jobRepository, contentEmbeddingJob).run()
     ).doesNotThrowAnyException();
+
+    ArgumentCaptor<JobParameters> captor = ArgumentCaptor.forClass(JobParameters.class);
+    verify(jobOperator).start(eq(contentEmbeddingJob), captor.capture());
+    Instant scheduleSlot = Instant.parse(captor.getValue().getString("scheduleSlot"));
+    assertThat(scheduleSlot.getNano()).isZero();
+    assertThat(scheduleSlot.getEpochSecond() % 60).isZero();
   }
 }

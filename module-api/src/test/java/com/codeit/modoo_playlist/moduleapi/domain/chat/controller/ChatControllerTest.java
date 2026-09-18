@@ -1,23 +1,22 @@
 package com.codeit.modoo_playlist.moduleapi.domain.chat.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
-
-import java.util.UUID;
-
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.codec.ServerSentEvent;
 
 import com.codeit.modoo_playlist.core.domain.user.entity.UserRole;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.dto.request.ChatMessageRequest;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.service.ChatService;
 import com.codeit.modoo_playlist.moduleapi.dto.UserDto;
 import com.codeit.modoo_playlist.moduleapi.security.UserDetails;
-
+import java.util.UUID;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.codec.ServerSentEvent;
 import reactor.core.publisher.Flux;
 
 @ExtendWith(MockitoExtension.class)
@@ -39,6 +38,8 @@ class ChatControllerTest {
         controller.stream(new ChatMessageRequest(conversationId, "안녕"), user);
 
     assertThat(result).isSameAs(expected);
+    verify(chatService).chat(userId, conversationId, "안녕");
+    verifyNoMoreInteractions(chatService);
   }
 
   @Test
@@ -51,5 +52,7 @@ class ChatControllerTest {
         controller.stream(new ChatMessageRequest(conversationId, "안녕"), null);
 
     assertThat(result).isSameAs(expected);
+    verify(chatService).chatAnonymous(conversationId, "안녕");
+    verifyNoMoreInteractions(chatService);
   }
 }

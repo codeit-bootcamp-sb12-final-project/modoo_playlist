@@ -96,13 +96,17 @@ class ContentEmbeddingMapperMySqlTest {
 
   @Test
   void clearEmbeddingSourceHashBulk는_주어진_콘텐츠들의_해시를_모두_비운다() {
-    String contentId = insertContent("영화H", true, "hash-3");
+    String first = insertContent("영화H", true, "hash-3");
+    String second = insertContent("영화H2", true, "hash-4");
 
-    mapper.clearEmbeddingSourceHashBulk(List.of(contentId));
+    mapper.clearEmbeddingSourceHashBulk(List.of(first, second));
 
     assertThat(jdbcTemplate.queryForObject(
         "SELECT embedding_source_hash FROM contents WHERE id = UUID_TO_BIN(?)",
-        String.class, contentId)).isNull();
+        String.class, first)).isNull();
+    assertThat(jdbcTemplate.queryForObject(
+        "SELECT embedding_source_hash FROM contents WHERE id = UUID_TO_BIN(?)",
+        String.class, second)).isNull();
   }
 
   @Test
@@ -113,11 +117,12 @@ class ContentEmbeddingMapperMySqlTest {
     List<ContentEmbeddingTarget> firstPage = mapper.findContentsNeedingEmbedding(0, 1);
     List<ContentEmbeddingTarget> secondPage = mapper.findContentsNeedingEmbedding(1, 1);
 
+    List<String> expectedOrder = java.util.stream.Stream.of(contentA, contentB).sorted().toList();
+
     assertThat(firstPage).hasSize(1);
     assertThat(secondPage).hasSize(1);
-    assertThat(firstPage.get(0).contentId()).isNotEqualTo(secondPage.get(0).contentId());
     assertThat(List.of(firstPage.get(0).contentId(), secondPage.get(0).contentId()))
-        .containsExactlyInAnyOrder(contentA, contentB);
+        .containsExactlyElementsOf(expectedOrder);
   }
 
   private String insertContent(String title, boolean deleted, String embeddingSourceHash) {

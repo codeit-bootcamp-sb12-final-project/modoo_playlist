@@ -4,20 +4,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
+import com.codeit.modoo_playlist.core.domain.tag.type.TagKind;
+import com.codeit.modoo_playlist.moduleapi.domain.preference.dto.UserPreferenceTagDto;
+import com.codeit.modoo_playlist.moduleapi.domain.preference.service.UserPreferenceTagService;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.chat.model.ToolContext;
-
-import com.codeit.modoo_playlist.core.domain.tag.type.TagKind;
-import com.codeit.modoo_playlist.moduleapi.domain.preference.dto.UserPreferenceTagDto;
-import com.codeit.modoo_playlist.moduleapi.domain.preference.service.UserPreferenceTagService;
 
 @ExtendWith(MockitoExtension.class)
 class GetUserPreferenceToolTest {

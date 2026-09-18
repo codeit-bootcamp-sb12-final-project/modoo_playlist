@@ -10,21 +10,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.function.Consumer;
-
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.http.codec.ServerSentEvent;
-import org.springframework.test.util.ReflectionTestUtils;
-
 import com.codeit.modoo_playlist.core.domain.conversation.entity.Conversation;
 import com.codeit.modoo_playlist.core.domain.conversation.entity.ConversationParticipant;
 import com.codeit.modoo_playlist.core.domain.conversation.entity.ConversationType;
@@ -45,7 +30,19 @@ import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.SearchContentsTool;
 import com.codeit.modoo_playlist.moduleapi.domain.conversation.repository.ConversationRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.message.repository.MessageRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
-
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.function.Consumer;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.http.codec.ServerSentEvent;
+import org.springframework.test.util.ReflectionTestUtils;
 import reactor.core.publisher.Flux;
 
 @ExtendWith(MockitoExtension.class)
@@ -189,6 +186,7 @@ class ChatServiceImplTest {
     List<ServerSentEvent<Object>> events = service().chat(userId, null, "안녕").collectList().block();
 
     assertThat(events).extracting(ServerSentEvent::event).containsExactly("error", "done");
+    verify(messageRepository, times(1)).save(any(Message.class));
   }
 
   @Test
@@ -224,6 +222,8 @@ class ChatServiceImplTest {
     List<ServerSentEvent<Object>> events = service().chatAnonymous(null, "안녕").collectList().block();
 
     assertThat(events).extracting(ServerSentEvent::event).containsExactly("message", "done");
+    assertThat(events.get(1).data()).isInstanceOf(ChatDoneEvent.class);
+    assertThat(((ChatDoneEvent) events.get(1).data()).conversationId()).isNotNull();
   }
 
   @Test

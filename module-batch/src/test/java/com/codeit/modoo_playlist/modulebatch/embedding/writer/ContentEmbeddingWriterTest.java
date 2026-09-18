@@ -54,6 +54,11 @@ class ContentEmbeddingWriterTest {
     new ContentEmbeddingWriter(mapper, elasticsearchOperations, embeddingModel)
         .write(new Chunk<>(List.of(first, second)));
 
+    ArgumentCaptor<EmbeddingRequest> requestCaptor = ArgumentCaptor.forClass(EmbeddingRequest.class);
+    verify(embeddingModel).call(requestCaptor.capture());
+    assertThat(requestCaptor.getValue().getInstructions())
+        .containsExactly(first.text(), second.text());
+
     ArgumentCaptor<List<ContentEmbeddingDocument>> captor = ArgumentCaptor.forClass(List.class);
     verify(elasticsearchOperations).save(captor.capture());
     assertThatDocumentsMatch(captor.getValue(), first, second);
@@ -83,5 +88,9 @@ class ContentEmbeddingWriterTest {
         .containsExactly(first.contentId(), second.contentId());
     assertThat(documents).extracting(ContentEmbeddingDocument::title)
         .containsExactly(first.title(), second.title());
+    assertThat(documents).extracting(ContentEmbeddingDocument::thumbnailUrl)
+        .containsExactly(first.thumbnailUrl(), second.thumbnailUrl());
+    assertThat(documents.get(0).vector()).containsExactly(0.1f);
+    assertThat(documents.get(1).vector()).containsExactly(0.2f);
   }
 }

@@ -107,16 +107,26 @@ class ReviewSummaryMapperMySqlTest {
 
   @Test
   void 콘텐츠당_최신_리뷰_N건만_최신순으로_반환한다() {
-    String contentId = insertContent("영화G", 5);
-    insertReview(contentId, "가장오래됨", new BigDecimal("1.0"), Instant.parse("2026-01-01T00:00:00Z"));
-    insertReview(contentId, "중간1", new BigDecimal("2.0"), Instant.parse("2026-02-01T00:00:00Z"));
-    insertReview(contentId, "중간2", new BigDecimal("3.0"), Instant.parse("2026-03-01T00:00:00Z"));
-    insertReview(contentId, "최신1", new BigDecimal("4.0"), Instant.parse("2026-04-01T00:00:00Z"));
-    insertReview(contentId, "최신2", new BigDecimal("5.0"), Instant.parse("2026-05-01T00:00:00Z"));
+    String contentA = insertContent("영화G", 5);
+    insertReview(contentA, "A-가장오래됨", new BigDecimal("1.0"), Instant.parse("2026-01-01T00:00:00Z"));
+    insertReview(contentA, "A-중간1", new BigDecimal("2.0"), Instant.parse("2026-02-01T00:00:00Z"));
+    insertReview(contentA, "A-중간2", new BigDecimal("3.0"), Instant.parse("2026-03-01T00:00:00Z"));
+    insertReview(contentA, "A-최신1", new BigDecimal("4.0"), Instant.parse("2026-04-01T00:00:00Z"));
+    insertReview(contentA, "A-최신2", new BigDecimal("5.0"), Instant.parse("2026-05-01T00:00:00Z"));
 
-    List<ReviewSummaryReviewRow> rows = mapper.findReviewsForContents(List.of(contentId), 2);
+    String contentB = insertContent("영화G2", 3);
+    insertReview(contentB, "B-가장오래됨", new BigDecimal("1.0"), Instant.parse("2026-06-01T00:00:00Z"));
+    insertReview(contentB, "B-최신1", new BigDecimal("4.0"), Instant.parse("2026-07-01T00:00:00Z"));
+    insertReview(contentB, "B-최신2", new BigDecimal("5.0"), Instant.parse("2026-08-01T00:00:00Z"));
 
-    assertThat(rows).extracting(ReviewSummaryReviewRow::text).containsExactly("최신2", "최신1");
+    List<ReviewSummaryReviewRow> rows = mapper.findReviewsForContents(List.of(contentA, contentB), 2);
+
+    assertThat(rows).filteredOn(row -> row.contentId().equals(contentA))
+        .extracting(ReviewSummaryReviewRow::text)
+        .containsExactly("A-최신2", "A-최신1");
+    assertThat(rows).filteredOn(row -> row.contentId().equals(contentB))
+        .extracting(ReviewSummaryReviewRow::text)
+        .containsExactly("B-최신2", "B-최신1");
   }
 
   @Test

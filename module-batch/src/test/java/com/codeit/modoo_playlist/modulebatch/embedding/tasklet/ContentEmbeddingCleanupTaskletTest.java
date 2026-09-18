@@ -13,9 +13,11 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.batch.infrastructure.repeat.RepeatStatus;
+import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.query.DeleteQuery;
 
@@ -51,8 +53,11 @@ class ContentEmbeddingCleanupTaskletTest {
         .execute(null, null);
 
     assertThat(status).isEqualTo(RepeatStatus.FINISHED);
+    ArgumentCaptor<DeleteQuery> captor = ArgumentCaptor.forClass(DeleteQuery.class);
     verify(elasticsearchOperations, times(1))
-        .delete(any(DeleteQuery.class), eq(ContentEmbeddingDocument.class));
+        .delete(captor.capture(), eq(ContentEmbeddingDocument.class));
+    NativeQuery deletedQuery = (NativeQuery) captor.getValue().getQuery();
+    assertThat(deletedQuery.getQuery().ids().values()).containsExactlyInAnyOrder("c1", "c2");
     verify(mapper).clearEmbeddingSourceHashBulk(page);
     verify(mapper, times(2)).findDeletedContentIdsNeedingCleanup(200);
   }

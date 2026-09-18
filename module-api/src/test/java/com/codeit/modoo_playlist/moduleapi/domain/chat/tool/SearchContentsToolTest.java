@@ -1,20 +1,19 @@
 package com.codeit.modoo_playlist.moduleapi.domain.chat.tool;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.RecommendedContentDto;
+import com.codeit.modoo_playlist.moduleapi.domain.recommendation.service.SemanticSearchService;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.chat.model.ToolContext;
-
-import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.RecommendedContentDto;
-import com.codeit.modoo_playlist.moduleapi.domain.recommendation.service.SemanticSearchService;
 
 @ExtendWith(MockitoExtension.class)
 class SearchContentsToolTest {
@@ -27,6 +26,7 @@ class SearchContentsToolTest {
   void query가_비어있으면_검색없이_빈_리스트를_반환한다() {
     assertThat(new SearchContentsTool(semanticSearchService).searchContents(null, emptyContext)).isEmpty();
     assertThat(new SearchContentsTool(semanticSearchService).searchContents("   ", emptyContext)).isEmpty();
+    verifyNoInteractions(semanticSearchService);
   }
 
   @Test

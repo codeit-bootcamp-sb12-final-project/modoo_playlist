@@ -1,20 +1,19 @@
 package com.codeit.modoo_playlist.moduleapi.domain.chat.tool;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.RecommendedContentDto;
+import com.codeit.modoo_playlist.moduleapi.domain.recommendation.service.RecommendationService;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.chat.model.ToolContext;
-
-import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.RecommendedContentDto;
-import com.codeit.modoo_playlist.moduleapi.domain.recommendation.service.RecommendationService;
 
 @ExtendWith(MockitoExtension.class)
 class RecommendContentsToolTest {
@@ -29,6 +28,7 @@ class RecommendContentsToolTest {
         new RecommendContentsTool(recommendationService).recommendContents(null, emptyContext);
 
     assertThat(result).isEmpty();
+    verifyNoInteractions(recommendationService);
   }
 
   @Test
@@ -37,6 +37,7 @@ class RecommendContentsToolTest {
         new RecommendContentsTool(recommendationService).recommendContents("uuid-아님", emptyContext);
 
     assertThat(result).isEmpty();
+    verifyNoInteractions(recommendationService);
   }
 
   @Test

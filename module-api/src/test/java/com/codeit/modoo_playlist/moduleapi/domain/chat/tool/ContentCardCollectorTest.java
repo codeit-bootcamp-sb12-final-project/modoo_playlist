@@ -2,11 +2,9 @@ package com.codeit.modoo_playlist.moduleapi.domain.chat.tool;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.UUID;
-
-import org.junit.jupiter.api.Test;
-
 import com.codeit.modoo_playlist.moduleapi.domain.chat.dto.response.ContentCardDto;
+import java.util.UUID;
+import org.junit.jupiter.api.Test;
 
 class ContentCardCollectorTest {
 

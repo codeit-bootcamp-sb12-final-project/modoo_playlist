@@ -3,6 +3,7 @@ package com.codeit.modoo_playlist.modulebatch.reviewsummary.processor;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
@@ -35,6 +36,8 @@ class ReviewSummaryProcessorTest {
 
     assertThat(result.contentId()).isEqualTo("c1");
     assertThat(result.summary()).isEqualTo("요약 결과입니다");
+    verify(requestSpec).system(ReviewSummaryPromptBuilder.systemPrompt());
+    verify(requestSpec).user(ReviewSummaryPromptBuilder.userPrompt(target()));
   }
 
   @Test

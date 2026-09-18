@@ -12,6 +12,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
+import static org.mockito.Mockito.verify;
+import org.springframework.http.HttpStatus;
 
 import com.codeit.modoo_playlist.moduleapi.domain.review.service.ReviewSummaryService;
 import com.codeit.modoo_playlist.moduleapi.dto.ReviewSummaryDto;
@@ -31,5 +33,7 @@ class ReviewSummaryControllerTest {
     ResponseEntity<ReviewSummaryDto> response = controller.getReviewSummary(contentId);
 
     assertThat(response.getBody()).isEqualTo(expected);
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    verify(reviewSummaryService).getReviewSummary(contentId);
   }
 }

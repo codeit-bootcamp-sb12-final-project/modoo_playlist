@@ -4,23 +4,23 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
+import com.codeit.modoo_playlist.moduleapi.domain.chat.dto.response.ContentCardDto;
+import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.RecommendedContentDto;
+import com.codeit.modoo_playlist.moduleapi.domain.recommendation.service.RecommendationService;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.chat.model.ToolContext;
 
-import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.RecommendedContentDto;
-import com.codeit.modoo_playlist.moduleapi.domain.recommendation.service.RecommendationService;
-
 @ExtendWith(MockitoExtension.class)
 class GetPersonalizedRecommendationsToolTest {
 
-  @Mock private RecommendationService recommendationService;
+  @Mock
+  private RecommendationService recommendationService;
 
   @Test
   void 로그인_사용자의_개인화_추천을_반환하고_카드_컬렉터에_담는다() {
@@ -33,10 +33,12 @@ class GetPersonalizedRecommendationsToolTest {
         List.of(new RecommendedContentDto(contentId, "제목", "thumb", 1.0)));
 
     List<RecommendedContentDto> result =
-        new GetPersonalizedRecommendationsTool(recommendationService).getPersonalizedRecommendations(toolContext);
+        new GetPersonalizedRecommendationsTool(
+            recommendationService).getPersonalizedRecommendations(toolContext);
 
     assertThat(result).extracting(RecommendedContentDto::contentId).containsExactly(contentId);
-    assertThat(collector.getCards()).hasSize(1);
+    assertThat(collector.getCards())
+        .containsExactly(new ContentCardDto(contentId, "제목", "thumb"));
   }
 
   @Test
@@ -44,7 +46,8 @@ class GetPersonalizedRecommendationsToolTest {
     ToolContext toolContext = new ToolContext(Map.of());
 
     assertThatThrownBy(() ->
-        new GetPersonalizedRecommendationsTool(recommendationService).getPersonalizedRecommendations(toolContext)
+        new GetPersonalizedRecommendationsTool(
+            recommendationService).getPersonalizedRecommendations(toolContext)
     ).isInstanceOf(IllegalStateException.class);
   }
 
@@ -56,7 +59,8 @@ class GetPersonalizedRecommendationsToolTest {
         .thenThrow(new RuntimeException("DB 장애"));
 
     List<RecommendedContentDto> result =
-        new GetPersonalizedRecommendationsTool(recommendationService).getPersonalizedRecommendations(toolContext);
+        new GetPersonalizedRecommendationsTool(
+            recommendationService).getPersonalizedRecommendations(toolContext);
 
     assertThat(result).isEmpty();
   }
@@ -69,7 +73,8 @@ class GetPersonalizedRecommendationsToolTest {
         List.of(new RecommendedContentDto(UUID.randomUUID(), "제목", null, 1.0)));
 
     List<RecommendedContentDto> result =
-        new GetPersonalizedRecommendationsTool(recommendationService).getPersonalizedRecommendations(toolContext);
+        new GetPersonalizedRecommendationsTool(
+            recommendationService).getPersonalizedRecommendations(toolContext);
 
     assertThat(result).hasSize(1);
   }
