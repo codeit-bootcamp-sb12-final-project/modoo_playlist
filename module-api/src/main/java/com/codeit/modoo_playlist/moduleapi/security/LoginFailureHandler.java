@@ -40,7 +40,10 @@ public class LoginFailureHandler implements AuthenticationFailureHandler {
   ) throws IOException {
     ErrorCode errorCode = resolveErrorCode(request, exception);
 
-    if (request.getRequestURI().startsWith(OAUTH_CALLBACK_BASE_URI)) {
+    String pathWithinApplication = request.getRequestURI()
+        .substring(request.getContextPath().length());
+
+    if (pathWithinApplication.startsWith(OAUTH_CALLBACK_BASE_URI)) {
       redirectOAuthFailure(response, errorCode);
       return;
     }
