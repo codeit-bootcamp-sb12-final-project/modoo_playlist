@@ -64,6 +64,16 @@ public class User extends BaseUpdatableEntity {
     return user;
   }
 
+  public static User createOAuth(
+      String email,
+      String username,
+      String profileImageUrl
+  ) {
+    User user = create(email, username, null);
+    user.profileImageUrl = profileImageUrl;
+    return user;
+  }
+
   public static User createBot(
       String email,
       String username
