@@ -10,6 +10,8 @@ import com.codeit.modoo_playlist.moduleapi.security.UserAuthenticationProvider;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtAuthenticationFilter;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtLoginSuccessHandler;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtLogoutHandler;
+import com.codeit.modoo_playlist.moduleapi.security.oauth.GoogleOidcUserService;
+import com.codeit.modoo_playlist.moduleapi.security.oauth.OAuthLoginSuccessHandler;
 import java.util.List;
 import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
@@ -22,8 +24,6 @@ import org.springframework.security.access.expression.method.DefaultMethodSecuri
 import org.springframework.security.access.expression.method.MethodSecurityExpressionHandler;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -51,11 +51,13 @@ public class SecurityConfig {
       LoginFailureHandler loginFailureHandler,
       JwtAuthenticationFilter jwtAuthenticationFilter,
       SecurityErrorResponseWriter securityErrorResponseWriter,
-      AuthenticationManager authenticationManager
+      UserAuthenticationProvider userAuthenticationProvider,
+      GoogleOidcUserService googleOidcUserService,
+      OAuthLoginSuccessHandler oauthLoginSuccessHandler
   ) throws Exception {
 
     http
-        .authenticationManager(authenticationManager)
+        .authenticationProvider(userAuthenticationProvider)
         // 1) URL별 인가 설정
         .authorizeHttpRequests(auth -> auth
             // 정적 리소스
@@ -77,7 +79,9 @@ public class SecurityConfig {
                 "/api/auth/sign-in",
                 "/api/auth/reset-password",
                 "/api/auth/refresh",
-                "/api/auth/csrf-token"
+                "/api/auth/csrf-token",
+                "/oauth2/**",
+                "/login/oauth2/**"
             ).permitAll()
 
             // 회원가입
@@ -92,7 +96,7 @@ public class SecurityConfig {
                 "/api/users/*/role",
                 "/api/users/*/locked"
             ).authenticated()
-                               
+
             // 로그인 필수 — 내 취향/유사 사용자 조회, 콘텐츠 반응
             .requestMatchers(HttpMethod.PUT, "/api/contents/*/reaction").authenticated()
             .requestMatchers("/api/users/preferences/tags/me").authenticated()
@@ -116,7 +120,20 @@ public class SecurityConfig {
             .failureHandler(loginFailureHandler)
         )
 
-        // 4) JWT 기반 로그아웃
+        // 4) Google OAuth 로그인
+        .oauth2Login(oauth -> oauth
+            // "/oauth2/authorization/google"
+            // "/oauth2/authorization/kakao"
+            .authorizationEndpoint(auth -> auth.baseUri("/oauth2/authorization"))
+            // 구글 사용자를 매퍼를 이용해 OAuthUserProfile로 변환.
+            .userInfoEndpoint(userInfo -> userInfo
+                .oidcUserService(googleOidcUserService)
+            )
+            .successHandler(oauthLoginSuccessHandler)
+            .failureHandler(loginFailureHandler)
+        )
+
+        // 5) JWT 기반 로그아웃
         .logout(logout -> logout
             .logoutUrl("/api/auth/sign-out")
             .addLogoutHandler(jwtLogoutHandler)
@@ -167,12 +184,6 @@ public class SecurityConfig {
     return new BCryptPasswordEncoder();
   }
 
-  @Bean
-  public AuthenticationManager authenticationManager(
-      UserAuthenticationProvider authenticationProvider
-  ) {
-    return new ProviderManager(authenticationProvider);
-  }
 
   @Bean
   public RoleHierarchy roleHierarchy() {
