@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -15,8 +16,10 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Answers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.JobExecution;
@@ -56,8 +59,12 @@ class ContentEmbeddingBatchSchedulerTest {
     ContentEmbeddingBatchScheduler scheduler =
         new ContentEmbeddingBatchScheduler(jobOperator, jobRepository, contentEmbeddingJob);
 
-    scheduler.run();
-    scheduler.run();
+    Instant fixedNow = Instant.parse("2026-01-01T00:00:30Z");
+    try (MockedStatic<Instant> instantMock = mockStatic(Instant.class, Answers.CALLS_REAL_METHODS)) {
+      instantMock.when(Instant::now).thenReturn(fixedNow);
+      scheduler.run();
+      scheduler.run();
+    }
 
     ArgumentCaptor<JobParameters> captor = ArgumentCaptor.forClass(JobParameters.class);
     verify(jobOperator, times(2)).start(eq(contentEmbeddingJob), captor.capture());
