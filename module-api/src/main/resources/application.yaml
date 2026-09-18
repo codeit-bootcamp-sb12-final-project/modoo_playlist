@@ -9,6 +9,17 @@ spring:
     url: ${DB_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope:
+              - openid
+              - profile
+              - email
   servlet:
     multipart:
       max-file-size: ${MULTIPART_MAX_FILE_SIZE:5MB}
@@ -57,6 +68,9 @@ module-api:
     email: ${BOT_EMAIL:bot@modoo.bot}
     name: ${BOT_NAME:MoDoo Bot}
   auth:
+    oauth2:
+      success-redirect-uri: ${OAUTH_SUCCESS_REDIRECT_URI:/#/contents}
+      failure-redirect-uri: ${OAUTH_FAILURE_REDIRECT_URI:/#/sign-in}
     cookie:
       same-site: ${AUTH_COOKIE_SAME_SITE:Lax} # 다른 사이트에서 보내느 요청에 refresh 토큰 전달 방지
       path: ${AUTH_COOKIE_PATH:/api/auth}
