@@ -41,8 +41,8 @@ public class ContentEmbeddingIndexInitializer implements ApplicationRunner {
 
     if (!hasVectorField) {
       throw new IllegalStateException(
-          "%s 인덱스에 %s 매핑이 없습니다. 매핑 생성이 이전에 실패한 채로 남은 것으로 보입니다. "
-              + "인덱스를 삭제 후 재기동하거나 수동으로 매핑을 추가하세요."
+          ("%s 인덱스에 %s 매핑이 없습니다. 매핑 생성이 이전에 실패한 채로 남은 것으로 보입니다. "
+              + "인덱스를 삭제 후 재기동하거나 수동으로 매핑을 추가하세요.")
               .formatted(ContentEmbeddingDocument.INDEX_NAME, ContentEmbeddingDocument.VECTOR_FIELD));
     }
   }

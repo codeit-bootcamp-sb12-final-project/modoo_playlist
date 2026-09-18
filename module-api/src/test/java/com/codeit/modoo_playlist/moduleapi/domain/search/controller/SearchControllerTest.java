@@ -9,6 +9,9 @@ import com.codeit.modoo_playlist.core.domain.user.entity.UserRole;
 import com.codeit.modoo_playlist.moduleapi.domain.content.controller.ContentController;
 import com.codeit.modoo_playlist.moduleapi.domain.content.service.ContentService;
 import com.codeit.modoo_playlist.moduleapi.domain.search.service.ContentSearchService;
+import com.codeit.modoo_playlist.moduleapi.domain.search.service.PopularSearchService;
+import com.codeit.modoo_playlist.moduleapi.domain.search.service.SuggestSearchService;
+import com.codeit.modoo_playlist.moduleapi.dto.PopularKeywordDto;
 import com.codeit.modoo_playlist.moduleapi.dto.UserDto;
 import com.codeit.modoo_playlist.moduleapi.dto.content.request.ContentListRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.content.response.ContentCursorResponse;
@@ -37,6 +40,15 @@ public class SearchControllerTest {
 
   @Mock
   private ContentSearchService contentSearchService;
+
+  @Mock
+  private PopularSearchService popularSearchService;
+
+  @Mock
+  private SuggestSearchService suggestSearchService;
+
+  @InjectMocks
+  private SearchController searchController;
 
   @InjectMocks
   private ContentController controller;
@@ -77,6 +89,36 @@ public class SearchControllerTest {
 
     verify(contentService).getContents(request, USER_ID);
     verifyNoInteractions(contentSearchService);
+  }
+
+  @Test
+  void 인기검색어를_반환한다() {
+    List<PopularKeywordDto> expected = List.of(
+        new PopularKeywordDto("인터스텔라", 3L),
+        new PopularKeywordDto("기생충", 2L)
+    );
+    when(popularSearchService.getPopularKeywords()).thenReturn(expected);
+
+    ResponseEntity<List<PopularKeywordDto>> response = searchController.getPopularKeywords();
+
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    assertThat(response.getBody()).isEqualTo(expected);
+    verify(popularSearchService).getPopularKeywords();
+    verifyNoInteractions(suggestSearchService);
+  }
+
+  @Test
+  void 자동완성_목록을_반환한다() {
+    String keyword = "인터";
+    List<String> expected = List.of("인터스텔라", "인터뷰");
+    when(suggestSearchService.suggest(keyword)).thenReturn(expected);
+
+    ResponseEntity<List<String>> response = searchController.getSuggestions(keyword);
+
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    assertThat(response.getBody()).isEqualTo(expected);
+    verify(suggestSearchService).suggest(keyword);
+    verifyNoInteractions(popularSearchService);
   }
 
   private ContentListRequest request(String keyword) {

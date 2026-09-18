@@ -6,6 +6,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import com.codeit.modoo_playlist.core.domain.content.type.ContentType;
 import com.codeit.modoo_playlist.core.global.common.util.KeywordNormalizer;
 import com.codeit.modoo_playlist.moduleapi.domain.search.document.ContentDocument;
+import com.codeit.modoo_playlist.moduleapi.domain.search.event.SearchExecutedEvent;
 import com.codeit.modoo_playlist.moduleapi.domain.search.mapper.ContentSearchResponseMapper;
 import com.codeit.modoo_playlist.moduleapi.dto.content.request.ContentListRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.content.response.ContentCursorResponse;
@@ -17,6 +18,8 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.client.elc.NativeQueryBuilder;
@@ -25,6 +28,7 @@ import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ContentSearchService {
@@ -36,6 +40,7 @@ public class ContentSearchService {
   private final ElasticsearchOperations elasticsearchOperations;
   private final ContentSearchResponseMapper contentSearchResponseMapper;
   private final ContentSearchSortService contentSearchSortService;
+  private final ApplicationEventPublisher eventPublisher;
 
   // 검색어 전용 호출
   public SearchHits<ContentDocument> search(String rawKeyword) {
@@ -187,15 +192,28 @@ public class ContentSearchService {
       nextIdAfter = UUID.fromString(lastHit.getSortValues().get(1).toString());
     }
 
-    return new ContentCursorResponse(
-        data,
-        nextCursor,
-        nextIdAfter,
-        hasNext,
-        totalCount,
-        sortBy,
-        sortDirection
-    );
+    ContentCursorResponse response =
+        new ContentCursorResponse(data, nextCursor, nextIdAfter, hasNext, totalCount, sortBy, sortDirection);
+
+    if (cursor == null && idAfter == null) {
+      publishSearchExecuted(request.keywordLike());
+    }
+
+    return response;
+  }
+
+  private void publishSearchExecuted(String rawKeyword) {
+    String keyword = KeywordNormalizer.normalize(rawKeyword);
+
+    if (!KeywordNormalizer.isValidLength(keyword)) {
+      return;
+    }
+
+    try {
+      eventPublisher.publishEvent(new SearchExecutedEvent(keyword));
+    } catch (RuntimeException exception) {
+      log.warn("검색 집계 이벤트 발행 실패", exception);
+    }
   }
 
   private record MatchedContent(
