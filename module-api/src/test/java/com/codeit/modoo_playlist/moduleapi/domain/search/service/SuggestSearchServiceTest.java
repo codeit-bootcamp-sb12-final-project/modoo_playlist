@@ -69,7 +69,7 @@ class SuggestSearchServiceTest {
     assertThat(prefix.mustNot().get(0).term().value().stringValue()).isEqualTo("변호사");
 
     var expected = requests.get(2).query().bool();
-    assertThat(expected.must().get(0).matchPhrasePrefix().field()).isEqualTo("title");
+    assertThat(expected.must().get(0).matchPhrasePrefix().field()).isEqualTo("normalizedTitle.analyzed");
     assertThat(expected.must().get(0).matchPhrasePrefix().query()).isEqualTo("변호사");
     assertThat(expected.mustNot().get(0).prefix().value()).isEqualTo("변호사");
 

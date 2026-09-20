@@ -1,18 +1,13 @@
 package com.codeit.modoo_playlist.moduleapi.domain.search.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.codeit.modoo_playlist.core.domain.content.type.ContentType;
 import com.codeit.modoo_playlist.moduleapi.domain.search.document.ContentDocument;
-import com.codeit.modoo_playlist.moduleapi.domain.search.event.SearchExecutedEvent;
 import com.codeit.modoo_playlist.moduleapi.domain.search.mapper.ContentSearchResponseMapper;
 import com.codeit.modoo_playlist.moduleapi.domain.search.repository.ContentSearchRepository;
 import com.codeit.modoo_playlist.moduleapi.dto.content.request.ContentListRequest;
@@ -32,7 +27,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfigurationPackage;
 import org.springframework.boot.data.elasticsearch.test.autoconfigure.DataElasticsearchTest;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
@@ -56,63 +50,13 @@ public class SearchServicePageTest {
     private ContentSearchResponseMapper responseMapper;
 
     @Mock
-    private ApplicationEventPublisher eventPublisher;
-
-    @Mock
     private SearchHits<ContentDocument> searchHits;
 
     private ContentSearchService service;
 
     @BeforeEach
     void setUp() {
-      service = new ContentSearchService(
-          operations, responseMapper, new ContentSearchSortService(), eventPublisher
-      );
-    }
-
-    @Test
-    void 첫페이지는_결과가_없어도_정규화한_검색어를_발행한다() {
-      givenEmptyResults();
-
-      ContentCursorResponse response = service.searchPage(request("  MOVIE  ", null, null));
-
-      assertThat(response.data()).isEmpty();
-      verify(eventPublisher).publishEvent(new SearchExecutedEvent("movie"));
-    }
-
-    @Test
-    void 다음페이지는_이벤트를_발행하지_않는다() {
-      givenEmptyResults();
-      UUID idAfter = UUID.fromString("019ed8a0-0000-7000-9000-000000000082");
-
-      service.searchPage(request("movie", "2026-09-13T13:38:18.34677Z", idAfter));
-
-      verifyNoInteractions(eventPublisher);
-    }
-
-    @Test
-    void 검색에_실패하면_이벤트를_발행하지_않는다() {
-      RuntimeException failure = new RuntimeException("검색 실패");
-      when(operations.search(any(Query.class), eq(ContentDocument.class))).thenThrow(failure);
-
-      assertThatThrownBy(() -> service.searchPage(request("movie", null, null)))
-          .isSameAs(failure);
-
-      verifyNoInteractions(eventPublisher);
-    }
-
-    @Test
-    void 이벤트_발행에_실패해도_검색_결과를_반환한다() {
-      givenEmptyResults();
-      doThrow(new RuntimeException("이벤트 발행 실패"))
-          .when(eventPublisher).publishEvent(any(SearchExecutedEvent.class));
-
-      ContentCursorResponse response = service.searchPage(request("movie", null, null));
-
-      assertThat(response.data()).isEmpty();
-      assertThat(response.totalCount()).isZero();
-      assertThat(response.hasNext()).isFalse();
-      verify(eventPublisher).publishEvent(new SearchExecutedEvent("movie"));
+      service = new ContentSearchService(operations, responseMapper, new ContentSearchSortService());
     }
 
     private void givenEmptyResults() {

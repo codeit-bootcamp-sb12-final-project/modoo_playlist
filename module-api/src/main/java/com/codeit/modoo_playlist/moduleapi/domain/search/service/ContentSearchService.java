@@ -6,7 +6,6 @@ import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import com.codeit.modoo_playlist.core.domain.content.type.ContentType;
 import com.codeit.modoo_playlist.core.global.common.util.KeywordNormalizer;
 import com.codeit.modoo_playlist.moduleapi.domain.search.document.ContentDocument;
-import com.codeit.modoo_playlist.moduleapi.domain.search.event.SearchExecutedEvent;
 import com.codeit.modoo_playlist.moduleapi.domain.search.mapper.ContentSearchResponseMapper;
 import com.codeit.modoo_playlist.moduleapi.dto.content.request.ContentListRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.content.response.ContentCursorResponse;
@@ -19,7 +18,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.client.elc.NativeQueryBuilder;
@@ -40,7 +38,6 @@ public class ContentSearchService {
   private final ElasticsearchOperations elasticsearchOperations;
   private final ContentSearchResponseMapper contentSearchResponseMapper;
   private final ContentSearchSortService contentSearchSortService;
-  private final ApplicationEventPublisher eventPublisher;
 
   // 검색어 전용 호출
   public SearchHits<ContentDocument> search(String rawKeyword) {
@@ -195,25 +192,7 @@ public class ContentSearchService {
     ContentCursorResponse response =
         new ContentCursorResponse(data, nextCursor, nextIdAfter, hasNext, totalCount, sortBy, sortDirection);
 
-    if (cursor == null && idAfter == null) {
-      publishSearchExecuted(request.keywordLike());
-    }
-
     return response;
-  }
-
-  private void publishSearchExecuted(String rawKeyword) {
-    String keyword = KeywordNormalizer.normalize(rawKeyword);
-
-    if (!KeywordNormalizer.isValidLength(keyword)) {
-      return;
-    }
-
-    try {
-      eventPublisher.publishEvent(new SearchExecutedEvent(keyword));
-    } catch (RuntimeException exception) {
-      log.warn("검색 집계 이벤트 발행 실패", exception);
-    }
   }
 
   private record MatchedContent(
@@ -226,6 +205,11 @@ public class ContentSearchService {
   private NativeQueryBuilder createQueryBuilder(
       String rawKeyword, String typeEqual, List<String> tagsIn) {
     String keyword = KeywordNormalizer.normalize(rawKeyword);
+
+    if (!keyword.isEmpty() && !KeywordNormalizer.isValidLength(keyword)) {
+      throw new IllegalArgumentException("검색어는 50자 이하여야 합니다.");
+    }
+
     ContentType type = toContentType(typeEqual);
     List<String> tags = normalizeTags(tagsIn);
 
@@ -234,8 +218,18 @@ public class ContentSearchService {
     if (keyword.isBlank()) {
       boolQuery.must(q -> q.matchAll(m -> m));
     } else {
-      boolQuery.must(q -> q.multiMatch(m -> m
-          .query(keyword).fields("title", "description", "tags")));
+      boolQuery.must(q -> q.bool(search -> search
+          .should(s -> s.multiMatch(m -> m
+              .query(keyword)
+              .fields("title", "description", "tags")))
+          .should(s -> s.matchPhrasePrefix(m -> m
+              .field("title")
+              .query(keyword)
+              .maxExpansions(50)))
+          .should(s -> s.prefix(p -> p
+              .field("normalizedTitle")
+              .value(keyword)))
+          .minimumShouldMatch("1")));
     }
 
     if (type != null) {

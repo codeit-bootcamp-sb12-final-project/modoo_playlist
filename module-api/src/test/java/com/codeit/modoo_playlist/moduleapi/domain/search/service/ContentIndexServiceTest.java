@@ -46,6 +46,7 @@ import org.springframework.boot.transaction.autoconfigure.TransactionAutoConfigu
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.repository.config.EnableElasticsearchRepositories;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.test.context.ContextConfiguration;
@@ -68,6 +69,9 @@ class ContentIndexServiceTest {
 
     @Mock
     private ElasticsearchClient elasticsearchClient;
+
+    @Mock
+    private ElasticsearchOperations elasticsearchOperations;
 
     @InjectMocks
     private ContentIndexService contentIndexService;
@@ -118,7 +122,7 @@ class ContentIndexServiceTest {
     @DisplayName("배치를 한 번씩 저장하고 마지막 ID로 이어서 조회한다")
     void indexBatchesOnce() {
       ContentInitialIndexService initialIndexService =
-          new ContentInitialIndexService(contentIndexService);
+          new ContentInitialIndexService(contentIndexService, elasticsearchOperations);
 
       UUID secondId = UUID.fromString("019ed8a0-0000-7000-9300-000000000002");
       UUID thirdId = UUID.fromString("019ed8a0-0000-7000-9300-000000000003");
