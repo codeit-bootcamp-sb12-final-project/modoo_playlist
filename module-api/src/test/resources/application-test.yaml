@@ -3,6 +3,29 @@ spring:
     url: jdbc:h2:mem:test-${random.uuid};MODE=MySQL;DB_CLOSE_DELAY=-1
     username: sa
     password: ''
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: test-google-client-id
+            client-secret: test-google-client-secret
+            scope: openid,profile,email
+          kakao:
+            client-id: test-kakao-client-id
+            client-secret: test-kakao-client-secret
+            provider: kakao-test
+            client-authentication-method: client_secret_post
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope: openid,profile_nickname,profile_image,account_email
+        provider:
+          kakao-test:
+            authorization-uri: https://kauth.example.test/oauth/authorize
+            token-uri: https://kauth.example.test/oauth/token
+            user-info-uri: https://kapi.example.test/v1/oidc/userinfo
+            jwk-set-uri: https://kauth.example.test/.well-known/jwks.json
+            user-name-attribute: sub
   test:
     database:
       replace: none

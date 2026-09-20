@@ -44,6 +44,12 @@ public class ContentDocument {
   @Field(type = FieldType.Text, analyzer = "nori_analyzer", searchAnalyzer = "nori_analyzer")
   private String title;
 
+  @MultiField(
+      mainField = @Field(type = FieldType.Keyword),
+      otherFields = @InnerField(suffix = "analyzed", type = FieldType.Text, analyzer = "nori_analyzer")
+  )
+  private String normalizedTitle;
+
   @Field(type = FieldType.Text, analyzer = "nori_analyzer", searchAnalyzer = "nori_analyzer")
   private String description;
 

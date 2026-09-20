@@ -17,6 +17,7 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.client.elc.NativeQueryBuilder;
@@ -25,6 +26,7 @@ import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ContentSearchService {
@@ -187,15 +189,10 @@ public class ContentSearchService {
       nextIdAfter = UUID.fromString(lastHit.getSortValues().get(1).toString());
     }
 
-    return new ContentCursorResponse(
-        data,
-        nextCursor,
-        nextIdAfter,
-        hasNext,
-        totalCount,
-        sortBy,
-        sortDirection
-    );
+    ContentCursorResponse response =
+        new ContentCursorResponse(data, nextCursor, nextIdAfter, hasNext, totalCount, sortBy, sortDirection);
+
+    return response;
   }
 
   private record MatchedContent(
@@ -208,6 +205,11 @@ public class ContentSearchService {
   private NativeQueryBuilder createQueryBuilder(
       String rawKeyword, String typeEqual, List<String> tagsIn) {
     String keyword = KeywordNormalizer.normalize(rawKeyword);
+
+    if (!keyword.isEmpty() && !KeywordNormalizer.isValidLength(keyword)) {
+      throw new IllegalArgumentException("검색어는 50자 이하여야 합니다.");
+    }
+
     ContentType type = toContentType(typeEqual);
     List<String> tags = normalizeTags(tagsIn);
 
@@ -216,8 +218,18 @@ public class ContentSearchService {
     if (keyword.isBlank()) {
       boolQuery.must(q -> q.matchAll(m -> m));
     } else {
-      boolQuery.must(q -> q.multiMatch(m -> m
-          .query(keyword).fields("title", "description", "tags")));
+      boolQuery.must(q -> q.bool(search -> search
+          .should(s -> s.multiMatch(m -> m
+              .query(keyword)
+              .fields("title", "description", "tags")))
+          .should(s -> s.matchPhrasePrefix(m -> m
+              .field("title")
+              .query(keyword)
+              .maxExpansions(50)))
+          .should(s -> s.prefix(p -> p
+              .field("normalizedTitle")
+              .value(keyword)))
+          .minimumShouldMatch("1")));
     }
 
     if (type != null) {

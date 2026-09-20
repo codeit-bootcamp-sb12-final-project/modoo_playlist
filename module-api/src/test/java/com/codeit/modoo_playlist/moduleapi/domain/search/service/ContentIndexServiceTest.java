@@ -30,6 +30,7 @@ import java.util.function.Function;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -45,6 +46,7 @@ import org.springframework.boot.transaction.autoconfigure.TransactionAutoConfigu
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.repository.config.EnableElasticsearchRepositories;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.test.context.ContextConfiguration;
@@ -67,6 +69,9 @@ class ContentIndexServiceTest {
 
     @Mock
     private ElasticsearchClient elasticsearchClient;
+
+    @Mock
+    private ElasticsearchOperations elasticsearchOperations;
 
     @InjectMocks
     private ContentIndexService contentIndexService;
@@ -117,7 +122,7 @@ class ContentIndexServiceTest {
     @DisplayName("배치를 한 번씩 저장하고 마지막 ID로 이어서 조회한다")
     void indexBatchesOnce() {
       ContentInitialIndexService initialIndexService =
-          new ContentInitialIndexService(contentIndexService);
+          new ContentInitialIndexService(contentIndexService, elasticsearchOperations);
 
       UUID secondId = UUID.fromString("019ed8a0-0000-7000-9300-000000000002");
       UUID thirdId = UUID.fromString("019ed8a0-0000-7000-9300-000000000003");
@@ -244,6 +249,16 @@ class ContentIndexServiceTest {
       assertThat(document.getTitle()).isEqualTo("Index Test Movie");
       assertThat(document.getWatcherCount())
           .isEqualTo(contentRepository.countCurrentWatchers(TEST_CONTENT_ID));
+    }
+
+    @Test
+    @EnabledIfEnvironmentVariable(named = "MODOO_REINDEX", matches = "true")
+    @DisplayName("로컬 콘텐츠를 재색인한다")
+    void reindexLocalContents() {
+      long indexedCount = contentInitialIndexService.indexAll();
+
+      System.out.println("재색인한 콘텐츠 수: " + indexedCount);
+      assertThat(indexedCount).isPositive();
     }
 
     @Test
