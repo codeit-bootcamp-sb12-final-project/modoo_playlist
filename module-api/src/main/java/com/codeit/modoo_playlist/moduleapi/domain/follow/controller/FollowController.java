@@ -3,7 +3,9 @@ package com.codeit.modoo_playlist.moduleapi.domain.follow.controller;
 import com.codeit.modoo_playlist.core.domain.follow.entity.Follow;
 import com.codeit.modoo_playlist.moduleapi.domain.follow.mapper.FollowMapper;
 import com.codeit.modoo_playlist.moduleapi.domain.follow.service.FollowService;
+import com.codeit.modoo_playlist.moduleapi.dto.follow.request.FollowListRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.follow.request.FollowRequest;
+import com.codeit.modoo_playlist.moduleapi.dto.follow.response.FollowMemberCursorResponse;
 import com.codeit.modoo_playlist.moduleapi.dto.follow.response.FollowResponse;
 import com.codeit.modoo_playlist.moduleapi.security.UserDetails;
 import jakarta.validation.Valid;
@@ -64,6 +66,32 @@ public class FollowController {
     @GetMapping("/count")
     public ResponseEntity<Long> countFollowers(@RequestParam UUID followeeId) {
         return ResponseEntity.ok(followService.countFollowers(followeeId));
+    }
+
+    @PreAuthorize("hasRole('USER')")
+    @GetMapping("/followers")
+    public ResponseEntity<FollowMemberCursorResponse> getFollowers(
+            @RequestParam UUID followeeId,
+            @RequestParam(required = false) String cursor,
+            @RequestParam(required = false) UUID idAfter,
+            @RequestParam(defaultValue = "20") int limit,
+            @RequestParam(defaultValue = "DESCENDING") String sortDirection
+    ) {
+        FollowListRequest request = new FollowListRequest(cursor, idAfter, limit, sortDirection);
+        return ResponseEntity.ok(followService.getFollowers(followeeId, request));
+    }
+
+    @PreAuthorize("hasRole('USER')")
+    @GetMapping("/following")
+    public ResponseEntity<FollowMemberCursorResponse> getFollowing(
+            @RequestParam UUID followerId,
+            @RequestParam(required = false) String cursor,
+            @RequestParam(required = false) UUID idAfter,
+            @RequestParam(defaultValue = "20") int limit,
+            @RequestParam(defaultValue = "DESCENDING") String sortDirection
+    ) {
+        FollowListRequest request = new FollowListRequest(cursor, idAfter, limit, sortDirection);
+        return ResponseEntity.ok(followService.getFollowing(followerId, request));
     }
 
 }

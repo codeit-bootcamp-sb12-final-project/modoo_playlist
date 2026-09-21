@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -21,6 +22,7 @@ public class ReactionController {
 
   private final ReactionService reactionService;
 
+  @PreAuthorize("hasRole('USER')")
   @PutMapping("/{contentId}/reaction")
   public ResponseEntity<Void> setReaction(@PathVariable UUID contentId,
       @RequestBody @Valid ReactionRequest request,

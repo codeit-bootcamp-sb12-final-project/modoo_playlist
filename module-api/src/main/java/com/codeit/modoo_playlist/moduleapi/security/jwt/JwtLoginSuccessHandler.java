@@ -13,6 +13,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
@@ -55,7 +56,13 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
     response.setHeader("Cache-Control", "no-store");
 
 //    다른 인증 객체 오면 에러.
-    if (!(authentication.getPrincipal() instanceof UserDetails userDetails)) {
+    UUID userId;
+    LoginCredentialType credentialType;
+
+    if (authentication.getPrincipal() instanceof UserDetails userDetails) {
+      userId = userDetails.getUserDto().id();
+      credentialType = userDetails.getCredentialType();
+    } else {
       SecurityContextHolder.clearContext();
       log.error("Unexpected principal type in login success handler");
 
@@ -71,12 +78,12 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
 
     try {
       LoginIssueResult result = authService.issueLogin(
-          userDetails.getUserDto().id(),
-          userDetails.getCredentialType()
+          userId,
+          credentialType
       );
 
       boolean temporaryLogin =
-          userDetails.getCredentialType() == LoginCredentialType.TEMPORARY;
+          credentialType == LoginCredentialType.TEMPORARY;
 
       refreshCookie = temporaryLogin
           ? null

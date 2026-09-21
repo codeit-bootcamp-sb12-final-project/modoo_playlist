@@ -84,8 +84,19 @@ public class PlaylistQueryRepositoryImpl implements PlaylistQueryRepository {
             return builder;
         }
 
-        Instant cursorInstant = Instant.parse(condition.cursor());
         boolean desc = condition.sortDirection() == PlaylistListCondition.SortDirection.DESCENDING;
+
+        if (condition.sortBy() == PlaylistListCondition.SortType.SUBSCRIBER_COUNT) {
+            long cursorCount = Long.parseLong(condition.cursor());
+            builder.and(desc
+                    ? playlist.subscriberCount.lt(cursorCount)
+                    .or(playlist.subscriberCount.eq(cursorCount).and(playlist.id.lt(condition.idAfter())))
+                    : playlist.subscriberCount.gt(cursorCount)
+                    .or(playlist.subscriberCount.eq(cursorCount).and(playlist.id.gt(condition.idAfter()))));
+            return builder;
+        }
+
+        Instant cursorInstant = Instant.parse(condition.cursor());
 
         if (condition.sortBy() == PlaylistListCondition.SortType.CREATED_AT) {
             builder.and(desc
@@ -107,6 +118,13 @@ public class PlaylistQueryRepositoryImpl implements PlaylistQueryRepository {
     private OrderSpecifier<?>[] orderSpecifiers(PlaylistListCondition condition) {
         boolean desc = condition.sortDirection() == PlaylistListCondition.SortDirection.DESCENDING;
 
+        if (condition.sortBy() == PlaylistListCondition.SortType.SUBSCRIBER_COUNT) {
+            return new OrderSpecifier<?>[]{
+                    desc ? playlist.subscriberCount.desc() : playlist.subscriberCount.asc(),
+                    desc ? playlist.id.desc() : playlist.id.asc()
+            };
+        }
+
         if (condition.sortBy() == PlaylistListCondition.SortType.CREATED_AT) {
             return new OrderSpecifier<?>[]{
                     desc ? playlist.createdAt.desc() : playlist.createdAt.asc(),
@@ -120,8 +138,10 @@ public class PlaylistQueryRepositoryImpl implements PlaylistQueryRepository {
     }
 
     private String cursorValue(Playlist p, PlaylistListCondition.SortType sortBy) {
-        return sortBy == PlaylistListCondition.SortType.CREATED_AT
-                ? p.getCreatedAt().toString()
-                : p.getUpdatedAt().toString();
+        return switch (sortBy) {
+            case CREATED_AT -> p.getCreatedAt().toString();
+            case UPDATED_AT -> p.getUpdatedAt().toString();
+            case SUBSCRIBER_COUNT -> String.valueOf(p.getSubscriberCount());
+        };
     }
 }

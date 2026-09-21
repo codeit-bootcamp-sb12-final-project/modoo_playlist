@@ -7,6 +7,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,6 +23,12 @@ public class SearchController {
   @GetMapping("/popular")
   public ResponseEntity<List<PopularKeywordDto>> getPopularKeywords() {
     return ResponseEntity.ok(popularSearchService.getPopularKeywords());
+  }
+
+  @PostMapping("/popular")
+  public ResponseEntity<Void> recordSearch(@RequestParam String keyword) {
+    popularSearchService.recordSearch(keyword);
+    return ResponseEntity.noContent().build();
   }
 
   @GetMapping("/suggestions")

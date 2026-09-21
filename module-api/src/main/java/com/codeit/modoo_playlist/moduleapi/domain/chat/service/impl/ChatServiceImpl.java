@@ -6,12 +6,10 @@ import com.codeit.modoo_playlist.core.domain.conversation.entity.ConversationTyp
 import com.codeit.modoo_playlist.core.domain.message.entity.Message;
 import com.codeit.modoo_playlist.core.domain.message.entity.MessageType;
 import com.codeit.modoo_playlist.core.domain.user.entity.User;
-import com.codeit.modoo_playlist.core.global.exception.BaseException;
-import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
-import com.codeit.modoo_playlist.moduleapi.domain.chat.dto.response.ChatCardsEvent;
 import com.codeit.modoo_playlist.core.domain.user.entity.UserRole;
 import com.codeit.modoo_playlist.core.global.exception.BaseException;
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
+import com.codeit.modoo_playlist.moduleapi.domain.chat.dto.response.ChatCardsEvent;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.dto.response.ChatDoneEvent;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.dto.response.ChatErrorEvent;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.dto.response.ContentCardDto;
@@ -120,39 +118,6 @@ public class ChatServiceImpl implements ChatService {
 
     Flux<ServerSentEvent<Object>> doneEvent = Flux.just(
         ServerSentEvent.builder((Object) new ChatDoneEvent(conversation.getId())).event("done")
-            .build()
-    );
-
-    return messageEvents.concatWith(cardsEvent).concatWith(doneEvent);
-  }
-
-  @Override
-  public Flux<ServerSentEvent<Object>> chatAnonymous(UUID conversationId, String message) {
-    UUID sessionId = (conversationId != null) ? conversationId : UUID.randomUUID();
-    log.info("chatAnonymous 요청: sessionId={}", sessionId);
-    ContentCardCollector cardCollector = new ContentCardCollector();
-
-    Flux<ServerSentEvent<Object>> messageEvents = chatClient.prompt()
-        .user(message)
-        .tools(searchContentsTool, recommendContentsTool)
-        .toolContext(Map.of(ChatToolContext.CARD_COLLECTOR, cardCollector))
-        .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, sessionId.toString()))
-        .stream()
-        .content()
-        .doOnComplete(() -> log.info("chatAnonymous 완료: sessionId={}", sessionId))
-        .map(token -> ServerSentEvent.builder((Object) token)
-            .event("message").build())
-        .onErrorResume(e -> {
-          log.error("chatAnonymous 스트림 오류: sessionId={}", sessionId, e);
-          return Flux.just(ServerSentEvent.builder(
-                  (Object) new ChatErrorEvent("답변을 생성하지 못했어요. 잠시 후 다시 시도해 주세요."))
-              .event("error").build());
-        });
-
-    Flux<ServerSentEvent<Object>> cardsEvent = cardsEvent(cardCollector);
-
-    Flux<ServerSentEvent<Object>> doneEvent = Flux.just(
-        ServerSentEvent.builder((Object) new ChatDoneEvent(sessionId)).event("done")
             .build()
     );
 

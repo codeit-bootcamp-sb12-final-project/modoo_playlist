@@ -10,6 +10,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -41,4 +42,27 @@ public class SocialAccount extends BaseEntity {
 
   @Column(name = "provider_user_id", length = 255, nullable = false)
   private String providerUserId;
+
+  public static SocialAccount create(
+      User user,
+      Provider provider,
+      String providerUserId
+  ) {
+    Objects.requireNonNull(user, "user is required");
+    Objects.requireNonNull(provider, "OAuth provider is required");
+
+    if (provider == Provider.LOCAL) {
+      throw new IllegalArgumentException("LOCAL cannot be used as an OAuth provider");
+    }
+
+    if (providerUserId == null || providerUserId.isBlank()) {
+      throw new IllegalArgumentException("OAuth provider user ID is required");
+    }
+
+    SocialAccount socialAccount = new SocialAccount();
+    socialAccount.user = user;
+    socialAccount.provider = provider;
+    socialAccount.providerUserId = providerUserId;
+    return socialAccount;
+  }
 }

@@ -9,6 +9,7 @@ import com.codeit.modoo_playlist.moduleapi.domain.notification.service.Notificat
 import com.codeit.modoo_playlist.moduleapi.domain.notification.sse.SseEmitterRepository;
 import com.codeit.modoo_playlist.moduleapi.dto.notification.response.NotificationCursorResponse;
 import com.codeit.modoo_playlist.moduleapi.dto.notification.response.NotificationResponse;
+import com.codeit.modoo_playlist.moduleapi.dto.notification.response.NotificationUnreadCountResponse;
 import com.codeit.modoo_playlist.moduleapi.security.UserDetails;
 import java.util.List;
 import java.util.UUID;
@@ -17,8 +18,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -75,12 +76,30 @@ public class NotificationController {
     }
 
     @PreAuthorize("hasRole('USER')")
-    @DeleteMapping("/api/notifications/{notificationId}")
+    @GetMapping("/api/notifications/unread-count")
+    public ResponseEntity<NotificationUnreadCountResponse> getUnreadCount(
+            @AuthenticationPrincipal UserDetails user
+    ) {
+        long count = notificationService.countUnread(user.getUserDto().id());
+        return ResponseEntity.ok(new NotificationUnreadCountResponse(count));
+    }
+
+    @PreAuthorize("hasRole('USER')")
+    @PatchMapping("/api/notifications/{notificationId}/read")
     public ResponseEntity<Void> readNotification(
             @PathVariable UUID notificationId,
             @AuthenticationPrincipal UserDetails user
     ) {
         notificationService.readNotification(notificationId, user.getUserDto().id());
+        return ResponseEntity.noContent().build();
+    }
+
+    @PreAuthorize("hasRole('USER')")
+    @PatchMapping("/api/notifications/read-all")
+    public ResponseEntity<Void> readAllNotifications(
+            @AuthenticationPrincipal UserDetails user
+    ) {
+        notificationService.readAllNotifications(user.getUserDto().id());
         return ResponseEntity.noContent().build();
     }
 

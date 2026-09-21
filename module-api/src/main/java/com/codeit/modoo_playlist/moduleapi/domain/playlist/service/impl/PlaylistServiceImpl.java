@@ -142,6 +142,7 @@ public class PlaylistServiceImpl implements PlaylistService {
                 .build();
 
         playlistSubscriptionRepository.save(subscription);
+        playlist.increaseSubscriberCount();
 
         eventPublisher.publishEvent(new PlaylistSubscribedEvent(playlistId, playlist.getOwnerId(), subscriberId));
     }
@@ -149,12 +150,16 @@ public class PlaylistServiceImpl implements PlaylistService {
     @Override
     @Transactional
     public void unsubscribe(UUID playlistId, UUID subscriberId) {
+        Playlist playlist = playlistRepository.findById(playlistId)
+                .orElseThrow(() -> new BaseException(ErrorCode.PLAYLIST_NOT_FOUND));
+
         PlaylistSubscriptionId id = new PlaylistSubscriptionId(playlistId, subscriberId);
 
         PlaylistSubscription subscription = playlistSubscriptionRepository.findById(id)
                 .orElseThrow(() -> new BaseException(ErrorCode.PLAYLIST_SUBSCRIPTION_NOT_FOUND));
 
         playlistSubscriptionRepository.delete(subscription);
+        playlist.decreaseSubscriberCount();
     }
 
     @Override
@@ -299,6 +304,7 @@ public class PlaylistServiceImpl implements PlaylistService {
         return switch (sortBy) {
             case "updatedAt" -> PlaylistListCondition.SortType.UPDATED_AT;
             case "createdAt" -> PlaylistListCondition.SortType.CREATED_AT;
+            case "subscribeCount" -> PlaylistListCondition.SortType.SUBSCRIBER_COUNT;
             default -> throw new IllegalArgumentException("지원하지 않는 sortBy 값입니다: " + sortBy);
         };
     }

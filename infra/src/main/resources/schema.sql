@@ -182,9 +182,13 @@ CREATE TABLE `playlists` (
 	`created_at`	DATETIME(6)	NOT NULL	DEFAULT CURRENT_TIMESTAMP(6),
 	`updated_at`	DATETIME(6)	NOT NULL	DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)	COMMENT '플레이리스트 목록 정렬 기준(sortBy=updatedAt)',
 	`generated_by`	VARCHAR(20)	NOT NULL	DEFAULT 'USER'	COMMENT 'USER / AI',
+    `subscriber_count` BIGINT NOT NULL DEFAULT 0 COMMENT '구독자 수. 즉시 갱신(subscribe/unsubscribe 시 증감). 정렬 기준(sortBy=subscribeCount)',
 
-	PRIMARY KEY (`id`),
+
+    PRIMARY KEY (`id`),
 	KEY `IDX_PLAYLISTS_OWNER` (`owner_id`, `updated_at` DESC)
+	KEY `IDX_PLAYLISTS_SUBSCRIBER_COUNT` (`subscriber_count` DESC)
+
 );
 
 

@@ -15,9 +15,9 @@ import com.codeit.modoo_playlist.core.domain.user.entity.User;
 import com.codeit.modoo_playlist.core.domain.user.entity.UserRole;
 import com.codeit.modoo_playlist.core.global.exception.BaseException;
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
+import com.codeit.modoo_playlist.moduleapi.domain.user.event.TemporaryPasswordIssuedEvent;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.user.service.TemporaryPasswordGenerator;
-import com.codeit.modoo_playlist.moduleapi.domain.user.service.TemporaryPasswordSender;
 import com.codeit.modoo_playlist.moduleapi.domain.user.service.impl.AuthServiceImpl;
 import com.codeit.modoo_playlist.moduleapi.dto.UserDto;
 import com.codeit.modoo_playlist.moduleapi.dto.jwt.LoginIssueResult;
@@ -46,6 +46,7 @@ import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -80,7 +81,7 @@ class AuthServiceTest {
   TemporaryPasswordGenerator temporaryPasswordGenerator;
 
   @Mock
-  TemporaryPasswordSender temporaryPasswordSender;
+  ApplicationEventPublisher eventPublisher;
 
   @Mock
   UserMapper userMapper;
@@ -103,7 +104,7 @@ class AuthServiceTest {
         userRepository,
         passwordEncoder,
         temporaryPasswordGenerator,
-        temporaryPasswordSender,
+        eventPublisher,
         clock,
         userMapper
     );
@@ -131,12 +132,18 @@ class AuthServiceTest {
     assertThat(user.getTempPassword()).isEqualTo(ENCODED_TEMPORARY_PASSWORD);
     assertThat(user.hasActiveTemporaryPassword(clock.instant())).isTrue();
     verify(userRepository).saveAndFlush(user);
-    verify(temporaryPasswordSender).send(
-        EMAIL,
-        TEMPORARY_PASSWORD,
-        user.getTempPasswordExpiresAt()
+    verify(eventPublisher).publishEvent(
+        org.mockito.Mockito.<Object>assertArg(event -> {
+          assertThat(event).isInstanceOf(TemporaryPasswordIssuedEvent.class);
+          TemporaryPasswordIssuedEvent issuedEvent = (TemporaryPasswordIssuedEvent) event;
+
+          assertThat(issuedEvent.userId()).isEqualTo(userId);
+          assertThat(issuedEvent.email()).isEqualTo(EMAIL);
+          assertThat(issuedEvent.temporaryPassword()).isEqualTo(TEMPORARY_PASSWORD);
+          assertThat(issuedEvent.expiresAt())
+              .isEqualTo(user.getTempPasswordExpiresAt());
+        })
     );
-    verify(sessions).invalidateAll(userId);
   }
 
   @Test

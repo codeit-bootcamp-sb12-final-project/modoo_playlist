@@ -27,7 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class HomeFeedServiceImpl implements HomeFeedService {
 
-  private static final int ROW_LIMIT = 5;
+  private static final int ROW_LIMIT = 10;
 
   private final Random random = new Random();
 
@@ -41,11 +41,9 @@ public class HomeFeedServiceImpl implements HomeFeedService {
   public HomeFeedResponse getHomeFeed(UUID userId) {
     List<HomeRowDto> rows = new ArrayList<>();
     addIfPresent(rows, "지금 함께 보는 중", this::liveWatchingRow);
-    if (userId != null) {
-      addIfPresent(rows, "취향과 맞아요", () -> topTagMatchRow(userId));
-      addIfPresent(rows, "오늘의 추천", () -> todayRecommendationRow(userId));
-      addIfPresent(rows, "팔로우한 사람들이 본", () -> followingActivityRow(userId));
-    }
+    addIfPresent(rows, "취향과 맞아요", () -> topTagMatchRow(userId));
+    addIfPresent(rows, "오늘의 추천", () -> todayRecommendationRow(userId));
+    addIfPresent(rows, "팔로우한 사람들이 본", () -> followingActivityRow(userId));
     addIfPresent(rows, "인기 콘텐츠", this::trendingRow);
     return new HomeFeedResponse(rows);
   }
