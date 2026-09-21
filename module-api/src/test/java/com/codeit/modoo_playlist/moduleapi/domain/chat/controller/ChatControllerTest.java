@@ -41,18 +41,4 @@ class ChatControllerTest {
     verify(chatService).chat(userId, conversationId, "안녕");
     verifyNoMoreInteractions(chatService);
   }
-
-  @Test
-  void 비로그인이면_chatAnonymous로_스트림을_시작한다() {
-    UUID conversationId = UUID.randomUUID();
-    Flux<ServerSentEvent<Object>> expected = Flux.empty();
-    when(chatService.chatAnonymous(conversationId, "안녕")).thenReturn(expected);
-
-    Flux<ServerSentEvent<Object>> result =
-        controller.stream(new ChatMessageRequest(conversationId, "안녕"), null);
-
-    assertThat(result).isSameAs(expected);
-    verify(chatService).chatAnonymous(conversationId, "안녕");
-    verifyNoMoreInteractions(chatService);
-  }
 }

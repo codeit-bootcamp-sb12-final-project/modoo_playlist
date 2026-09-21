@@ -7,6 +7,4 @@ import reactor.core.publisher.Flux;
 
 public interface ChatService {
 	Flux<ServerSentEvent<Object>> chat(UUID userId, UUID conversationId, @NotBlank String message);
-
-	Flux<ServerSentEvent<Object>> chatAnonymous(UUID uuid, @NotBlank String message);
 }
