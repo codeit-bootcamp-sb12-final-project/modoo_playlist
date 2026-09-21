@@ -9,6 +9,7 @@ import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserPasswordUpdateRe
 import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserProfileUpdateRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserRoleUpdateRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.user.response.CursorResponseUserDto;
+import com.codeit.modoo_playlist.moduleapi.dto.user.response.WithdrawalInfoResponse;
 import com.codeit.modoo_playlist.moduleapi.security.UserDetails;
 import jakarta.validation.Valid;
 import java.util.UUID;
@@ -52,6 +53,18 @@ public class UserController {
       @PathVariable("userId") UUID userId
   ) {
     return ResponseEntity.ok(userService.getUser(userId));
+  }
+
+  @GetMapping(
+      name = "회원 탈퇴 인증 방식 조회",
+      value = "/me/withdrawal-info"
+  )
+  public ResponseEntity<WithdrawalInfoResponse> getWithdrawalInfo(
+      @AuthenticationPrincipal UserDetails principal
+  ) {
+    return ResponseEntity.ok(
+        userService.getWithdrawalInfo(principal.getUserDto().id())
+    );
   }
 
   @PatchMapping(

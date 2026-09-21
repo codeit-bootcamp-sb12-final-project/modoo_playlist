@@ -6,6 +6,7 @@ import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserCreateRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserListRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserProfileUpdateRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.user.response.CursorResponseUserDto;
+import com.codeit.modoo_playlist.moduleapi.dto.user.response.WithdrawalInfoResponse;
 import java.util.UUID;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -14,6 +15,8 @@ public interface UserService {
   UserDto create(UserCreateRequest request);
 
   UserDto getUser(UUID userId);
+
+  WithdrawalInfoResponse getWithdrawalInfo(UUID userId);
 
   CursorResponseUserDto getAllUsers(UserListRequest request);
 

@@ -89,6 +89,9 @@ public class SecurityConfig {
             // 회원가입
             .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
 
+            // 회원 탈퇴 인증 방식 조회
+            .requestMatchers(HttpMethod.GET, "/api/users/me/withdrawal-info").authenticated()
+
             // 사용자 수정
             .requestMatchers(HttpMethod.PATCH, "/api/users/*").authenticated()
 

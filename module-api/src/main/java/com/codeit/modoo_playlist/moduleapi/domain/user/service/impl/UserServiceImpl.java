@@ -4,6 +4,7 @@ import com.codeit.modoo_playlist.core.domain.user.entity.User;
 import com.codeit.modoo_playlist.core.domain.user.entity.UserRole;
 import com.codeit.modoo_playlist.core.global.exception.BaseException;
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
+import com.codeit.modoo_playlist.moduleapi.domain.user.repository.SocialAccountRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.query.UserQueryPage;
 import com.codeit.modoo_playlist.moduleapi.domain.user.service.UserService;
@@ -12,6 +13,8 @@ import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserCreateRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserListRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserProfileUpdateRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.user.response.CursorResponseUserDto;
+import com.codeit.modoo_playlist.moduleapi.dto.user.response.WithdrawalInfoResponse;
+import com.codeit.modoo_playlist.moduleapi.dto.user.response.WithdrawalVerificationMethod;
 import com.codeit.modoo_playlist.moduleapi.mapper.UserMapper;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.LoginSessionStore;
 import java.util.List;
@@ -28,6 +31,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class UserServiceImpl implements UserService {
 
   private final UserRepository userRepository;
+  private final SocialAccountRepository socialAccountRepository;
   private final PasswordEncoder passwordEncoder;
   private final UserMapper userMapper;
   private final LoginSessionStore loginSessionStore;
@@ -74,6 +78,20 @@ public class UserServiceImpl implements UserService {
         .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
 
     return userMapper.toDto(user);
+  }
+
+  @Transactional(readOnly = true)
+  @Override
+  public WithdrawalInfoResponse getWithdrawalInfo(UUID userId) {
+    return socialAccountRepository.findByUserId(userId)
+        .map(socialAccount -> new WithdrawalInfoResponse(
+            WithdrawalVerificationMethod.OAUTH,
+            socialAccount.getProvider()
+        ))
+        .orElseGet(() -> new WithdrawalInfoResponse(
+            WithdrawalVerificationMethod.PASSWORD,
+            null
+        ));
   }
 
   @Transactional(readOnly = true)
