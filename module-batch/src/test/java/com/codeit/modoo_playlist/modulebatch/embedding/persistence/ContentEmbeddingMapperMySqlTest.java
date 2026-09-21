@@ -164,6 +164,22 @@ class ContentEmbeddingMapperMySqlTest {
   }
 
   @Test
+  void 표시순서가_같으면_id순으로_정렬하고_상위_5명도_id_기준으로_고른다() {
+    String contentId = insertContent("영화Q", false, null);
+    List<Integer> insertionOrder = List.of(6, 2, 7, 4, 1, 5, 3);
+    for (int n : insertionOrder) {
+      insertPersonWithId(contentId, "00000000-0000-7000-8000-00000000000" + n, "ACTOR", "배우" + n, 1);
+    }
+    insertPersonWithId(contentId, "00000000-0000-7000-8000-000000000009", "DIRECTOR", "감독B", 0);
+    insertPersonWithId(contentId, "00000000-0000-7000-8000-000000000008", "DIRECTOR", "감독A", 0);
+
+    ContentEmbeddingTarget target = findTarget(contentId);
+
+    assertThat(target.actors()).isEqualTo("배우1,배우2,배우3,배우4,배우5");
+    assertThat(target.directors()).isEqualTo("감독A,감독B");
+  }
+
+  @Test
   void 태그와_인물이_함께_있어도_값이_중복되지_않는다() {
     String contentId = insertContent("영화N", false, null);
     attachTag(contentId, "Drama");
@@ -220,10 +236,14 @@ class ContentEmbeddingMapperMySqlTest {
   }
 
   private void insertPerson(String contentId, String roleType, String name, int displayOrder) {
+    insertPersonWithId(contentId, UUID.randomUUID().toString(), roleType, name, displayOrder);
+  }
+
+  private void insertPersonWithId(String contentId, String personId, String roleType, String name, int displayOrder) {
     jdbcTemplate.update(
         "INSERT INTO content_people (id, content_id, role_type, person_name, display_order) "
             + "VALUES (UUID_TO_BIN(?), UUID_TO_BIN(?), ?, ?, ?)",
-        UUID.randomUUID().toString(), contentId, roleType, name, displayOrder);
+        personId, contentId, roleType, name, displayOrder);
   }
 
   private String insertContent(String title, boolean deleted, String embeddingSourceHash) {

@@ -63,7 +63,7 @@ public class EmbeddingTextBuilder {
     if (country == null) {
       return null;
     }
-    String code = country.trim().toUpperCase();
+    String code = country.trim().toUpperCase(Locale.ROOT);
     if (!ISO_COUNTRY_CODES.contains(code)) {
       return country;
     }

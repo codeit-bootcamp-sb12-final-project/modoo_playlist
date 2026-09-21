@@ -19,14 +19,14 @@
            c.type AS type,
            YEAR(c.release_date) AS releaseYear,
            c.origin_country AS originCountry,
-           (SELECT GROUP_CONCAT(p.person_name ORDER BY p.display_order)
+           (SELECT GROUP_CONCAT(p.person_name ORDER BY p.display_order, p.id)
               FROM content_people p
              WHERE p.content_id = c.id AND p.role_type = 'DIRECTOR') AS directors,
-           (SELECT GROUP_CONCAT(a.person_name ORDER BY a.display_order)
-              FROM (SELECT p.person_name, p.display_order
+           (SELECT GROUP_CONCAT(a.person_name ORDER BY a.display_order, a.id)
+              FROM (SELECT p.id, p.person_name, p.display_order
                       FROM content_people p
                      WHERE p.content_id = c.id AND p.role_type = 'ACTOR'
-                     ORDER BY p.display_order
+                     ORDER BY p.display_order, p.id
                      LIMIT 5) a) AS actors,
            cs.sport_type AS sportType,
            cs.league AS league,

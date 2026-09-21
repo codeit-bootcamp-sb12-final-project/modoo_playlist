@@ -46,6 +46,9 @@ public class ContentDetailServiceImpl implements ContentDetailService {
         .collect(Collectors.groupingBy(
             contentTag -> contentTag.getId().getContentId(),
             Collectors.mapping(contentTag -> contentTag.getTag().getName(), Collectors.toList())));
+    Map<UUID, List<ContentPerson>> people = contentPersonRepository
+        .findAllByContent_IdInOrderByDisplayOrderAscIdAsc(contentIds).stream()
+        .collect(Collectors.groupingBy(person -> person.getContent().getId()));
     Map<UUID, ContentSports> sports = contentSportsRepository.findAllById(contentIds).stream()
         .collect(Collectors.toMap(ContentSports::getContentId, Function.identity()));
 
@@ -54,7 +57,7 @@ public class ContentDetailServiceImpl implements ContentDetailService {
         .map(id -> toDto(
             contents.get(id),
             tags.getOrDefault(id, List.of()).stream().sorted().toList(),
-            contentPersonRepository.findAllByContent_IdOrderByDisplayOrderAsc(id),
+            people.getOrDefault(id, List.of()),
             sports.get(id)))
         .toList();
   }

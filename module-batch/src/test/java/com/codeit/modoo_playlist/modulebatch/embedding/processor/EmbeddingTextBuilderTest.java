@@ -2,6 +2,8 @@ package com.codeit.modoo_playlist.modulebatch.embedding.processor;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Locale;
+
 import org.junit.jupiter.api.Test;
 
 import com.codeit.modoo_playlist.modulebatch.embedding.model.ContentEmbeddingTarget;
@@ -66,6 +68,21 @@ class EmbeddingTextBuilderTest {
         .contains("국가: 대한민국 (KR)");
     assertThat(EmbeddingTextBuilder.build(builder("a").originCountry("US").build()))
         .contains("국가: 미국 (US)");
+  }
+
+  @Test
+  void 국가코드_변환은_호스트_로케일과_무관하다() {
+    Locale original = Locale.getDefault();
+    try {
+      Locale.setDefault(new Locale("tr", "TR"));
+
+      assertThat(EmbeddingTextBuilder.build(builder("a").originCountry("fi").build()))
+          .contains("국가: 핀란드 (FI)");
+      assertThat(EmbeddingTextBuilder.build(builder("a").originCountry("id").build()))
+          .contains("국가: 인도네시아 (ID)");
+    } finally {
+      Locale.setDefault(original);
+    }
   }
 
   @Test

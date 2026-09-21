@@ -45,20 +45,18 @@ class RecommendContentsToolTest {
   }
 
   @Test
-  void 정상_UUID면_유사_콘텐츠의_상세정보를_반환하고_카드_컬렉터에_담는다() {
+  void 정상_UUID면_유사_콘텐츠의_상세정보를_반환한다() {
     UUID contentId = UUID.randomUUID();
     UUID similarId = UUID.randomUUID();
-    ContentCardCollector collector = new ContentCardCollector();
-    ToolContext toolContext = new ToolContext(Map.of(ChatToolContext.CARD_COLLECTOR, collector));
+    ToolContext toolContext = new ToolContext(Map.of(ChatToolContext.CARD_COLLECTOR, new ContentCardCollector()));
     List<RecommendedContentDto> similar = List.of(new RecommendedContentDto(similarId, "비슷한 콘텐츠", "thumb", 0.9));
     when(recommendationService.getSimilarContents(contentId, 5)).thenReturn(similar);
     ContentDetailDto detail = ContentDetailDto.titleOnly(similarId, "비슷한 콘텐츠");
-    when(contentDetailResolver.resolve(similar)).thenReturn(List.of(detail));
+    when(contentDetailResolver.resolve(similar, toolContext)).thenReturn(List.of(detail));
 
     List<ContentDetailDto> result = tool().recommendContents(contentId.toString(), toolContext);
 
     assertThat(result).containsExactly(detail);
-    assertThat(collector.getCards()).hasSize(1);
   }
 
   @Test

@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import com.codeit.modoo_playlist.moduleapi.domain.chat.dto.response.ContentCardDto;
 import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.ContentDetailDto;
 import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.RecommendedContentDto;
 import com.codeit.modoo_playlist.moduleapi.domain.recommendation.service.RecommendationService;
@@ -29,22 +28,19 @@ class GetPersonalizedRecommendationsToolTest {
   }
 
   @Test
-  void 로그인_사용자의_개인화_추천_상세정보를_반환하고_카드_컬렉터에_담는다() {
+  void 로그인_사용자의_개인화_추천_상세정보를_반환한다() {
     UUID userId = UUID.randomUUID();
     UUID contentId = UUID.randomUUID();
-    ContentCardCollector collector = new ContentCardCollector();
     ToolContext toolContext = new ToolContext(Map.of(
-        ChatToolContext.USER_ID, userId, ChatToolContext.CARD_COLLECTOR, collector));
+        ChatToolContext.USER_ID, userId, ChatToolContext.CARD_COLLECTOR, new ContentCardCollector()));
     List<RecommendedContentDto> recommended = List.of(new RecommendedContentDto(contentId, "제목", "thumb", 1.0));
     when(recommendationService.getRecommendationsForMe(userId, 5)).thenReturn(recommended);
     ContentDetailDto detail = ContentDetailDto.titleOnly(contentId, "제목");
-    when(contentDetailResolver.resolve(recommended)).thenReturn(List.of(detail));
+    when(contentDetailResolver.resolve(recommended, toolContext)).thenReturn(List.of(detail));
 
     List<ContentDetailDto> result = tool().getPersonalizedRecommendations(toolContext);
 
     assertThat(result).containsExactly(detail);
-    assertThat(collector.getCards())
-        .containsExactly(new ContentCardDto(contentId, "제목", "thumb"));
   }
 
   @Test
@@ -76,7 +72,7 @@ class GetPersonalizedRecommendationsToolTest {
     ToolContext toolContext = new ToolContext(Map.of(ChatToolContext.USER_ID, userId));
     List<RecommendedContentDto> recommended = List.of(new RecommendedContentDto(contentId, "제목", null, 1.0));
     when(recommendationService.getRecommendationsForMe(userId, 5)).thenReturn(recommended);
-    when(contentDetailResolver.resolve(recommended))
+    when(contentDetailResolver.resolve(recommended, toolContext))
         .thenReturn(List.of(ContentDetailDto.titleOnly(contentId, "제목")));
 
     List<ContentDetailDto> result = tool().getPersonalizedRecommendations(toolContext);

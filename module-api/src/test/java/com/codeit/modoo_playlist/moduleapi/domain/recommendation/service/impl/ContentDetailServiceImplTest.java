@@ -1,6 +1,8 @@
 package com.codeit.modoo_playlist.moduleapi.domain.recommendation.service.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
@@ -57,10 +59,10 @@ class ContentDetailServiceImplTest {
     when(contentRepository.findAllById(ids)).thenReturn(List.of(content));
     when(contentTagRepository.findAllWithTagByContentIds(ids)).thenReturn(List.of(
         contentTag(content, tag("스릴러")), contentTag(content, tag("블랙코미디"))));
-    when(contentPersonRepository.findAllByContent_IdOrderByDisplayOrderAsc(id)).thenReturn(List.of(
-        person(content, "DIRECTOR", "봉준호", 0),
-        person(content, "ACTOR", "송강호", 1),
-        person(content, "ACTOR", "이선균", 2)));
+    when(contentPersonRepository.findAllByContent_IdInOrderByDisplayOrderAscIdAsc(ids)).thenReturn(List.of(
+        person(id, "DIRECTOR", "봉준호"),
+        person(id, "ACTOR", "송강호"),
+        person(id, "ACTOR", "이선균")));
 
     List<ContentDetailDto> result = service().getDetails(ids);
 
@@ -83,14 +85,37 @@ class ContentDetailServiceImplTest {
     UUID id = UUID.randomUUID();
     Content content = content(id, "영화", "설명");
     when(contentRepository.findAllById(List.of(id))).thenReturn(List.of(content));
-    when(contentPersonRepository.findAllByContent_IdOrderByDisplayOrderAsc(id)).thenReturn(List.of(
-        person(content, "ACTOR", "배우0", 0), person(content, "ACTOR", "배우1", 1),
-        person(content, "ACTOR", "배우2", 2), person(content, "ACTOR", "배우3", 3),
-        person(content, "ACTOR", "배우4", 4), person(content, "ACTOR", "배우5", 5)));
+    when(contentPersonRepository.findAllByContent_IdInOrderByDisplayOrderAscIdAsc(List.of(id))).thenReturn(List.of(
+        person(id, "ACTOR", "배우0"), person(id, "ACTOR", "배우1"),
+        person(id, "ACTOR", "배우2"), person(id, "ACTOR", "배우3"),
+        person(id, "ACTOR", "배우4"), person(id, "ACTOR", "배우5")));
 
     List<ContentDetailDto> result = service().getDetails(List.of(id));
 
     assertThat(result.get(0).actors()).containsExactly("배우0", "배우1", "배우2", "배우3", "배우4");
+  }
+
+  @Test
+  void 인물은_콘텐츠_수와_관계없이_한_번에_조회해_각_콘텐츠에_나눠_담는다() {
+    UUID first = UUID.randomUUID();
+    UUID second = UUID.randomUUID();
+    UUID third = UUID.randomUUID();
+    List<UUID> ids = List.of(first, second, third);
+    when(contentRepository.findAllById(ids)).thenReturn(List.of(
+        content(first, "영화1", null), content(second, "영화2", null), content(third, "영화3", null)));
+    when(contentPersonRepository.findAllByContent_IdInOrderByDisplayOrderAscIdAsc(ids)).thenReturn(List.of(
+        person(first, "DIRECTOR", "감독1"), person(second, "ACTOR", "배우2"),
+        person(first, "ACTOR", "배우1"), person(second, "DIRECTOR", "감독2")));
+
+    List<ContentDetailDto> result = service().getDetails(ids);
+
+    verify(contentPersonRepository, times(1)).findAllByContent_IdInOrderByDisplayOrderAscIdAsc(ids);
+    assertThat(result.get(0).directors()).containsExactly("감독1");
+    assertThat(result.get(0).actors()).containsExactly("배우1");
+    assertThat(result.get(1).directors()).containsExactly("감독2");
+    assertThat(result.get(1).actors()).containsExactly("배우2");
+    assertThat(result.get(2).directors()).isEmpty();
+    assertThat(result.get(2).actors()).isEmpty();
   }
 
   @Test
@@ -170,8 +195,8 @@ class ContentDetailServiceImplTest {
         .content(content).tag(tag).build();
   }
 
-  private ContentPerson person(Content content, String roleType, String name, int displayOrder) {
-    return ContentPerson.builder()
-        .content(content).roleType(roleType).personName(name).displayOrder(displayOrder).build();
+  private ContentPerson person(UUID contentId, String roleType, String name) {
+    Content content = Content.builder().id(contentId).type(ContentType.MOVIE).title("t").build();
+    return ContentPerson.builder().content(content).roleType(roleType).personName(name).build();
   }
 }

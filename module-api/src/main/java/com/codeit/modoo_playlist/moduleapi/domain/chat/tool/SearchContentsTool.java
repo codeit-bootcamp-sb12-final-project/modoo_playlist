@@ -47,10 +47,6 @@ public class SearchContentsTool {
     }
     log.info("search_contents 결과: {}건", hits.size());
 
-    Object collector = toolContext.getContext().get(ChatToolContext.CARD_COLLECTOR);
-    if (collector instanceof ContentCardCollector cardCollector) {
-      hits.forEach(c -> cardCollector.add(c.contentId(), c.title(), c.thumbnailUrl()));
-    }
-    return contentDetailResolver.resolve(hits);
+    return contentDetailResolver.resolve(hits, toolContext);
   }
 }

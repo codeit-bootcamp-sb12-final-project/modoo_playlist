@@ -39,10 +39,6 @@ public class GetPersonalizedRecommendationsTool {
     }
     log.info("get_personalized_recommendations 결과: {}건", result.size());
 
-    Object collector = toolContext.getContext().get(ChatToolContext.CARD_COLLECTOR);
-    if (collector instanceof ContentCardCollector cardCollector) {
-      result.forEach(c -> cardCollector.add(c.contentId(), c.title(), c.thumbnailUrl()));
-    }
-    return contentDetailResolver.resolve(result);
+    return contentDetailResolver.resolve(result, toolContext);
   }
 }
