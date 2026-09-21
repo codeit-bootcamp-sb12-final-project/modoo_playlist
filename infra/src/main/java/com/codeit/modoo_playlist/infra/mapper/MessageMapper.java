@@ -1,12 +1,12 @@
-package com.codeit.modoo_playlist.moduleapi.mapper;
+package com.codeit.modoo_playlist.infra.mapper;
 
 import com.codeit.modoo_playlist.core.domain.message.entity.Message;
-import com.codeit.modoo_playlist.moduleapi.dto.MessageDto;
+import com.codeit.modoo_playlist.core.domain.message.entity.MessageDto;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring",
-        uses = UserMapper.class)
+        uses = UserSummaryMapper.class)
 public interface MessageMapper {
 
     @Mapping(target = "conversationId", source = "conversation.id")

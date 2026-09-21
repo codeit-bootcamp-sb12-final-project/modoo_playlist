@@ -1,14 +1,15 @@
-package com.codeit.modoo_playlist.moduleapi.domain.message.controller;
+package com.codeit.modoo_playlist.modulerealtime.message.controller;
 
+import com.codeit.modoo_playlist.core.domain.message.entity.MessageDto;
 import com.codeit.modoo_playlist.core.global.exception.BaseException;
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import com.codeit.modoo_playlist.core.global.realtime.RealtimeNotifier;
-import com.codeit.modoo_playlist.moduleapi.domain.message.service.MessageService;
-import com.codeit.modoo_playlist.moduleapi.dto.MessageDto;
-import com.codeit.modoo_playlist.moduleapi.dto.chat.ContentChatDto;
-import com.codeit.modoo_playlist.moduleapi.dto.chat.ContentChatSendRequest;
-import com.codeit.modoo_playlist.moduleapi.dto.chat.DirectMessageSendRequest;
-import com.codeit.modoo_playlist.moduleapi.security.UserDetails;
+
+import com.codeit.modoo_playlist.modulerealtime.dto.chat.ContentChatDto;
+import com.codeit.modoo_playlist.modulerealtime.dto.chat.ContentChatSendRequest;
+import com.codeit.modoo_playlist.modulerealtime.dto.chat.DirectMessageSendRequest;
+import com.codeit.modoo_playlist.modulerealtime.message.service.MessageService;
+import com.codeit.modoo_playlist.modulerealtime.security.RealtimePrincipal;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -71,9 +72,9 @@ public class MessageController {
     private UUID extractSenderId(Principal principal) {
         if(!(principal instanceof Authentication auth)
         || !auth.isAuthenticated()
-            || !(auth.getPrincipal() instanceof UserDetails user)){
+            || !(auth.getPrincipal() instanceof RealtimePrincipal user)){
             throw new BaseException(ErrorCode.ACCESS_DENIED);
         }
-        return user.getUserDto().id();
+        return user.userId();
     }
 }

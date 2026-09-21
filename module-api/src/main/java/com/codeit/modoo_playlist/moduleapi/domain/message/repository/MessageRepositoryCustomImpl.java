@@ -2,12 +2,12 @@ package com.codeit.modoo_playlist.moduleapi.domain.message.repository;
 
 import com.codeit.modoo_playlist.core.domain.conversation.entity.SortDirection;
 import com.codeit.modoo_playlist.core.domain.message.entity.Message;
+import com.codeit.modoo_playlist.core.domain.message.entity.MessageDto;
 import com.codeit.modoo_playlist.core.domain.message.entity.QMessage;
 import com.codeit.modoo_playlist.core.domain.user.entity.QUser;
-import com.codeit.modoo_playlist.moduleapi.dto.MessageDto;
-import com.codeit.modoo_playlist.moduleapi.dto.conversation.request.SliceCursorRequest;
+import com.codeit.modoo_playlist.core.global.common.dto.base.SliceCursorRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.conversation.response.CursorResponseMessageDto;
-import com.codeit.modoo_playlist.moduleapi.mapper.MessageMapper;
+import com.codeit.modoo_playlist.infra.mapper.MessageMapper;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;

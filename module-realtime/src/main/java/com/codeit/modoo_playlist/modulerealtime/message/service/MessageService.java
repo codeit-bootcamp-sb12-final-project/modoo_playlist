@@ -1,4 +1,4 @@
-package com.codeit.modoo_playlist.moduleapi.domain.message.service;
+package com.codeit.modoo_playlist.modulerealtime.message.service;
 
 import com.codeit.modoo_playlist.core.domain.content.entity.Content;
 import com.codeit.modoo_playlist.core.domain.conversation.entity.Conversation;
@@ -6,18 +6,19 @@ import com.codeit.modoo_playlist.core.domain.conversation.entity.ConversationPar
 import com.codeit.modoo_playlist.core.domain.message.entity.Message;
 import com.codeit.modoo_playlist.core.domain.message.entity.MessageType;
 import com.codeit.modoo_playlist.core.domain.user.entity.User;
+import com.codeit.modoo_playlist.core.domain.message.entity.MessageDto;
 import com.codeit.modoo_playlist.core.global.exception.BaseException;
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
-import com.codeit.modoo_playlist.moduleapi.domain.content.repository.jpa.ContentRepository;
-import com.codeit.modoo_playlist.moduleapi.domain.conversation.repository.ConversationRepository;
-import com.codeit.modoo_playlist.moduleapi.domain.message.repository.MessageRepository;
-import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
-import com.codeit.modoo_playlist.moduleapi.dto.MessageDto;
-import com.codeit.modoo_playlist.moduleapi.dto.chat.ContentChatDto;
-import com.codeit.modoo_playlist.moduleapi.dto.chat.ContentChatSendRequest;
-import com.codeit.modoo_playlist.moduleapi.dto.chat.DirectMessageSendRequest;
-import com.codeit.modoo_playlist.moduleapi.mapper.MessageMapper;
-import com.codeit.modoo_playlist.moduleapi.mapper.UserMapper;
+
+import com.codeit.modoo_playlist.infra.repository.RealtimeContentRepository;
+import com.codeit.modoo_playlist.infra.repository.RealtimeConversationRepository;
+import com.codeit.modoo_playlist.infra.repository.RealtimeMessageRepository;
+import com.codeit.modoo_playlist.infra.repository.RealtimeUserRepository;
+import com.codeit.modoo_playlist.infra.mapper.MessageMapper;
+import com.codeit.modoo_playlist.infra.mapper.UserSummaryMapper;
+import com.codeit.modoo_playlist.modulerealtime.dto.chat.ContentChatDto;
+import com.codeit.modoo_playlist.modulerealtime.dto.chat.ContentChatSendRequest;
+import com.codeit.modoo_playlist.modulerealtime.dto.chat.DirectMessageSendRequest;
 import lombok.RequiredArgsConstructor;
 //import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -29,13 +30,13 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class MessageService {
 
-    private final MessageRepository messageRepository;
-    private final UserRepository userRepository;
-    private final ConversationRepository conversationRepository;
+    private final RealtimeMessageRepository messageRepository;
+    private final RealtimeUserRepository userRepository;
+    private final RealtimeConversationRepository conversationRepository;
 //    private final ApplicationEventPublisher eventPublisher;
-    private final ContentRepository contentRepository;
+    private final RealtimeContentRepository contentRepository;
     private final MessageMapper messageMapper;
-    private final UserMapper userMapper;
+    private final UserSummaryMapper userSummaryMapper;
 
     // 1) DM 전송 (+ 메시지 생성)
     @Transactional
@@ -113,7 +114,7 @@ public class MessageService {
 
         Message saved = messageRepository.save(message);
         ContentChatDto response = new ContentChatDto(
-                userMapper.toSummary(sender),
+                userSummaryMapper.toSummary(sender),
                 saved.getMessage()
         );
 //        eventPublisher.publishEvent(new DMCreatedEvent(receiverUserId, response));
