@@ -1,5 +1,7 @@
-package com.codeit.modoo_playlist.infra.event.kafka;
+package com.codeit.modoo_playlist.modulerealtime.event;
 
+import com.codeit.modoo_playlist.infra.event.kafka.RealtimeKafkaPublisher;
+import com.codeit.modoo_playlist.infra.event.kafka.StompKafkaEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;

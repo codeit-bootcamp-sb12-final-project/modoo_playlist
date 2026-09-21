@@ -13,7 +13,7 @@ import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserListRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserProfileUpdateRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.user.response.CursorResponseUserDto;
 import com.codeit.modoo_playlist.moduleapi.mapper.UserMapper;
-import com.codeit.modoo_playlist.moduleapi.security.jwt.LoginSessionStore;
+import com.codeit.modoo_playlist.core.global.security.LoginSessionStore;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
