@@ -1,3 +1,55 @@
+server:
+  # API와 로컬에서 함께 실행할 때 포트 충돌 방지
+  port: ${REALTIME_SERVER_PORT:8081}
+
 spring:
   application:
     name: module-realtime
+
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
+  config:
+    import: "optional:file:./.env[.properties]"
+
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: true
+
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      auto-offset-reset: latest
+      properties:
+        spring.json.trusted.packages: com.codeit.modoo_playlist.infra.event.kafka
+
+#  # infra 의존성으로 들어오는 AI 모델/ AI 채팅 메모리 자동 설정을 제외하는 설정
+  autoconfigure:
+    exclude:
+      - org.springframework.ai.model.google.genai.autoconfigure.chat.GoogleGenAiChatAutoConfiguration
+      - org.springframework.ai.model.google.genai.autoconfigure.embedding.GoogleGenAiEmbeddingConnectionAutoConfiguration
+      - org.springframework.ai.model.google.genai.autoconfigure.embedding.GoogleGenAiTextEmbeddingAutoConfiguration
+      - org.springframework.ai.model.google.genai.autoconfigure.image.GoogleGenAiImageConnectionAutoConfiguration
+      - org.springframework.ai.model.google.genai.autoconfigure.image.GoogleGenAiImageAutoConfiguration
+      - org.springframework.ai.model.chat.memory.repository.redis.autoconfigure.RedisChatMemoryRepositoryAutoConfiguration
+
+module-api: #security 설정 접두어가 module-api로 설정되어있음.
+  jwt:
+    issuer: modoo-playlist
+    access-token:
+      secret: ${JWT_ACCESS_SECRET}

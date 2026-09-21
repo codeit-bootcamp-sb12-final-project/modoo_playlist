@@ -1,4 +1,4 @@
-package com.codeit.modoo_playlist.moduleapi.domain.watchingsession.listener;
+package com.codeit.modoo_playlist.modulerealtime.watchingSession.listener;
 
 import com.codeit.modoo_playlist.core.global.realtime.RealtimeNotifier;
 import lombok.RequiredArgsConstructor;
@@ -7,7 +7,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
-@Profile("dev")
+@Profile("!prod")
 @RequiredArgsConstructor
 public class LocalRealtimeNotifier implements RealtimeNotifier {
 
