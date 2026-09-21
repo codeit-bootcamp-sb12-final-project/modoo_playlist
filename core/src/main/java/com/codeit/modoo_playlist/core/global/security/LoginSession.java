@@ -1,4 +1,4 @@
-package com.codeit.modoo_playlist.moduleapi.dto.jwt;
+package com.codeit.modoo_playlist.core.global.security;
 
 import java.time.Instant;
 import java.util.UUID;

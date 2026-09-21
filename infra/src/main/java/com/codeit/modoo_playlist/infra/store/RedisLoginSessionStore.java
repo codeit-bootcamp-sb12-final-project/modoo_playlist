@@ -1,13 +1,16 @@
-package com.codeit.modoo_playlist.moduleapi.security.jwt;
+package com.codeit.modoo_playlist.infra.store;
 
 import com.codeit.modoo_playlist.core.global.exception.BaseException;
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
-import com.codeit.modoo_playlist.moduleapi.dto.jwt.LoginSession;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import com.codeit.modoo_playlist.core.global.security.LoginSession;
+import com.codeit.modoo_playlist.core.global.security.LoginSessionStore;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;

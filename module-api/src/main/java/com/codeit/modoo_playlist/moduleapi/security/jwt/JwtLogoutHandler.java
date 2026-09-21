@@ -20,7 +20,7 @@ import org.springframework.util.StringUtils;
 public class JwtLogoutHandler implements LogoutHandler {
 
   private final JwtTokenProvider tokenProvider;
-  private final LoginSessionStore loginSessionStore;
+  private final com.codeit.modoo_playlist.core.global.security.LoginSessionStore loginSessionStore;
 
   //  로그아웃은 sid가 달라 세션 무효화가 되거나 refresh 토큰이 없는 등의 문제가 생겨도
 //  쿠키를 제거하고 종료.

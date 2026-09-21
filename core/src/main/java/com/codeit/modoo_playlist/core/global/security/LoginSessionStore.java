@@ -1,6 +1,5 @@
-package com.codeit.modoo_playlist.moduleapi.security.jwt;
+package com.codeit.modoo_playlist.core.global.security;
 
-import com.codeit.modoo_playlist.moduleapi.dto.jwt.LoginSession;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
