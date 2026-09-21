@@ -1,7 +1,7 @@
 package com.codeit.modoo_playlist.moduleapi.domain.conversation.repository;
 
 import com.codeit.modoo_playlist.moduleapi.dto.ConversationDto;
-import com.codeit.modoo_playlist.moduleapi.dto.conversation.request.SliceCursorRequest;
+import com.codeit.modoo_playlist.core.global.common.dto.base.SliceCursorRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.conversation.response.CursorResponseConversationDto;
 
 import java.util.Optional;
