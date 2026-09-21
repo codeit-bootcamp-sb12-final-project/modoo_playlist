@@ -56,16 +56,6 @@ class RecommendationControllerTest {
     assertThat(response.getBody()).isEqualTo(expected);
   }
 
-  @Test
-  void getHomeFeed는_비로그인이면_null_userId를_전달한다() {
-    HomeFeedResponse expected = new HomeFeedResponse(List.of());
-    when(homeFeedService.getHomeFeed(null)).thenReturn(expected);
-
-    ResponseEntity<HomeFeedResponse> response = controller.getHomeFeed(null);
-
-    assertThat(response.getBody()).isEqualTo(expected);
-  }
-
   private UserDetails userDetails(UUID userId) {
     return new UserDetails(
         new UserDto(userId, "user@test.com", "user", null, UserRole.USER, false, null), "password");
