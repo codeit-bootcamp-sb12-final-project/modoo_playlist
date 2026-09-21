@@ -1,6 +1,4 @@
-package com.codeit.modoo_playlist.moduleapi.dto.watchingsession.response;
-
-import com.codeit.modoo_playlist.moduleapi.dto.watchingsession.WatchingSessionChange;
+package com.codeit.modoo_playlist.modulerealtime.dto.watchingsession;
 
 import java.util.List;
 import java.util.UUID;

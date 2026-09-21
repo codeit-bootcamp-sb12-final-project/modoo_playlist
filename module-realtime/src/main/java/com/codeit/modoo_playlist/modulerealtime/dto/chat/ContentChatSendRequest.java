@@ -1,4 +1,4 @@
-package com.codeit.modoo_playlist.moduleapi.dto.chat;
+package com.codeit.modoo_playlist.modulerealtime.dto.chat;
 
 import jakarta.validation.constraints.NotBlank;
 

@@ -1,8 +1,7 @@
 package com.codeit.modoo_playlist.moduleapi.dto.conversation.response;
 
 import com.codeit.modoo_playlist.core.domain.conversation.entity.SortDirection;
-import com.codeit.modoo_playlist.moduleapi.dto.MessageDto;
-import com.querydsl.core.types.Order;
+import com.codeit.modoo_playlist.core.domain.message.entity.MessageDto;
 
 import java.util.List;
 import java.util.UUID;

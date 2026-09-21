@@ -1,7 +1,6 @@
-package com.codeit.modoo_playlist.moduleapi.dto.watchingsession.response;
+package com.codeit.modoo_playlist.core.domain.watchingSession.dto;
 
 import com.codeit.modoo_playlist.core.domain.conversation.entity.SortDirection;
-import com.codeit.modoo_playlist.moduleapi.dto.WatchingSessionDto;
 
 import java.util.List;
 import java.util.UUID;

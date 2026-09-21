@@ -1,4 +1,4 @@
-package com.codeit.modoo_playlist.moduleapi.dto.user.response;
+package com.codeit.modoo_playlist.core.domain.user.dto;
 
 import java.util.UUID;
 

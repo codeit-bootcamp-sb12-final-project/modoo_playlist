@@ -1,4 +1,4 @@
-package com.codeit.modoo_playlist.moduleapi.dto.content.response;
+package com.codeit.modoo_playlist.core.domain.content.dto;
 
 import java.math.BigDecimal;
 import java.util.List;

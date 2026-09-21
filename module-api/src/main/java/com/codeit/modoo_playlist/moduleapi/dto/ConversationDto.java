@@ -1,6 +1,7 @@
 package com.codeit.modoo_playlist.moduleapi.dto;
 
-import com.codeit.modoo_playlist.moduleapi.dto.user.response.UserSummaryResponse;
+import com.codeit.modoo_playlist.core.domain.message.entity.MessageDto;
+import com.codeit.modoo_playlist.core.domain.user.dto.UserSummaryResponse;
 
 import java.util.UUID;
 

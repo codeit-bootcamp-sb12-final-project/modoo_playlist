@@ -1,4 +1,4 @@
-package com.codeit.modoo_playlist.moduleapi.dto.conversation.request;
+package com.codeit.modoo_playlist.core.global.common.dto.base;
 
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Max;
