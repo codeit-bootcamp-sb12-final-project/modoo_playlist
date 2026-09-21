@@ -48,6 +48,8 @@ class ContentEmbeddingProcessorTest {
   }
 
   private ContentEmbeddingTarget target(String currentSourceHash) {
-    return new ContentEmbeddingTarget("c1", "제목", "설명", "https://thumb", "태그", currentSourceHash);
+    return ContentEmbeddingTarget.builder()
+        .contentId("c1").title("제목").description("설명")
+        .thumbnailUrl("https://thumb").tagNames("태그").currentSourceHash(currentSourceHash).build();
   }
 }

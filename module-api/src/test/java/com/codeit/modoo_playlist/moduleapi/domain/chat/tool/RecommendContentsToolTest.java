@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.ContentDetailDto;
 import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.RecommendedContentDto;
 import com.codeit.modoo_playlist.moduleapi.domain.recommendation.service.RecommendationService;
 import java.util.List;
@@ -19,41 +20,43 @@ import org.springframework.ai.chat.model.ToolContext;
 class RecommendContentsToolTest {
 
   @Mock private RecommendationService recommendationService;
+  @Mock private ContentDetailResolver contentDetailResolver;
 
   private final ToolContext emptyContext = new ToolContext(Map.of());
 
+  private RecommendContentsTool tool() {
+    return new RecommendContentsTool(recommendationService, contentDetailResolver);
+  }
+
   @Test
   void contentId가_없으면_빈_리스트를_반환한다() {
-    List<RecommendedContentDto> result =
-        new RecommendContentsTool(recommendationService).recommendContents(null, emptyContext);
+    List<ContentDetailDto> result = tool().recommendContents(null, emptyContext);
 
     assertThat(result).isEmpty();
-    verifyNoInteractions(recommendationService);
+    verifyNoInteractions(recommendationService, contentDetailResolver);
   }
 
   @Test
   void contentId_형식이_올바르지_않으면_빈_리스트를_반환한다() {
-    List<RecommendedContentDto> result =
-        new RecommendContentsTool(recommendationService).recommendContents("uuid-아님", emptyContext);
+    List<ContentDetailDto> result = tool().recommendContents("uuid-아님", emptyContext);
 
     assertThat(result).isEmpty();
-    verifyNoInteractions(recommendationService);
+    verifyNoInteractions(recommendationService, contentDetailResolver);
   }
 
   @Test
-  void 정상_UUID면_유사_콘텐츠를_반환하고_카드_컬렉터에_담는다() {
+  void 정상_UUID면_유사_콘텐츠의_상세정보를_반환한다() {
     UUID contentId = UUID.randomUUID();
     UUID similarId = UUID.randomUUID();
-    ContentCardCollector collector = new ContentCardCollector();
-    ToolContext toolContext = new ToolContext(Map.of(ChatToolContext.CARD_COLLECTOR, collector));
-    when(recommendationService.getSimilarContents(contentId, 5)).thenReturn(
-        List.of(new RecommendedContentDto(similarId, "비슷한 콘텐츠", "thumb", 0.9)));
+    ToolContext toolContext = new ToolContext(Map.of(ChatToolContext.CARD_COLLECTOR, new ContentCardCollector()));
+    List<RecommendedContentDto> similar = List.of(new RecommendedContentDto(similarId, "비슷한 콘텐츠", "thumb", 0.9));
+    when(recommendationService.getSimilarContents(contentId, 5)).thenReturn(similar);
+    ContentDetailDto detail = ContentDetailDto.titleOnly(similarId, "비슷한 콘텐츠");
+    when(contentDetailResolver.resolve(similar, toolContext)).thenReturn(List.of(detail));
 
-    List<RecommendedContentDto> result = new RecommendContentsTool(recommendationService)
-        .recommendContents(contentId.toString(), toolContext);
+    List<ContentDetailDto> result = tool().recommendContents(contentId.toString(), toolContext);
 
-    assertThat(result).extracting(RecommendedContentDto::contentId).containsExactly(similarId);
-    assertThat(collector.getCards()).hasSize(1);
+    assertThat(result).containsExactly(detail);
   }
 
   @Test
@@ -62,9 +65,9 @@ class RecommendContentsToolTest {
     when(recommendationService.getSimilarContents(contentId, 5))
         .thenThrow(new RuntimeException("DB 장애"));
 
-    List<RecommendedContentDto> result = new RecommendContentsTool(recommendationService)
-        .recommendContents(contentId.toString(), emptyContext);
+    List<ContentDetailDto> result = tool().recommendContents(contentId.toString(), emptyContext);
 
     assertThat(result).isEmpty();
+    verifyNoInteractions(contentDetailResolver);
   }
 }
