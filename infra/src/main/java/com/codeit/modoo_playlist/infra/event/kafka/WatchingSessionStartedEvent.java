@@ -1,4 +1,4 @@
-package com.codeit.modoo_playlist.moduleapi.domain.notification.event;
+package com.codeit.modoo_playlist.infra.event.kafka;
 
 import java.util.UUID;
 

@@ -16,7 +16,9 @@ import com.codeit.modoo_playlist.infra.mapper.WatchingSessionMapper;
 import com.codeit.modoo_playlist.modulerealtime.dto.watchingsession.ChangeType;
 import com.codeit.modoo_playlist.modulerealtime.dto.watchingsession.StartResult;
 import com.codeit.modoo_playlist.modulerealtime.dto.watchingsession.WatchingSessionChange;
+import com.codeit.modoo_playlist.infra.event.kafka.WatchingSessionStartedEvent;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +36,7 @@ public class WatchingSessionCommandService {
     private final WatchingSessionRepository watchingSessionRepository;
     private final RealtimeContentRepository contentRepository;
     private final RealtimeContentTagRepository contentTagRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     private final WatchingSessionMapper watchingSessionMapper;
     private final ContentSummaryMapper contentSummaryMapper;
@@ -58,6 +61,11 @@ public class WatchingSessionCommandService {
 
         // 새 세션 저장
         watchingSessionRepository.saveAndFlush(session);
+
+        // 팔로워에게 "실시간 시청 시작" 알림을 보내기 위한 이벤트 발행
+        eventPublisher.publishEvent(
+                new WatchingSessionStartedEvent(session.getId(), watcherId, contentId)
+        );
 
         // JOIN 생성
         changes.add(change(ChangeType.JOIN, session));

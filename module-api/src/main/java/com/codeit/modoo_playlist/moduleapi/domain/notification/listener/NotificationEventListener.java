@@ -5,6 +5,8 @@ import com.codeit.modoo_playlist.moduleapi.domain.follow.repository.FollowReposi
 import com.codeit.modoo_playlist.moduleapi.domain.notification.event.*;
 import com.codeit.modoo_playlist.moduleapi.domain.notification.service.NotificationService;
 import com.codeit.modoo_playlist.moduleapi.domain.playlist.repository.PlaylistSubscriptionRepository;
+import com.codeit.modoo_playlist.infra.event.kafka.WatchingSessionStartedEvent;
+
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
