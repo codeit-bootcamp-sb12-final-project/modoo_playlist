@@ -49,7 +49,8 @@ public record PlaylistListCondition(
 
     public enum SortType {
         UPDATED_AT,
-        CREATED_AT
+        CREATED_AT,
+        SUBSCRIBER_COUNT
     }
 
     public enum SortDirection {

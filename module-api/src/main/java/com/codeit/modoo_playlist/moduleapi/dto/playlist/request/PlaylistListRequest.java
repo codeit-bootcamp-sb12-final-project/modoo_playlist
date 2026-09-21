@@ -34,7 +34,7 @@ public record PlaylistListRequest(
 
         @NotNull
         @Pattern(
-                regexp = "updatedAt|createdAt",
+                regexp = "updatedAt|createdAt|subscribeCount",
                 message = "지원하지 않는 sortBy 값입니다."
         )
         String sortBy
