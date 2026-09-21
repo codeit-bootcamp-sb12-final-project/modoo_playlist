@@ -8,6 +8,7 @@ import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import com.codeit.modoo_playlist.moduleapi.domain.content.mapper.ContentMapper;
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.jpa.ContentRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.jpa.ContentTagRepository;
+import com.codeit.modoo_playlist.moduleapi.domain.notification.event.WatchingSessionStartedEvent;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.watchingsession.repository.WatchingSessionRepository;
 import com.codeit.modoo_playlist.moduleapi.dto.WatchingSessionDto;
@@ -19,6 +20,7 @@ import com.codeit.modoo_playlist.moduleapi.dto.watchingsession.response.CursorRe
 import com.codeit.modoo_playlist.moduleapi.dto.watchingsession.response.StartResult;
 import com.codeit.modoo_playlist.moduleapi.mapper.WatchingSessionMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +37,8 @@ public class WatchingSessionService {
     private final UserRepository userRepository;
     private final ContentRepository contentRepository;
     private final ContentTagRepository contentTagRepository;
+    private final ApplicationEventPublisher eventPublisher;
+
 
     private final WatchingSessionMapper watchingSessionMapper;
     private final ContentMapper contentMapper;
@@ -86,6 +90,11 @@ public class WatchingSessionService {
 
         // 새 세션 저장
         watchingSessionRepository.saveAndFlush(session);
+
+        // 팔로워에게 "실시간 시청 시작" 알림을 보내기 위한 이벤트 발행
+        eventPublisher.publishEvent(
+                new WatchingSessionStartedEvent(session.getId(), watcherId, contentId)
+        );
 
         // JOIN 생성
         changes.add(change(ChangeType.JOIN, session));
