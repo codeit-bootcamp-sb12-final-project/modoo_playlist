@@ -91,7 +91,7 @@ module-api:
     name: ${BOT_NAME:MoDoo Bot}
   auth:
     oauth2:
-      success-redirect-uri: ${OAUTH_SUCCESS_REDIRECT_URI:/#/contents}
+      success-redirect-uri: ${OAUTH_SUCCESS_REDIRECT_URI:/#/home}
       failure-redirect-uri: ${OAUTH_FAILURE_REDIRECT_URI:/#/sign-in}
     cookie:
       same-site: ${AUTH_COOKIE_SAME_SITE:Lax} # 다른 사이트에서 보내느 요청에 refresh 토큰 전달 방지
