@@ -5,6 +5,8 @@ import com.codeit.modoo_playlist.core.domain.user.entity.UserRole;
 import com.codeit.modoo_playlist.core.global.exception.BaseException;
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
+import com.codeit.modoo_playlist.moduleapi.domain.image.storage.ImageCategory;
+import com.codeit.modoo_playlist.moduleapi.domain.image.storage.ImageStorage;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.query.UserQueryPage;
 import com.codeit.modoo_playlist.moduleapi.domain.user.service.UserService;
 import com.codeit.modoo_playlist.moduleapi.dto.UserDto;
@@ -13,6 +15,7 @@ import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserListRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserProfileUpdateRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.user.response.CursorResponseUserDto;
 import com.codeit.modoo_playlist.moduleapi.mapper.UserMapper;
+import java.io.IOException;
 import com.codeit.modoo_playlist.core.global.security.LoginSessionStore;
 import java.util.List;
 import java.util.Objects;
@@ -21,6 +24,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 @RequiredArgsConstructor
@@ -31,6 +36,7 @@ public class UserServiceImpl implements UserService {
   private final PasswordEncoder passwordEncoder;
   private final UserMapper userMapper;
   private final LoginSessionStore loginSessionStore;
+  private final ImageStorage imageStorage;
 
   @Transactional
   @Override
@@ -113,12 +119,48 @@ public class UserServiceImpl implements UserService {
 
     String imageUrl = null;
     if (image != null && !image.isEmpty()) {
-      imageUrl = image.getOriginalFilename();
-//      TODO: 이미지 저장 후 URL로 받아오는 메서드로 변경
+      try {
+        imageUrl = imageStorage.store(image, ImageCategory.USER_PROFILE);
+        registerImageRollbackCleanup(imageUrl);
+        registerPreviousImageCleanup(user.getProfileImageUrl(), imageUrl);
+      } catch (IOException exception) {
+        throw new BaseException(ErrorCode.FILE_SAVE_FAILED, exception);
+      }
     }
 
     user.updateProfile(request.name(), imageUrl);
     return userMapper.toDto(user);
+  }
+
+  private void registerImageRollbackCleanup(String imageUrl) {
+    if (!TransactionSynchronizationManager.isSynchronizationActive()) return;
+    TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+      @Override
+      public void afterCompletion(int status) {
+        if (status != STATUS_ROLLED_BACK) return;
+        deleteImageQuietly(imageUrl);
+      }
+    });
+  }
+
+  private void registerPreviousImageCleanup(String previousImageUrl, String newImageUrl) {
+    if (previousImageUrl == null || Objects.equals(previousImageUrl, newImageUrl)
+        || !TransactionSynchronizationManager.isSynchronizationActive()) return;
+    TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+      @Override
+      public void afterCompletion(int status) {
+        if (status != STATUS_COMMITTED) return;
+        deleteImageQuietly(previousImageUrl);
+      }
+    });
+  }
+
+  private void deleteImageQuietly(String imageUrl) {
+    try {
+      imageStorage.delete(imageUrl);
+    } catch (IOException ignored) {
+      // 이미지 정리 실패로 원래 트랜잭션 결과를 바꾸지 않는다.
+    }
   }
 
   @Transactional

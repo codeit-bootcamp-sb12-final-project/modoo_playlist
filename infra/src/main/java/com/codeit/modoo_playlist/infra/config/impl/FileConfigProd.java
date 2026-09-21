@@ -15,7 +15,7 @@ import java.nio.file.Path;
 public class FileConfigProd implements FileConfig {
 
     // prod는 S3 사용이므로 로컬 경로는 임시 디렉토리 용도 (필요 시 활용)
-    @Value("${myblog.storage.local.root-path:/app/storage}")
+    @Value("${storage.local.root-path:/app/storage}")
     private String rootPathStr;
 
     private Path rootPath;

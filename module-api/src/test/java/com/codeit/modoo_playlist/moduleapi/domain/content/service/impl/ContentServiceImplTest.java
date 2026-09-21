@@ -48,7 +48,8 @@ import com.codeit.modoo_playlist.moduleapi.domain.content.repository.jpa.Content
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.query.ContentListCondition;
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.query.ContentQueryPage;
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.query.ContentQueryPage.ContentItem;
-import com.codeit.modoo_playlist.moduleapi.domain.content.storage.ThumbnailStorage;
+import com.codeit.modoo_playlist.moduleapi.domain.image.storage.ImageCategory;
+import com.codeit.modoo_playlist.moduleapi.domain.image.storage.ImageStorage;
 import com.codeit.modoo_playlist.moduleapi.domain.interaction.repository.UserContentInteractionRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.tag.service.TagService;
 import com.codeit.modoo_playlist.moduleapi.dto.content.request.ContentListRequest;
@@ -60,6 +61,7 @@ import com.codeit.modoo_playlist.moduleapi.dto.content.request.ContentVideoReque
 import com.codeit.modoo_playlist.moduleapi.dto.content.response.ContentCursorResponse;
 import com.codeit.modoo_playlist.moduleapi.dto.content.response.ContentDetailResponse;
 import com.codeit.modoo_playlist.moduleapi.dto.content.response.ContentListItemResponse;
+import org.springframework.context.ApplicationEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 class ContentServiceImplTest {
@@ -74,7 +76,8 @@ class ContentServiceImplTest {
     @Mock private UserContentInteractionRepository userContentInteractionRepository;
     @Mock private TagService tagService;
     @Mock private ContentMapper contentMapper;
-    @Mock private ThumbnailStorage thumbnailStorage;
+    @Mock private ImageStorage imageStorage;
+    @Mock private ApplicationEventPublisher eventPublisher;
     @InjectMocks private ContentServiceImpl contentService;
 
     @Test
@@ -202,7 +205,8 @@ class ContentServiceImplTest {
         MultipartFile thumbnail = org.mockito.Mockito.mock(MultipartFile.class);
         when(contentRepository.findByIdAndDeletedAtIsNull(content.getId())).thenReturn(Optional.of(content));
         when(thumbnail.isEmpty()).thenReturn(false);
-        when(thumbnailStorage.store(thumbnail)).thenThrow(new IOException("disk error"));
+        when(imageStorage.store(thumbnail, ImageCategory.CONTENT_THUMBNAIL))
+                .thenThrow(new IOException("disk error"));
 
         assertThatThrownBy(() -> contentService.updateContent(
                 content.getId(), new ContentUpdateRequest(null, null, null), thumbnail

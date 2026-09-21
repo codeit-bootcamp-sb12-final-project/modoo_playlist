@@ -20,3 +20,6 @@ module-api:
   auth:
     cookie:
       secure: true
+
+storage:
+  type: ${STORAGE_TYPE:s3}
