@@ -6,7 +6,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.codeit.modoo_playlist.moduleapi.domain.user.service.UserService;
 import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserCreateRequest;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtTokenProvider;
-import com.codeit.modoo_playlist.moduleapi.security.jwt.LoginSessionStore;
+import com.codeit.modoo_playlist.core.global.security.LoginSessionStore;
 import com.codeit.modoo_playlist.moduleapi.support.AuthTestApplication;
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
