@@ -1,6 +1,7 @@
 package com.codeit.modoo_playlist.moduleapi.domain.chat.tool;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
@@ -55,6 +56,7 @@ class SearchContentsToolTest {
     when(contentDetailResolver.resolve(List.of(), emptyContext)).thenReturn(List.of());
 
     assertThat(tool().searchContents("질의", emptyContext)).isEmpty();
+    verify(contentDetailResolver).resolve(List.of(), emptyContext);
   }
 
   @Test
