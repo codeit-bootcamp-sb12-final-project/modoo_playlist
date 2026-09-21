@@ -48,10 +48,15 @@ dependencies {
     api 'org.springframework.ai:spring-ai-starter-model-google-genai-embedding:2.0.1'
     api 'org.springframework.ai:spring-ai-starter-model-chat-memory-repository-redis:2.0.1'
 
-
-    // kafka, websocket
+    // kafka
     implementation 'org.springframework.boot:spring-boot-starter-kafka'
-    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+
+    // MapStruct
+    implementation 'org.mapstruct:mapstruct:1.6.3'
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
+
+    // JWT
+    implementation 'com.nimbusds:nimbus-jose-jwt:10.9.1'
 }
 
 dependencyManagement {

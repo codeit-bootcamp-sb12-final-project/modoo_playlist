@@ -20,6 +20,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 })
 @EnableJpaRepositories(basePackages = {
     "com.codeit.modoo_playlist.core",
+    "com.codeit.modoo_playlist.infra.repository",
     "com.codeit.modoo_playlist.moduleapi"
 })
 @Import(QuerydslConfig.class)
