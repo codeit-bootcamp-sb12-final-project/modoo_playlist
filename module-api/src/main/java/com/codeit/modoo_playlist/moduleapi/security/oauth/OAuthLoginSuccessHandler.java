@@ -67,7 +67,7 @@ public class OAuthLoginSuccessHandler implements AuthenticationSuccessHandler {
       );
 
       response.addCookie(refreshCookie);
-      response.sendRedirect(successRedirectUri);
+      redirectSuccess(response);
     } catch (BaseException exception) {
       SecurityContextHolder.clearContext();
       log.warn("OAuth login processing failed: {}", exception.getErrorCode(), exception);
@@ -81,6 +81,13 @@ public class OAuthLoginSuccessHandler implements AuthenticationSuccessHandler {
       log.error("Failed to complete OAuth login", exception);
       redirectFailure(response, ErrorCode.INTERNAL_SERVER_ERROR);
     }
+  }
+
+  private void redirectSuccess(HttpServletResponse response) throws IOException {
+    String separator = successRedirectUri.contains("?") ? "&" : "?";
+    response.sendRedirect(
+        successRedirectUri + separator + "oauthSuccess=true"
+    );
   }
 
   private void redirectFailure(HttpServletResponse response, ErrorCode errorCode)
