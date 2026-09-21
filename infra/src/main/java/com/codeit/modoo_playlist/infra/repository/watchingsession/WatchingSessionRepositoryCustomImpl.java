@@ -1,17 +1,16 @@
-package com.codeit.modoo_playlist.moduleapi.domain.watchingsession.repository;
+package com.codeit.modoo_playlist.infra.repository.watchingsession;
 
 import com.codeit.modoo_playlist.core.domain.content.entity.Content;
 import com.codeit.modoo_playlist.core.domain.conversation.entity.SortDirection;
-import com.codeit.modoo_playlist.core.domain.user.entity.QUser;
+import com.codeit.modoo_playlist.core.domain.watchingSession.dto.WatchingSessionDto;
 import com.codeit.modoo_playlist.core.domain.watchingSession.entity.QWatchingSession;
 import com.codeit.modoo_playlist.core.domain.watchingSession.entity.WatchingSession;
-import com.codeit.modoo_playlist.moduleapi.domain.content.mapper.ContentMapper;
-import com.codeit.modoo_playlist.moduleapi.domain.content.repository.jpa.ContentTagRepository;
-import com.codeit.modoo_playlist.moduleapi.dto.WatchingSessionDto;
-import com.codeit.modoo_playlist.moduleapi.dto.content.response.ContentSummaryResponse;
-import com.codeit.modoo_playlist.moduleapi.dto.conversation.request.SliceCursorRequest;
-import com.codeit.modoo_playlist.moduleapi.dto.watchingsession.response.CursorResponseWatchingSessionDto;
-import com.codeit.modoo_playlist.moduleapi.mapper.WatchingSessionMapper;
+import com.codeit.modoo_playlist.core.global.common.dto.base.SliceCursorRequest;
+import com.codeit.modoo_playlist.infra.mapper.ContentSummaryMapper;
+import com.codeit.modoo_playlist.core.domain.content.dto.ContentSummaryResponse;
+import com.codeit.modoo_playlist.infra.repository.RealtimeContentTagRepository;
+import com.codeit.modoo_playlist.core.domain.watchingSession.dto.CursorResponseWatchingSessionDto;
+import com.codeit.modoo_playlist.infra.mapper.WatchingSessionMapper;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -27,9 +26,9 @@ public class WatchingSessionRepositoryCustomImpl implements WatchingSessionRepos
 
     private final JPAQueryFactory queryFactory;
     private final WatchingSessionMapper watchingSessionMapper;
-    private final ContentMapper contentMapper;
+    private final ContentSummaryMapper contentSummaryMapper;
 
-    private final ContentTagRepository contentTagRepository;
+    private final RealtimeContentTagRepository contentTagRepository;
 
     private static final QWatchingSession ws = QWatchingSession.watchingSession;
 
@@ -96,7 +95,7 @@ public class WatchingSessionRepositoryCustomImpl implements WatchingSessionRepos
                     .toList();
 
             ContentSummaryResponse summary =
-                    contentMapper.toSummary(content, tags);
+                    contentSummaryMapper.toSummary(content, tags);
 
             data = rows.stream()
                     .map(row -> watchingSessionMapper.toDto(row, summary))

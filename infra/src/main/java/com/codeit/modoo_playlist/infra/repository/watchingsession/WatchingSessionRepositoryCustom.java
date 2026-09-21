@@ -1,8 +1,8 @@
-package com.codeit.modoo_playlist.moduleapi.domain.watchingsession.repository;
+package com.codeit.modoo_playlist.infra.repository.watchingsession;
 
 import com.codeit.modoo_playlist.core.domain.watchingSession.entity.WatchingSession;
-import com.codeit.modoo_playlist.moduleapi.dto.conversation.request.SliceCursorRequest;
-import com.codeit.modoo_playlist.moduleapi.dto.watchingsession.response.CursorResponseWatchingSessionDto;
+import com.codeit.modoo_playlist.core.domain.watchingSession.dto.CursorResponseWatchingSessionDto;
+import com.codeit.modoo_playlist.core.global.common.dto.base.SliceCursorRequest;
 
 import java.time.Instant;
 import java.util.Collection;

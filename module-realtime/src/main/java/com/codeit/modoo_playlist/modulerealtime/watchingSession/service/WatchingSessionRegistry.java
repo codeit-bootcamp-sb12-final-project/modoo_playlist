@@ -1,13 +1,14 @@
-package com.codeit.modoo_playlist.moduleapi.domain.watchingsession.service;
+package com.codeit.modoo_playlist.modulerealtime.watchingSession.service;
 
 import com.codeit.modoo_playlist.core.global.realtime.RealtimeNotifier;
-import com.codeit.modoo_playlist.moduleapi.domain.search.event.WatcherCountChangedEvent;
-import com.codeit.modoo_playlist.moduleapi.dto.watchingsession.response.StartResult;
-import com.codeit.modoo_playlist.moduleapi.dto.watchingsession.WatchingSessionChange;
+import com.codeit.modoo_playlist.modulerealtime.dto.watchingsession.StartResult;
+import com.codeit.modoo_playlist.modulerealtime.dto.watchingsession.WatchingSessionChange;
+import org.springframework.kafka.core.KafkaTemplate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
+import com.codeit.modoo_playlist.infra.event.kafka.WatcherCountChangedEvent;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -21,9 +22,10 @@ public class WatchingSessionRegistry {
 
     private static final int MAX_END_ATTEMPTS = 3;
 
-    private final WatchingSessionService watchingSessionService;
+    private final WatchingSessionCommandService watchingSessionService;
     private final RealtimeNotifier realtimeNotifier;
     private final ApplicationEventPublisher eventPublisher;
+    private final KafkaTemplate<String, WatcherCountChangedEvent> kafkaTemplate;
 
     private final Map<String, ConnectionState> connections =
             new ConcurrentHashMap<>();
@@ -293,7 +295,18 @@ public class WatchingSessionRegistry {
 
         // ES 반영을 위한 이벤트 발행
         try {
-            eventPublisher.publishEvent(new WatcherCountChangedEvent(contentId));
+            kafkaTemplate.send(
+                    WatcherCountChangedEvent.TOPIC,
+                    contentId.toString(),
+                    new WatcherCountChangedEvent(contentId)
+            ). whenComplete((result, exception) -> {
+                if(exception != null) {
+                    log.error( "시청자 수 변경 이벤트 전송 실패: contentId={}",
+                            contentId,
+                            exception
+                    );
+                }
+            });
         } catch (RuntimeException exception) {
             log.error(
                 "시청자 수 변경 이벤트 발행 실패: contentId={}, watcherCount={}",

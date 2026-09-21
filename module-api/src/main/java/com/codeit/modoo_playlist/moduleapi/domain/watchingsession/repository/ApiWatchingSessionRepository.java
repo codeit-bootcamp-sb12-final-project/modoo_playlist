@@ -1,30 +1,17 @@
+
 package com.codeit.modoo_playlist.moduleapi.domain.watchingsession.repository;
 
 import com.codeit.modoo_playlist.core.domain.watchingSession.entity.WatchingSession;
+import com.codeit.modoo_playlist.infra.repository.watchingsession.WatchingSessionRepositoryCustom;
 import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.RecommendedContentDto;
-import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 
-import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
-public interface WatchingSessionRepository
-        extends JpaRepository<WatchingSession, UUID>, WatchingSessionRepositoryCustom {
-
-    List<WatchingSession> findByWatcher_IdAndEndedAtIsNull(UUID watcherId);
-
-    long countDistinctByContent_IdAndEndedAtIsNull(UUID contentId);
-
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    List<WatchingSession> findByEndedAtIsNullAndUpdatedAtBefore(Instant cutoff);
-
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    Optional<WatchingSession> findWatchingSessionById(UUID id);
+public interface ApiWatchingSessionRepository extends JpaRepository<WatchingSession, UUID>, WatchingSessionRepositoryCustom {
 
     @Query("""
         select new com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.RecommendedContentDto(

@@ -1,7 +1,7 @@
-package com.codeit.modoo_playlist.moduleapi.domain.watchingsession.listener;
+package com.codeit.modoo_playlist.modulerealtime.watchingSession.listener;
 
-import com.codeit.modoo_playlist.moduleapi.domain.watchingsession.service.WatchingSessionRegistry;
-import com.codeit.modoo_playlist.moduleapi.security.UserDetails;
+import com.codeit.modoo_playlist.modulerealtime.security.RealtimePrincipal;
+import com.codeit.modoo_playlist.modulerealtime.watchingSession.service.WatchingSessionRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -53,7 +53,7 @@ public class WatchingSessionWebSocketListener {
 
         if (!(event.getUser() instanceof Authentication authentication)
                 || !authentication.isAuthenticated()
-                || !(authentication.getPrincipal() instanceof UserDetails user)) {
+                || !(authentication.getPrincipal() instanceof RealtimePrincipal user)) {
             log.warn("인증되지 않은 watching subscription: sessionId={}, destination={}",
                     sessionId,
                     destination
@@ -62,7 +62,7 @@ public class WatchingSessionWebSocketListener {
         }
 
         registry.start(
-                user.getUserDto().id(),
+                user.userId(),
                 UUID.fromString(matcher.group(1)),
                 sessionId,
                 subscriptionId
