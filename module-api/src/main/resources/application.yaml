@@ -114,3 +114,12 @@ external:
     access-token: ${TMDB_ACCESS_TOKEN:업서여}
   sports-db:
     api-key: ${THESPORTSDB_API_KEY}
+
+storage:
+  type: ${STORAGE_TYPE:local}
+  local:
+    root-path: ${STORAGE_LOCAL_ROOT_PATH:.blog/storage}
+  s3:
+    bucket: ${STORAGE_S3_BUCKET:}
+    region: ${AWS_REGION:ap-northeast-2}
+    public-base-url: ${STORAGE_PUBLIC_BASE_URL:}
