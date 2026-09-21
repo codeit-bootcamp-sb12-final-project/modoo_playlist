@@ -1,9 +1,12 @@
 package com.codeit.modoo_playlist.moduleapi.security;
 
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
+import com.codeit.modoo_playlist.moduleapi.security.oauth.withdrawal.OAuthWithdrawalRequest;
+import com.codeit.modoo_playlist.moduleapi.security.oauth.withdrawal.OAuthWithdrawalRequestStore;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataAccessException;
@@ -22,14 +25,21 @@ public class LoginFailureHandler implements AuthenticationFailureHandler {
   private static final String OAUTH_CALLBACK_BASE_URI = "/login/oauth2/code/";
 
   private final SecurityErrorResponseWriter errorResponseWriter;
+  private final OAuthWithdrawalRequestStore withdrawalRequestStore;
   private final String oauthFailureRedirectUri;
+  private final String withdrawalFailureRedirectUri;
 
   public LoginFailureHandler(
       SecurityErrorResponseWriter errorResponseWriter,
-      @Value("${module-api.auth.oauth2.failure-redirect-uri}") String oauthFailureRedirectUri
+      OAuthWithdrawalRequestStore withdrawalRequestStore,
+      @Value("${module-api.auth.oauth2.failure-redirect-uri}") String oauthFailureRedirectUri,
+      @Value("${module-api.auth.oauth2.withdrawal.failure-redirect-uri}")
+      String withdrawalFailureRedirectUri
   ) {
     this.errorResponseWriter = errorResponseWriter;
+    this.withdrawalRequestStore = withdrawalRequestStore;
     this.oauthFailureRedirectUri = oauthFailureRedirectUri;
+    this.withdrawalFailureRedirectUri = withdrawalFailureRedirectUri;
   }
 
   @Override
@@ -44,6 +54,14 @@ public class LoginFailureHandler implements AuthenticationFailureHandler {
         .substring(request.getContextPath().length());
 
     if (pathWithinApplication.startsWith(OAUTH_CALLBACK_BASE_URI)) {
+      String state = request.getParameter("state");
+      if (withdrawalRequestStore.isWithdrawalState(state)) {
+        UUID userId = withdrawalRequestStore.consumeByState(state)
+            .map(OAuthWithdrawalRequest::userId)
+            .orElse(null);
+        redirectWithdrawalFailure(response, userId, ErrorCode.OAUTH_REAUTHENTICATION_FAILED);
+        return;
+      }
       redirectOAuthFailure(response, errorCode);
       return;
     }
@@ -90,6 +108,20 @@ public class LoginFailureHandler implements AuthenticationFailureHandler {
     String separator = oauthFailureRedirectUri.contains("?") ? "&" : "?";
     response.sendRedirect(
         oauthFailureRedirectUri + separator + "oauthError=" + errorCode.name()
+    );
+  }
+
+  private void redirectWithdrawalFailure(
+      HttpServletResponse response,
+      UUID userId,
+      ErrorCode errorCode
+  ) throws IOException {
+    String redirectUri = userId == null
+        ? oauthFailureRedirectUri
+        : withdrawalFailureRedirectUri.replace("{userId}", userId.toString());
+    String separator = redirectUri.contains("?") ? "&" : "?";
+    response.sendRedirect(
+        redirectUri + separator + "withdrawalModal=true&withdrawalError=" + errorCode.name()
     );
   }
 

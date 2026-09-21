@@ -1,5 +1,6 @@
 package com.codeit.modoo_playlist.moduleapi.domain.user.controller;
 
+import com.codeit.modoo_playlist.moduleapi.domain.user.service.OAuthWithdrawalService;
 import com.codeit.modoo_playlist.moduleapi.domain.user.service.UserService;
 import com.codeit.modoo_playlist.moduleapi.dto.UserDto;
 import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserCreateRequest;
@@ -8,9 +9,13 @@ import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserLockUpdateReques
 import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserPasswordUpdateRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserProfileUpdateRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserRoleUpdateRequest;
+import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserWithdrawalRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.user.response.CursorResponseUserDto;
+import com.codeit.modoo_playlist.moduleapi.dto.user.response.OAuthWithdrawalAuthorizationResponse;
 import com.codeit.modoo_playlist.moduleapi.dto.user.response.WithdrawalInfoResponse;
 import com.codeit.modoo_playlist.moduleapi.security.UserDetails;
+import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtTokenProvider;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +40,8 @@ import org.springframework.web.multipart.MultipartFile;
 public class UserController {
 
   private final UserService userService;
+  private final OAuthWithdrawalService oauthWithdrawalService;
+  private final JwtTokenProvider jwtTokenProvider;
 
   @PostMapping(
       name = "회원가입"
@@ -64,6 +71,32 @@ public class UserController {
   ) {
     return ResponseEntity.ok(
         userService.getWithdrawalInfo(principal.getUserDto().id())
+    );
+  }
+
+  @PostMapping(
+      name = "일반 계정 회원 탈퇴",
+      value = "/me/withdraw"
+  )
+  public ResponseEntity<Void> withdraw(
+      @Valid @RequestBody UserWithdrawalRequest request,
+      @AuthenticationPrincipal UserDetails principal,
+      HttpServletResponse response
+  ) {
+    userService.withdraw(principal.getUserDto().id(), request.password());
+    response.addCookie(jwtTokenProvider.generateRefreshTokenExpirationCookie());
+    return ResponseEntity.noContent().build();
+  }
+
+  @PostMapping(
+      name = "소셜 계정 회원 탈퇴 본인 인증 준비",
+      value = "/me/withdrawal/oauth2/authorization"
+  )
+  public ResponseEntity<OAuthWithdrawalAuthorizationResponse> prepareOAuthWithdrawal(
+      @AuthenticationPrincipal UserDetails principal
+  ) {
+    return ResponseEntity.ok(
+        oauthWithdrawalService.prepare(principal.getUserDto().id())
     );
   }
 

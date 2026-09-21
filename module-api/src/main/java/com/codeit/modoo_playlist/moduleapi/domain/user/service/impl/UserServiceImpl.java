@@ -20,6 +20,7 @@ import com.codeit.modoo_playlist.moduleapi.security.jwt.LoginSessionStore;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -92,6 +93,24 @@ public class UserServiceImpl implements UserService {
             WithdrawalVerificationMethod.PASSWORD,
             null
         ));
+  }
+
+  @Transactional
+  @Override
+  public void withdraw(UUID userId, String password) {
+    User user = userRepository.findByIdForUpdate(userId)
+        .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+
+    if (user.getDeletedAt() != null) {
+      throw new BaseException(ErrorCode.USER_ACCOUNT_WITHDRAWN);
+    }
+
+    if (user.getPassword() == null || !passwordEncoder.matches(password, user.getPassword())) {
+      throw new BaseException(ErrorCode.INVALID_CURRENT_PASSWORD);
+    }
+
+    user.withdraw(Instant.now());
+    loginSessionStore.invalidateAll(userId);
   }
 
   @Transactional(readOnly = true)

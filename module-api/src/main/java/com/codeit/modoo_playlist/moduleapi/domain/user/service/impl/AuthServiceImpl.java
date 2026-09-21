@@ -70,6 +70,14 @@ public class AuthServiceImpl implements AuthService {
       return;
     }
 
+    if (user.getDeletedAt() != null) {
+      log.info(
+          "Password reset request ignored: reason=USER_ACCOUNT_WITHDRAWN, userId={}",
+          user.getId()
+      );
+      return;
+    }
+
     if (user.getPassword() == null) {
       log.info(
           "Password reset request ignored: reason=PASSWORD_RESET_NOT_SUPPORTED, userId={}",
@@ -111,6 +119,10 @@ public class AuthServiceImpl implements AuthService {
   ) {
     User user = userRepository.findByIdForUpdate(userId)
         .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+
+    if (user.getDeletedAt() != null) {
+      throw new BaseException(ErrorCode.USER_ACCOUNT_WITHDRAWN);
+    }
 
     // 최초 인증 이후 관리자가 계정을 잠갔는지 다시 확인
     if (user.isLocked()) {

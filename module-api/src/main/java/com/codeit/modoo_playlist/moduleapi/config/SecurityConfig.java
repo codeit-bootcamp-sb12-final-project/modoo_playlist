@@ -91,6 +91,11 @@ public class SecurityConfig {
 
             // 회원 탈퇴 인증 방식 조회
             .requestMatchers(HttpMethod.GET, "/api/users/me/withdrawal-info").authenticated()
+            .requestMatchers(HttpMethod.POST, "/api/users/me/withdraw").authenticated()
+            .requestMatchers(
+                HttpMethod.POST,
+                "/api/users/me/withdrawal/oauth2/authorization"
+            ).authenticated()
 
             // 사용자 수정
             .requestMatchers(HttpMethod.PATCH, "/api/users/*").authenticated()

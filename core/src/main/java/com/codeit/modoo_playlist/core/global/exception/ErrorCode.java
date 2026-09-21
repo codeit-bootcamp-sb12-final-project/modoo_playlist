@@ -36,6 +36,12 @@ public enum ErrorCode {
   USER_NOT_FOUND(404, "사용자를 찾을 수 없습니다."),
   EMAIL_ALREADY_EXISTS(409, "이미 사용 중인 이메일입니다."),
   USER_ACCOUNT_LOCKED(403, "잠긴 계정입니다."),
+  USER_ACCOUNT_WITHDRAWN(403, "탈퇴한 계정입니다."),
+  INVALID_CURRENT_PASSWORD(401, "현재 비밀번호가 올바르지 않습니다."),
+  WITHDRAWAL_REQUEST_EXPIRED(400, "회원 탈퇴 인증 요청이 만료되었습니다. 다시 시도해 주세요."),
+  OAUTH_ACCOUNT_MISMATCH(403, "기존에 연결된 소셜 계정과 일치하지 않습니다."),
+  OAUTH_REAUTHENTICATION_FAILED(401, "소셜 계정 본인 인증에 실패했습니다."),
+  SOCIAL_UNLINK_FAILED(502, "소셜 계정 연결을 해제하지 못했습니다."),
   PASSWORD_RESET_NOT_SUPPORTED(400, "비밀번호를 초기화할 수 없는 계정입니다."),
   EMAIL_SEND_FAILED(503, "임시 비밀번호 이메일을 전송하지 못했습니다."),
 

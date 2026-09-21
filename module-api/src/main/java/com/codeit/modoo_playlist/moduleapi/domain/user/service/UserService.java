@@ -18,6 +18,8 @@ public interface UserService {
 
   WithdrawalInfoResponse getWithdrawalInfo(UUID userId);
 
+  void withdraw(UUID userId, String password);
+
   CursorResponseUserDto getAllUsers(UserListRequest request);
 
   UserDto updateUser(
