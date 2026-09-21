@@ -125,6 +125,107 @@ class ContentEmbeddingMapperMySqlTest {
         .containsExactlyElementsOf(expectedOrder);
   }
 
+  @Test
+  void 유형_개봉연도_제작국가를_함께_반환한다() {
+    String contentId = insertContent("영화K", false, null);
+    jdbcTemplate.update(
+        "UPDATE contents SET release_date = '2019-05-30', origin_country = 'KR' WHERE id = UUID_TO_BIN(?)",
+        contentId);
+
+    ContentEmbeddingTarget target = findTarget(contentId);
+
+    assertThat(target.type()).isEqualTo("MOVIE");
+    assertThat(target.releaseYear()).isEqualTo(2019);
+    assertThat(target.originCountry()).isEqualTo("KR");
+  }
+
+  @Test
+  void 개봉일과_국가가_없으면_해당_값은_null이다() {
+    String contentId = insertContent("영화L", false, null);
+
+    ContentEmbeddingTarget target = findTarget(contentId);
+
+    assertThat(target.releaseYear()).isNull();
+    assertThat(target.originCountry()).isNull();
+  }
+
+  @Test
+  void 감독과_출연진은_표시순서대로_반환하고_출연진은_상위_5명만_담는다() {
+    String contentId = insertContent("영화M", false, null);
+    insertPerson(contentId, "DIRECTOR", "감독A", 0);
+    for (int i = 0; i < 7; i++) {
+      insertPerson(contentId, "ACTOR", "배우" + i, i + 1);
+    }
+
+    ContentEmbeddingTarget target = findTarget(contentId);
+
+    assertThat(target.directors()).isEqualTo("감독A");
+    assertThat(target.actors()).isEqualTo("배우0,배우1,배우2,배우3,배우4");
+  }
+
+  @Test
+  void 태그와_인물이_함께_있어도_값이_중복되지_않는다() {
+    String contentId = insertContent("영화N", false, null);
+    attachTag(contentId, "Drama");
+    attachTag(contentId, "Action");
+    insertPerson(contentId, "DIRECTOR", "감독B", 0);
+    insertPerson(contentId, "ACTOR", "배우X", 1);
+    insertPerson(contentId, "ACTOR", "배우Y", 2);
+
+    ContentEmbeddingTarget target = findTarget(contentId);
+
+    assertThat(target.tagNames()).isEqualTo("Action,Drama");
+    assertThat(target.directors()).isEqualTo("감독B");
+    assertThat(target.actors()).isEqualTo("배우X,배우Y");
+  }
+
+  @Test
+  void 인물이_없으면_감독과_출연진은_null이다() {
+    String contentId = insertContent("영화O", false, null);
+
+    ContentEmbeddingTarget target = findTarget(contentId);
+
+    assertThat(target.directors()).isNull();
+    assertThat(target.actors()).isNull();
+  }
+
+  @Test
+  void 스포츠_상세정보를_함께_반환하고_일반_콘텐츠는_null이다() {
+    String sportsId = insertContent("경기A", false, null);
+    jdbcTemplate.update(
+        "INSERT INTO content_sports (content_id, sport_type, league, season, home_team, away_team, venue, kickoff_at) "
+            + "VALUES (UUID_TO_BIN(?), 'Soccer', 'Premier League', '2025-2026', 'Man Utd', 'Arsenal', 'Old Trafford', "
+            + "CURRENT_TIMESTAMP(6))",
+        sportsId);
+    String movieId = insertContent("영화P", false, null);
+
+    ContentEmbeddingTarget sports = findTarget(sportsId);
+    ContentEmbeddingTarget movie = findTarget(movieId);
+
+    assertThat(sports.sportType()).isEqualTo("Soccer");
+    assertThat(sports.league()).isEqualTo("Premier League");
+    assertThat(sports.season()).isEqualTo("2025-2026");
+    assertThat(sports.homeTeam()).isEqualTo("Man Utd");
+    assertThat(sports.awayTeam()).isEqualTo("Arsenal");
+    assertThat(sports.venue()).isEqualTo("Old Trafford");
+    assertThat(movie.sportType()).isNull();
+    assertThat(movie.homeTeam()).isNull();
+  }
+
+  private ContentEmbeddingTarget findTarget(String contentId) {
+    return mapper.findContentsNeedingEmbedding(0, 100).stream()
+        .filter(target -> target.contentId().equals(contentId))
+        .findFirst()
+        .orElseThrow();
+  }
+
+  private void insertPerson(String contentId, String roleType, String name, int displayOrder) {
+    jdbcTemplate.update(
+        "INSERT INTO content_people (id, content_id, role_type, person_name, display_order) "
+            + "VALUES (UUID_TO_BIN(?), UUID_TO_BIN(?), ?, ?, ?)",
+        UUID.randomUUID().toString(), contentId, roleType, name, displayOrder);
+  }
+
   private String insertContent(String title, boolean deleted, String embeddingSourceHash) {
     String contentId = UUID.randomUUID().toString();
     jdbcTemplate.update(
