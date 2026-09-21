@@ -72,6 +72,12 @@ spring:
     uris: ${ELASTICSEARCH_URL:http://localhost:9200}
     connection-timeout: ${ELASTICSEARCH_CONNECTION_TIMEOUT:2s}
     socket-timeout: ${ELASTICSEARCH_SOCKET_TIMEOUT:30s}
+  jpa:
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 50
+        order_inserts: true
 
 module-api:
   admin: # dev에서 실패 방지를 위해 false로 명시

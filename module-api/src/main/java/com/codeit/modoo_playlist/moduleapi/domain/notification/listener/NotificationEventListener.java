@@ -39,15 +39,13 @@ public class NotificationEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handlePlaylistCreated(PlaylistCreatedEvent event) {
         List<UUID> followerIds = followRepository.findFollowerIdsByFolloweeId(event.ownerId());
-        for (UUID followerId : followerIds) {
-            notificationService.create(
-                    followerId,
-                    "팔로우한 사용자의 새 플레이리스트",
-                    "회원님이 팔로우한 사용자가 새 플레이리스트를 만들었습니다.",
-                    NotificationLevel.INFO,
-                    event.playlistId()
-            );
-        }
+        notificationService.createBatch(
+                followerIds,
+                "팔로우한 사용자의 새 플레이리스트",
+                "회원님이 팔로우한 사용자가 새 플레이리스트를 만들었습니다.",
+                NotificationLevel.INFO,
+                event.playlistId()
+        );
     }
 
     @Async
@@ -67,30 +65,26 @@ public class NotificationEventListener {
     public void handlePlaylistContentAdded(PlaylistContentAddedEvent event) {
         List<UUID> subscriberIds =
                 playlistSubscriptionRepository.findSubscriberIdsByPlaylistId(event.playlistId());
-        for (UUID subscriberId : subscriberIds) {
-            notificationService.create(
-                    subscriberId,
-                    "구독 중인 플레이리스트에 콘텐츠 추가",
-                    "구독 중인 플레이리스트에 새 콘텐츠가 추가됐습니다.",
-                    NotificationLevel.INFO,
-                    event.playlistId()
-            );
-        }
+        notificationService.createBatch(
+                subscriberIds,
+                "구독 중인 플레이리스트에 콘텐츠 추가",
+                "구독 중인 플레이리스트에 새 콘텐츠가 추가됐습니다.",
+                NotificationLevel.INFO,
+                event.playlistId()
+        );
     }
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleWatchingSessionStarted(WatchingSessionStartedEvent event) {
         List<UUID> followerIds = followRepository.findFollowerIdsByFolloweeId(event.watcherId());
-        for (UUID followerId : followerIds) {
-            notificationService.create(
-                    followerId,
-                    "팔로우한 사용자의 실시간 시청",
-                    "회원님이 팔로우한 사용자가 콘텐츠를 시청하기 시작했습니다.",
-                    NotificationLevel.INFO,
-                    event.contentId()
-            );
-        }
+        notificationService.createBatch(
+                followerIds,
+                "팔로우한 사용자의 실시간 시청",
+                "회원님이 팔로우한 사용자가 콘텐츠를 시청하기 시작했습니다.",
+                NotificationLevel.INFO,
+                event.contentId()
+        );
     }
 
 }
