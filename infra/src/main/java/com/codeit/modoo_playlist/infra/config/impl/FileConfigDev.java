@@ -15,8 +15,7 @@ import java.nio.file.Paths;
 @Profile({"dev", "test"})
 public class FileConfigDev implements FileConfig {
 
-    // application.yml의 myblog.storage.local.root-path 값 (기본값: .blog/storage)
-    @Value("${myblog.storage.local.root-path:.blog/storage}")
+    @Value("${storage.local.root-path:.blog/storage}")
     private String rootPathStr;
 
     private Path rootPath;

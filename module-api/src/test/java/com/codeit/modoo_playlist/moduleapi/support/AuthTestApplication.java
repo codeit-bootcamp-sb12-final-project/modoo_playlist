@@ -6,6 +6,7 @@ import com.codeit.modoo_playlist.moduleapi.config.OAuth2AuthorizationRequestConf
 import com.codeit.modoo_playlist.moduleapi.config.SecurityConfig;
 import com.codeit.modoo_playlist.moduleapi.config.properties.AuthCookieProperties;
 import com.codeit.modoo_playlist.moduleapi.domain.user.controller.AuthController;
+import com.codeit.modoo_playlist.moduleapi.domain.image.storage.ImageStorage;
 import com.codeit.modoo_playlist.moduleapi.domain.user.controller.UserController;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.user.service.TemporaryPasswordGenerator;
@@ -41,6 +42,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
+import static org.mockito.Mockito.mock;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -83,6 +85,11 @@ public class AuthTestApplication {
   @Bean
   UserMapper userMapper() {
     return Mappers.getMapper(UserMapper.class);
+  }
+
+  @Bean
+  ImageStorage imageStorage() {
+    return mock(ImageStorage.class);
   }
 
   @Bean

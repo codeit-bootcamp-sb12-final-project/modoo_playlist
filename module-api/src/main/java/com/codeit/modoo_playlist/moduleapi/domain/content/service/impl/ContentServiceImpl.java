@@ -44,7 +44,8 @@ import com.codeit.modoo_playlist.moduleapi.domain.content.repository.query.Conte
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.query.ContentQueryPage;
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.query.ContentQueryPage.ContentItem;
 import com.codeit.modoo_playlist.moduleapi.domain.content.service.ContentService;
-import com.codeit.modoo_playlist.moduleapi.domain.content.storage.ThumbnailStorage;
+import com.codeit.modoo_playlist.moduleapi.domain.image.storage.ImageStorage;
+import com.codeit.modoo_playlist.moduleapi.domain.image.storage.ImageCategory;
 import com.codeit.modoo_playlist.moduleapi.domain.interaction.repository.UserContentInteractionRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.tag.service.TagService;
 import com.codeit.modoo_playlist.moduleapi.dto.content.request.ContentCreateRequest;
@@ -83,7 +84,7 @@ public class ContentServiceImpl implements ContentService {
     private final UserContentInteractionRepository userContentInteractionRepository;
     private final TagService tagService;
     private final ContentMapper contentMapper;
-    private final ThumbnailStorage thumbnailStorage;
+    private final ImageStorage imageStorage;
     private final ApplicationEventPublisher eventPublisher;
 
     @Override
@@ -401,7 +402,7 @@ public class ContentServiceImpl implements ContentService {
             return null;
         }
         try {
-            String thumbnailUrl = thumbnailStorage.store(thumbnail);
+            String thumbnailUrl = imageStorage.store(thumbnail, ImageCategory.CONTENT_THUMBNAIL);
             registerThumbnailRollbackCleanup(thumbnailUrl);
             return thumbnailUrl;
         } catch (IOException exception) {
@@ -420,7 +421,7 @@ public class ContentServiceImpl implements ContentService {
                     return;
                 }
                 try {
-                    thumbnailStorage.delete(thumbnailUrl);
+                    imageStorage.delete(thumbnailUrl);
                 } catch (IOException ignored) {
                     // 원래 저장 실패 예외를 유지한다.
                 }
@@ -441,7 +442,7 @@ public class ContentServiceImpl implements ContentService {
                     return;
                 }
                 try {
-                    thumbnailStorage.delete(previousThumbnailUrl);
+                    imageStorage.delete(previousThumbnailUrl);
                 } catch (IOException ignored) {
                 }
             }

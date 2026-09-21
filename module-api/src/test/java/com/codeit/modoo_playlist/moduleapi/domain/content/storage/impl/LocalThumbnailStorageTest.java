@@ -16,6 +16,9 @@ import org.springframework.mock.web.MockMultipartFile;
 
 import com.codeit.modoo_playlist.core.global.exception.BaseException;
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
+import com.codeit.modoo_playlist.moduleapi.domain.image.storage.ImageCategory;
+import com.codeit.modoo_playlist.moduleapi.domain.image.storage.ImageValidator;
+import com.codeit.modoo_playlist.moduleapi.domain.image.storage.impl.LocalImageStorage;
 
 class LocalThumbnailStorageTest {
 
@@ -23,14 +26,14 @@ class LocalThumbnailStorageTest {
 
     @Test
     void 실제_PNG_이미지를_UUID_파일명으로_저장한다() throws Exception {
-        LocalThumbnailStorage storage = new LocalThumbnailStorage(() -> tempDirectory);
+        LocalImageStorage storage = new LocalImageStorage(() -> tempDirectory, new ImageValidator());
         MockMultipartFile image = new MockMultipartFile(
                 "thumbnail", "poster.PNG", "image/png", pngBytes()
         );
 
-        String url = storage.store(image);
+        String url = storage.store(image, ImageCategory.CONTENT_THUMBNAIL);
 
-        assertThat(url).matches("/files/thumbnails/[0-9a-f-]+\\.png");
+        assertThat(url).matches("/files/contents/thumbnails/[0-9a-f-]+\\.png");
         assertThat(Files.exists(tempDirectory.resolve(url.substring("/files/".length())))).isTrue();
     }
 
@@ -67,8 +70,8 @@ class LocalThumbnailStorageTest {
     }
 
     private void assertInvalid(MockMultipartFile file, ErrorCode errorCode) {
-        LocalThumbnailStorage storage = new LocalThumbnailStorage(() -> tempDirectory);
-        assertThatThrownBy(() -> storage.store(file))
+        LocalImageStorage storage = new LocalImageStorage(() -> tempDirectory, new ImageValidator());
+        assertThatThrownBy(() -> storage.store(file, ImageCategory.CONTENT_THUMBNAIL))
                 .isInstanceOfSatisfying(BaseException.class, exception ->
                         assertThat(exception.getErrorCode()).isEqualTo(errorCode));
     }
