@@ -2,6 +2,7 @@ package com.codeit.modoo_playlist.moduleapi.domain.conversation.repository;
 
 import com.codeit.modoo_playlist.moduleapi.dto.ConversationDto;
 import com.codeit.modoo_playlist.core.global.common.dto.base.SliceCursorRequest;
+import com.codeit.modoo_playlist.moduleapi.domain.chat.dto.response.ChatConversationCursorResponse;
 import com.codeit.modoo_playlist.moduleapi.dto.conversation.response.CursorResponseConversationDto;
 
 import java.util.Optional;
@@ -32,5 +33,11 @@ public interface ConversationRepositoryCustom{
     boolean existsParticipant(
             UUID conversationId,
             UUID userId
+    );
+
+    // 내가 참여중인 AI 챗봇 대화 목록
+    ChatConversationCursorResponse findAiConversations(
+        UUID requesterId,
+        SliceCursorRequest request
     );
 }
