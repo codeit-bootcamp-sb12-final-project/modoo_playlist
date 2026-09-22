@@ -6,22 +6,32 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.codeit.modoo_playlist.core.domain.user.entity.Provider;
 import com.codeit.modoo_playlist.core.domain.user.entity.UserRole;
 import com.codeit.modoo_playlist.core.global.exception.BaseException;
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import com.codeit.modoo_playlist.moduleapi.domain.user.controller.UserController;
 import com.codeit.modoo_playlist.moduleapi.domain.user.service.UserService;
+import com.codeit.modoo_playlist.moduleapi.domain.user.service.OAuthWithdrawalService;
 import com.codeit.modoo_playlist.moduleapi.dto.UserDto;
 import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserCreateRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserProfileUpdateRequest;
+import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserWithdrawalRequest;
+import com.codeit.modoo_playlist.moduleapi.dto.user.response.WithdrawalInfoResponse;
+import com.codeit.modoo_playlist.moduleapi.dto.user.response.WithdrawalVerificationMethod;
+import com.codeit.modoo_playlist.moduleapi.dto.user.response.OAuthWithdrawalAuthorizationResponse;
 import com.codeit.modoo_playlist.moduleapi.exception.GlobalExceptionHandler;
 import com.codeit.modoo_playlist.moduleapi.security.UserDetails;
+import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtTokenProvider;
+import jakarta.servlet.http.Cookie;
 import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
@@ -59,6 +69,12 @@ class UserControllerTest {
   @Mock
   UserService userService;
 
+  @Mock
+  JwtTokenProvider jwtTokenProvider;
+
+  @Mock
+  OAuthWithdrawalService oauthWithdrawalService;
+
   private MockMvc mvc;
   private final JsonMapper json = JsonMapper.builder().build();
   private UUID id;
@@ -72,7 +88,8 @@ class UserControllerTest {
     dto = new UserDto(id, EMAIL, USERNAME, null, UserRole.USER, false, Instant.now());
     createRequest = new UserCreateRequest(EMAIL, USERNAME, PASSWORD);
     updateRequest = new UserProfileUpdateRequest(CHANGED_USERNAME);
-    mvc = MockMvcBuilders.standaloneSetup(new UserController(userService))
+    mvc = MockMvcBuilders.standaloneSetup(
+            new UserController(userService, oauthWithdrawalService, jwtTokenProvider))
         .setControllerAdvice(new GlobalExceptionHandler())
         .setCustomArgumentResolvers(new AuthenticationPrincipalArgumentResolver()).build();
   }
@@ -157,6 +174,61 @@ class UserControllerTest {
   }
 
   @Test
+  @DisplayName("회원 탈퇴 인증 방식 조회")
+  void getWithdrawalInfo() throws Exception {
+    authenticate();
+    WithdrawalInfoResponse response = new WithdrawalInfoResponse(
+        WithdrawalVerificationMethod.OAUTH,
+        Provider.GOOGLE
+    );
+    when(userService.getWithdrawalInfo(id)).thenReturn(response);
+
+    mvc.perform(get("/api/users/me/withdrawal-info"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.verificationMethod").value("OAUTH"))
+        .andExpect(jsonPath("$.provider").value("GOOGLE"));
+
+    verify(userService).getWithdrawalInfo(id);
+  }
+
+  @Test
+  @DisplayName("일반 계정 탈퇴 후 refresh 쿠키를 만료한다")
+  void withdrawPasswordAccount() throws Exception {
+    authenticate();
+    UserWithdrawalRequest request = new UserWithdrawalRequest(PASSWORD);
+    Cookie expiredCookie = new Cookie(JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME, "");
+    expiredCookie.setMaxAge(0);
+    when(jwtTokenProvider.generateRefreshTokenExpirationCookie()).thenReturn(expiredCookie);
+
+    mvc.perform(post("/api/users/me/withdraw")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(json.writeValueAsString(request)))
+        .andExpect(status().isNoContent())
+        .andExpect(cookie().maxAge(JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME, 0));
+
+    verify(userService).withdraw(id, PASSWORD);
+  }
+
+  @Test
+  @DisplayName("소셜 계정 탈퇴 인증 URL 준비")
+  void prepareOAuthWithdrawal() throws Exception {
+    authenticate();
+    when(oauthWithdrawalService.prepare(id)).thenReturn(
+        new OAuthWithdrawalAuthorizationResponse(
+            "/oauth2/authorization/google?withdrawalRequestId=request-id"
+        )
+    );
+
+    mvc.perform(post("/api/users/me/withdrawal/oauth2/authorization"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.authorizationUrl").value(
+            "/oauth2/authorization/google?withdrawalRequestId=request-id"
+        ));
+
+    verify(oauthWithdrawalService).prepare(id);
+  }
+
+  @Test
   @DisplayName("미 존재 유저 조회시 실패.")
   void missingUserResponse() throws Exception {
     when(userService.getUser(id)).thenThrow(new BaseException(ErrorCode.USER_NOT_FOUND));
@@ -222,6 +294,17 @@ class UserControllerTest {
     mvc.perform(multipart(HttpMethod.PATCH, "/api/users/{id}", id))
         .andExpect(status().isBadRequest());
     verifyNoInteractions(userService);
+  }
+
+  @Test
+  @DisplayName("관리자가 탈퇴 사용자를 조기 영구 삭제한다")
+  void purgeWithdrawnUser() throws Exception {
+    authenticate();
+
+    mvc.perform(delete("/api/users/{userId}/purge", id))
+        .andExpect(status().isNoContent());
+
+    verify(userService).purgeUser(id, id);
   }
 
   private void authenticate() {
