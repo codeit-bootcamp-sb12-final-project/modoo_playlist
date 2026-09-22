@@ -14,6 +14,7 @@ import com.codeit.modoo_playlist.moduleapi.domain.user.service.TemporaryPassword
 import com.codeit.modoo_playlist.moduleapi.domain.user.service.impl.AuthServiceImpl;
 import com.codeit.modoo_playlist.moduleapi.domain.user.service.impl.OAuthAccountServiceImpl;
 import com.codeit.modoo_playlist.moduleapi.domain.user.service.impl.OAuthWithdrawalServiceImpl;
+import com.codeit.modoo_playlist.moduleapi.domain.user.service.impl.OAuthWithdrawalTransactionService;
 import com.codeit.modoo_playlist.moduleapi.domain.user.service.impl.RestSocialAccountUnlinkClient;
 import com.codeit.modoo_playlist.moduleapi.domain.user.service.impl.UserServiceImpl;
 import com.codeit.modoo_playlist.moduleapi.exception.GlobalExceptionHandler;
@@ -85,6 +86,7 @@ import org.testcontainers.utility.DockerImageName;
     KakaoOAuthUserProfileMapper.class,
     OAuthAccountServiceImpl.class,
     OAuthWithdrawalServiceImpl.class,
+    OAuthWithdrawalTransactionService.class,
     RestSocialAccountUnlinkClient.class,
     OAuthWithdrawalRequestStore.class})
 public class AuthTestApplication {

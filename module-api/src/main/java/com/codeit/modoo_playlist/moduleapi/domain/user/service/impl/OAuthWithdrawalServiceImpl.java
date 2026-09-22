@@ -14,14 +14,15 @@ import com.codeit.modoo_playlist.moduleapi.dto.oauth.OAuthUserProfile;
 import com.codeit.modoo_playlist.moduleapi.dto.user.response.OAuthWithdrawalAuthorizationResponse;
 import com.codeit.modoo_playlist.moduleapi.security.oauth.withdrawal.OAuthWithdrawalRequest;
 import com.codeit.modoo_playlist.moduleapi.security.oauth.withdrawal.OAuthWithdrawalRequestStore;
-import java.time.Instant;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OAuthWithdrawalServiceImpl implements OAuthWithdrawalService {
@@ -31,6 +32,7 @@ public class OAuthWithdrawalServiceImpl implements OAuthWithdrawalService {
   private final OAuthWithdrawalRequestStore requestStore;
   private final SocialAccountUnlinkClient unlinkClient;
   private final LoginSessionStore loginSessionStore;
+  private final OAuthWithdrawalTransactionService transactionService;
 
   @Override
   @Transactional(readOnly = true)
@@ -59,7 +61,6 @@ public class OAuthWithdrawalServiceImpl implements OAuthWithdrawalService {
   }
 
   @Override
-  @Transactional
   public void complete(
       OAuthWithdrawalRequest request,
       OAuthUserProfile authenticatedProfile,
@@ -70,21 +71,32 @@ public class OAuthWithdrawalServiceImpl implements OAuthWithdrawalService {
       throw new BaseException(ErrorCode.OAUTH_ACCOUNT_MISMATCH);
     }
 
-    User user = userRepository.findByIdForUpdate(request.userId())
-        .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
-    if (user.getDeletedAt() != null) {
-      throw new BaseException(ErrorCode.USER_ACCOUNT_WITHDRAWN);
-    }
+    transactionService.withdraw(request);
+    invalidateSessions(request.userId());
+    unlinkSocialAccount(request, providerAccessToken);
+  }
 
-    SocialAccount socialAccount = socialAccountRepository.findByUserId(request.userId())
-        .orElseThrow(() -> new BaseException(ErrorCode.OAUTH_ACCOUNT_MISMATCH));
-    if (socialAccount.getProvider() != request.provider()
-        || !Objects.equals(socialAccount.getProviderUserId(), request.providerUserId())) {
-      throw new BaseException(ErrorCode.OAUTH_ACCOUNT_MISMATCH);
+  private void invalidateSessions(UUID userId) {
+    try {
+      loginSessionStore.invalidateAll(userId);
+    } catch (RuntimeException exception) {
+      log.error("Failed to invalidate sessions for withdrawn user: {}", userId, exception);
     }
+  }
 
-    unlinkClient.unlink(request.provider(), providerAccessToken);
-    user.withdraw(Instant.now());
-    loginSessionStore.invalidateAll(request.userId());
+  private void unlinkSocialAccount(
+      OAuthWithdrawalRequest request,
+      String providerAccessToken
+  ) {
+    try {
+      unlinkClient.unlink(request.provider(), providerAccessToken);
+    } catch (RuntimeException exception) {
+      log.error(
+          "Failed to unlink OAuth account after local withdrawal: userId={}, provider={}",
+          request.userId(),
+          request.provider(),
+          exception
+      );
+    }
   }
 }

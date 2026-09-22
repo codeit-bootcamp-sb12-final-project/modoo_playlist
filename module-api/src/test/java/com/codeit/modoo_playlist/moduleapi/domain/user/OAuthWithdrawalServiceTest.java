@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -18,6 +19,7 @@ import com.codeit.modoo_playlist.moduleapi.domain.user.repository.SocialAccountR
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.user.service.SocialAccountUnlinkClient;
 import com.codeit.modoo_playlist.moduleapi.domain.user.service.impl.OAuthWithdrawalServiceImpl;
+import com.codeit.modoo_playlist.moduleapi.domain.user.service.impl.OAuthWithdrawalTransactionService;
 import com.codeit.modoo_playlist.moduleapi.dto.oauth.OAuthUserProfile;
 import com.codeit.modoo_playlist.core.global.security.LoginSessionStore;
 import com.codeit.modoo_playlist.moduleapi.security.oauth.withdrawal.OAuthWithdrawalRequest;
@@ -53,7 +55,8 @@ class OAuthWithdrawalServiceTest {
         socialAccountRepository,
         requestStore,
         unlinkClient,
-        loginSessionStore
+        loginSessionStore,
+        new OAuthWithdrawalTransactionService(userRepository, socialAccountRepository)
     );
   }
 
@@ -74,7 +77,7 @@ class OAuthWithdrawalServiceTest {
   }
 
   @Test
-  void unlinksMatchingAccountThenWithdrawsAndInvalidatesSession() {
+  void withdrawsLocallyBeforeInvalidatingSessionAndUnlinkingAccount() {
     UUID userId = UUID.randomUUID();
     OAuthWithdrawalRequest request =
         new OAuthWithdrawalRequest(userId, Provider.KAKAO, "kakao-sub");
@@ -87,9 +90,10 @@ class OAuthWithdrawalServiceTest {
 
     service.complete(request, profile, "provider-access-token");
 
-    verify(unlinkClient).unlink(Provider.KAKAO, "provider-access-token");
-    verify(user).withdraw(any(Instant.class));
-    verify(loginSessionStore).invalidateAll(userId);
+    var order = inOrder(user, loginSessionStore, unlinkClient);
+    order.verify(user).withdraw(any(Instant.class));
+    order.verify(loginSessionStore).invalidateAll(userId);
+    order.verify(unlinkClient).unlink(Provider.KAKAO, "provider-access-token");
   }
 
   @Test
@@ -232,7 +236,7 @@ class OAuthWithdrawalServiceTest {
   }
 
   @Test
-  void doesNotWithdrawWhenProviderUnlinkFails() {
+  void keepsLocalWithdrawalCommittedWhenProviderUnlinkFails() {
     UUID userId = UUID.randomUUID();
     OAuthWithdrawalRequest request =
         new OAuthWithdrawalRequest(userId, Provider.GOOGLE, "google-sub");
@@ -245,11 +249,29 @@ class OAuthWithdrawalServiceTest {
     doThrow(new IllegalStateException("unlink failed"))
         .when(unlinkClient).unlink(Provider.GOOGLE, "provider-token");
 
-    assertThatThrownBy(() -> service.complete(request, profile, "provider-token"))
-        .isInstanceOf(IllegalStateException.class)
-        .hasMessage("unlink failed");
+    service.complete(request, profile, "provider-token");
 
-    verify(user, never()).withdraw(any());
-    verifyNoInteractions(loginSessionStore);
+    verify(user).withdraw(any(Instant.class));
+    verify(loginSessionStore).invalidateAll(userId);
+  }
+
+  @Test
+  void stillAttemptsProviderUnlinkWhenSessionInvalidationFails() {
+    UUID userId = UUID.randomUUID();
+    OAuthWithdrawalRequest request =
+        new OAuthWithdrawalRequest(userId, Provider.GOOGLE, "google-sub");
+    OAuthUserProfile profile =
+        new OAuthUserProfile(Provider.GOOGLE, "google-sub", EMAIL, "user", null);
+    when(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.of(user));
+    when(socialAccountRepository.findByUserId(userId)).thenReturn(Optional.of(socialAccount));
+    when(socialAccount.getProvider()).thenReturn(Provider.GOOGLE);
+    when(socialAccount.getProviderUserId()).thenReturn("google-sub");
+    doThrow(new IllegalStateException("redis failed"))
+        .when(loginSessionStore).invalidateAll(userId);
+
+    service.complete(request, profile, "provider-token");
+
+    verify(user).withdraw(any(Instant.class));
+    verify(unlinkClient).unlink(Provider.GOOGLE, "provider-token");
   }
 }
