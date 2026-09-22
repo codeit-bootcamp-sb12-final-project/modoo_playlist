@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.codeit.modoo_playlist.modulebatch.user.persistence.UserDeletionMapper">
+
+  <select id="findDeletionTargets"
+    resultType="com.codeit.modoo_playlist.modulebatch.user.model.UserDeletionTarget">
+    SELECT BIN_TO_UUID(u.id) AS userId
+    FROM users u
+    WHERE u.deleted_at IS NOT NULL
+    AND u.deleted_at &lt;= #{cutoff}
+    AND u.role != 'BOT'
+    <if test="lastUserId != null">
+      AND u.id &gt; UUID_TO_BIN(#{lastUserId})
+    </if>
+    ORDER BY u.id
+    LIMIT #{limit}
+  </select>
+
+  <select id="lockDeletionTarget" resultType="string">
+    SELECT BIN_TO_UUID(u.id)
+    FROM users u
+    WHERE u.id = UUID_TO_BIN(#{userId})
+    AND u.deleted_at IS NOT NULL
+    AND u.deleted_at &lt;= #{cutoff}
+    AND u.role != 'BOT'
+    FOR UPDATE
+  </select>
+
+  <delete id="deleteMessages">
+    DELETE FROM messages
+    WHERE sender_id = UUID_TO_BIN(#{userId})
+    OR receiver_id = UUID_TO_BIN(#{userId})
+  </delete>
+
+  <delete id="deleteWatchingSessions">
+    DELETE FROM watching_sessions
+    WHERE watcher_id = UUID_TO_BIN(#{userId})
+  </delete>
+
+  <delete id="deleteReviews">
+    DELETE FROM reviews
+    WHERE author_id = UUID_TO_BIN(#{userId})
+  </delete>
+
+  <delete id="deleteUser">
+    DELETE FROM users
+    WHERE id = UUID_TO_BIN(#{userId})
+    AND deleted_at IS NOT NULL
+    AND deleted_at &lt;= #{cutoff}
+    AND role != 'BOT'
+  </delete>
+</mapper>

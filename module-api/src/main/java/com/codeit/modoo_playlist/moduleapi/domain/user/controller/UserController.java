@@ -1,5 +1,6 @@
 package com.codeit.modoo_playlist.moduleapi.domain.user.controller;
 
+import com.codeit.modoo_playlist.moduleapi.domain.user.service.OAuthWithdrawalService;
 import com.codeit.modoo_playlist.moduleapi.domain.user.service.UserService;
 import com.codeit.modoo_playlist.moduleapi.dto.UserDto;
 import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserCreateRequest;
@@ -8,8 +9,13 @@ import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserLockUpdateReques
 import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserPasswordUpdateRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserProfileUpdateRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserRoleUpdateRequest;
+import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserWithdrawalRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.user.response.CursorResponseUserDto;
+import com.codeit.modoo_playlist.moduleapi.dto.user.response.OAuthWithdrawalAuthorizationResponse;
+import com.codeit.modoo_playlist.moduleapi.dto.user.response.WithdrawalInfoResponse;
 import com.codeit.modoo_playlist.moduleapi.security.UserDetails;
+import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtTokenProvider;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +23,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -34,6 +41,8 @@ import org.springframework.web.multipart.MultipartFile;
 public class UserController {
 
   private final UserService userService;
+  private final OAuthWithdrawalService oauthWithdrawalService;
+  private final JwtTokenProvider jwtTokenProvider;
 
   @PostMapping(
       name = "회원가입"
@@ -52,6 +61,44 @@ public class UserController {
       @PathVariable("userId") UUID userId
   ) {
     return ResponseEntity.ok(userService.getUser(userId));
+  }
+
+  @GetMapping(
+      name = "회원 탈퇴 인증 방식 조회",
+      value = "/me/withdrawal-info"
+  )
+  public ResponseEntity<WithdrawalInfoResponse> getWithdrawalInfo(
+      @AuthenticationPrincipal UserDetails principal
+  ) {
+    return ResponseEntity.ok(
+        userService.getWithdrawalInfo(principal.getUserDto().id())
+    );
+  }
+
+  @PostMapping(
+      name = "일반 계정 회원 탈퇴",
+      value = "/me/withdraw"
+  )
+  public ResponseEntity<Void> withdraw(
+      @Valid @RequestBody UserWithdrawalRequest request,
+      @AuthenticationPrincipal UserDetails principal,
+      HttpServletResponse response
+  ) {
+    userService.withdraw(principal.getUserDto().id(), request.password());
+    response.addCookie(jwtTokenProvider.generateRefreshTokenExpirationCookie());
+    return ResponseEntity.noContent().build();
+  }
+
+  @PostMapping(
+      name = "소셜 계정 회원 탈퇴 본인 인증 준비",
+      value = "/me/withdrawal/oauth2/authorization"
+  )
+  public ResponseEntity<OAuthWithdrawalAuthorizationResponse> prepareOAuthWithdrawal(
+      @AuthenticationPrincipal UserDetails principal
+  ) {
+    return ResponseEntity.ok(
+        oauthWithdrawalService.prepare(principal.getUserDto().id())
+    );
   }
 
   @PatchMapping(
@@ -100,6 +147,19 @@ public class UserController {
       @Valid @ModelAttribute UserListRequest request
   ) {
     return ResponseEntity.ok(userService.getAllUsers(request));
+  }
+
+  @PreAuthorize("hasRole('ADMIN')")
+  @DeleteMapping(
+      name = "[ADMIN 권한] 탈퇴 사용자 조기 영구 삭제",
+      value = "/{userId}/purge"
+  )
+  public ResponseEntity<Void> purgeUser(
+      @PathVariable UUID userId,
+      @AuthenticationPrincipal UserDetails principal
+  ) {
+    userService.purgeUser(principal.getUserDto().id(), userId);
+    return ResponseEntity.noContent().build();
   }
 
   @PreAuthorize("hasRole('ADMIN')")

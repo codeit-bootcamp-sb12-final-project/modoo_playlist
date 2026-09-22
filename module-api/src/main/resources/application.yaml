@@ -88,6 +88,10 @@ spring:
       properties:
         spring.json.trusted.packages: com.codeit.modoo_playlist.infra.event.kafka
 
+user-deletion:
+  retention: ${USER_DELETION_RETENTION:1d}
+  zone: ${USER_DELETION_ZONE:Asia/Seoul}
+
 module-api:
   admin: # dev에서 실패 방지를 위해 false로 명시
     enabled: ${ADMIN_ENABLED:false}
@@ -102,6 +106,10 @@ module-api:
     oauth2:
       success-redirect-uri: ${OAUTH_SUCCESS_REDIRECT_URI:/#/home}
       failure-redirect-uri: ${OAUTH_FAILURE_REDIRECT_URI:/#/sign-in}
+      withdrawal:
+        success-redirect-uri: ${OAUTH_WITHDRAWAL_SUCCESS_REDIRECT_URI:/#/sign-in}
+        failure-redirect-uri: ${OAUTH_WITHDRAWAL_FAILURE_REDIRECT_URI:/#/profiles/{userId}}
+        request-expiration: ${OAUTH_WITHDRAWAL_REQUEST_EXPIRATION:5m}
     cookie:
       same-site: ${AUTH_COOKIE_SAME_SITE:Lax} # 다른 사이트에서 보내느 요청에 refresh 토큰 전달 방지
       path: ${AUTH_COOKIE_PATH:/api/auth}

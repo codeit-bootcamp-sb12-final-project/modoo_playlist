@@ -2,6 +2,7 @@ package com.codeit.modoo_playlist.moduleapi.domain.user;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -14,7 +15,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.codeit.modoo_playlist.core.domain.user.entity.User;
 import com.codeit.modoo_playlist.core.domain.user.entity.UserRole;
 import com.codeit.modoo_playlist.core.global.exception.BaseException;
+import com.codeit.modoo_playlist.moduleapi.domain.message.repository.MessageRepository;
+import com.codeit.modoo_playlist.moduleapi.domain.review.repository.ReviewRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
+import com.codeit.modoo_playlist.moduleapi.domain.watchingsession.repository.ApiWatchingSessionRepository;
+import com.codeit.modoo_playlist.core.global.security.LoginSession;
 import com.codeit.modoo_playlist.core.global.security.LoginSession;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtTokenProvider;
 import com.codeit.modoo_playlist.core.global.security.LoginSessionStore;
@@ -47,6 +52,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder;
@@ -86,6 +92,15 @@ class AuthApiIntegrationTest {
 
   @Autowired
   StringRedisTemplate redis;
+
+  @MockitoBean
+  MessageRepository messageRepository;
+
+  @MockitoBean
+  ApiWatchingSessionRepository watchingSessionRepository;
+
+  @MockitoBean
+  ReviewRepository reviewRepository;
 
   private String email;
   private Map<String, String> signupRequest;
@@ -479,6 +494,38 @@ class AuthApiIntegrationTest {
             .header("Authorization", "Bearer " + login.access()))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
+  }
+
+  @Test
+  @DisplayName("일반 사용자는 관리자 사용자 삭제 API를 호출할 수 없다")
+  void normalUserCannotDeleteUser() throws Exception {
+    Login actor = registeredLogin();
+    UUID targetId = UUID.randomUUID();
+
+    mvc.perform(withCsrf(delete("/api/users/{userId}/purge", targetId))
+            .header("Authorization", "Bearer " + actor.access()))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
+  }
+
+  @Test
+  @DisplayName("관리자가 탈퇴 사용자를 영구 삭제하면 기존 세션을 무효화한다")
+  void adminPurgesWithdrawnUserAndInvalidatesSession() throws Exception {
+    Login target = registeredLogin();
+    Login admin = adminLogin();
+    User withdrawnUser = users.findById(target.userId()).orElseThrow();
+    withdrawnUser.withdraw(Instant.now());
+    users.saveAndFlush(withdrawnUser);
+
+    mvc.perform(withCsrf(delete("/api/users/{userId}/purge", target.userId()))
+            .header("Authorization", "Bearer " + admin.access()))
+        .andExpect(status().isNoContent());
+
+    assertThat(users.findById(target.userId())).isEmpty();
+    mvc.perform(withCsrf(profile(target.userId(), "rejected"))
+            .header("Authorization", "Bearer " + target.access()))
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.code").value("LOGIN_SESSION_INVALIDATED"));
   }
 
   @Test

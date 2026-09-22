@@ -13,6 +13,9 @@ import com.codeit.modoo_playlist.moduleapi.domain.user.service.TemporaryPassword
 import com.codeit.modoo_playlist.moduleapi.domain.user.service.TemporaryPasswordSender;
 import com.codeit.modoo_playlist.moduleapi.domain.user.service.impl.AuthServiceImpl;
 import com.codeit.modoo_playlist.moduleapi.domain.user.service.impl.OAuthAccountServiceImpl;
+import com.codeit.modoo_playlist.moduleapi.domain.user.service.impl.OAuthWithdrawalServiceImpl;
+import com.codeit.modoo_playlist.moduleapi.domain.user.service.impl.OAuthWithdrawalTransactionService;
+import com.codeit.modoo_playlist.moduleapi.domain.user.service.impl.RestSocialAccountUnlinkClient;
 import com.codeit.modoo_playlist.moduleapi.domain.user.service.impl.UserServiceImpl;
 import com.codeit.modoo_playlist.moduleapi.exception.GlobalExceptionHandler;
 import com.codeit.modoo_playlist.moduleapi.mapper.UserMapper;
@@ -31,8 +34,10 @@ import com.codeit.modoo_playlist.moduleapi.security.oauth.GoogleOAuthUserProfile
 import com.codeit.modoo_playlist.moduleapi.security.oauth.KakaoOAuthUserProfileMapper;
 import com.codeit.modoo_playlist.moduleapi.security.oauth.OAuthLoginSuccessHandler;
 import com.codeit.modoo_playlist.moduleapi.security.oauth.OAuthOidcUserService;
+import com.codeit.modoo_playlist.moduleapi.security.oauth.withdrawal.OAuthWithdrawalRequestStore;
 import java.time.Clock;
 import org.mapstruct.factory.Mappers;
+import org.springframework.ai.model.chat.memory.repository.redis.autoconfigure.RedisChatMemoryRepositoryAutoConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.persistence.autoconfigure.EntityScan;
@@ -50,7 +55,7 @@ import org.testcontainers.utility.DockerImageName;
  * 실제 인증 구성만 로드하여 외부 AI, Kafka 및 운영 DB 설정과 격리한다.
  */
 @Configuration(proxyBeanMethods = false)
-@EnableAutoConfiguration
+@EnableAutoConfiguration(exclude = RedisChatMemoryRepositoryAutoConfiguration.class)
 @EntityScan(basePackageClasses = User.class)
 @EnableJpaRepositories(basePackageClasses = UserRepository.class)
 @EnableJpaAuditing
@@ -79,7 +84,11 @@ import org.testcontainers.utility.DockerImageName;
     OAuthLoginSuccessHandler.class,
     GoogleOAuthUserProfileMapper.class,
     KakaoOAuthUserProfileMapper.class,
-    OAuthAccountServiceImpl.class})
+    OAuthAccountServiceImpl.class,
+    OAuthWithdrawalServiceImpl.class,
+    OAuthWithdrawalTransactionService.class,
+    RestSocialAccountUnlinkClient.class,
+    OAuthWithdrawalRequestStore.class})
 public class AuthTestApplication {
 
   @Bean

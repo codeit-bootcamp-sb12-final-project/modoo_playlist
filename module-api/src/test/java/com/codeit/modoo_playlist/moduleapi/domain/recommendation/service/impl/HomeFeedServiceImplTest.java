@@ -32,13 +32,13 @@ class HomeFeedServiceImplTest {
 
   @Mock private RecommendationService recommendationService;
   @Mock private UserPreferenceTagService userPreferenceTagService;
-  @Mock private ApiWatchingSessionRepository apiWatchingSessionRepository;
+  @Mock private ApiWatchingSessionRepository watchingSessionRepository;
   @Mock private FollowRepository followRepository;
   @Mock private UserContentInteractionRepository userContentInteractionRepository;
 
   private HomeFeedServiceImpl service() {
     return new HomeFeedServiceImpl(
-        recommendationService, userPreferenceTagService, apiWatchingSessionRepository,
+        recommendationService, userPreferenceTagService, watchingSessionRepository,
         followRepository, userContentInteractionRepository);
   }
 
@@ -46,7 +46,7 @@ class HomeFeedServiceImplTest {
   void 로그인_사용자는_모든_행을_지정된_순서로_구성한다() {
     UUID userId = UUID.randomUUID();
     UUID tagId = UUID.randomUUID();
-    when(apiWatchingSessionRepository.findLiveWatchingContents(eq(PageRequest.of(0, 10))))
+    when(watchingSessionRepository.findLiveWatchingContents(eq(PageRequest.of(0, 10))))
         .thenReturn(List.of(content("함께보는 콘텐츠")));
     when(userPreferenceTagService.getMyPreferenceTags(userId, 5)).thenReturn(
         List.of(new UserPreferenceTagDto(tagId, "액션", TagKind.GENRE, new BigDecimal("1.0"))));
@@ -66,7 +66,7 @@ class HomeFeedServiceImplTest {
   @Test
   void 콘텐츠가_비어있는_행은_결과에서_빠진다() {
     UUID userId = UUID.randomUUID();
-    when(apiWatchingSessionRepository.findLiveWatchingContents(eq(PageRequest.of(0, 10)))).thenReturn(List.of());
+    when(watchingSessionRepository.findLiveWatchingContents(eq(PageRequest.of(0, 10)))).thenReturn(List.of());
     when(userPreferenceTagService.getMyPreferenceTags(userId, 5)).thenReturn(List.of());
     when(recommendationService.getRecommendationsForMe(userId, 10)).thenReturn(List.of(content("추천")));
     when(followRepository.findFolloweeIdsByFollowerId(userId)).thenReturn(List.of());
@@ -80,7 +80,7 @@ class HomeFeedServiceImplTest {
   @Test
   void 한_행에서_예외가_나도_나머지_행은_정상적으로_구성된다() {
     UUID userId = UUID.randomUUID();
-    when(apiWatchingSessionRepository.findLiveWatchingContents(eq(PageRequest.of(0, 10)))).thenReturn(List.of());
+    when(watchingSessionRepository.findLiveWatchingContents(eq(PageRequest.of(0, 10)))).thenReturn(List.of());
     when(userPreferenceTagService.getMyPreferenceTags(userId, 5)).thenReturn(List.of());
     when(recommendationService.getRecommendationsForMe(userId, 10))
         .thenThrow(new RuntimeException("추천 서비스 장애"));

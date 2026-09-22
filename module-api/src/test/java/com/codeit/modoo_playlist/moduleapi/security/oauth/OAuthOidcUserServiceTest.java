@@ -8,14 +8,10 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.codeit.modoo_playlist.core.domain.user.entity.Provider;
-import com.codeit.modoo_playlist.core.global.exception.BaseException;
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
-import com.codeit.modoo_playlist.moduleapi.domain.user.service.OAuthAccountService;
-import com.codeit.modoo_playlist.moduleapi.dto.oauth.OAuthAccountResult;
 import com.codeit.modoo_playlist.moduleapi.dto.oauth.OAuthUserProfile;
 import com.codeit.modoo_playlist.moduleapi.security.CodedAuthenticationException;
 import java.util.Map;
-import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,6 +21,7 @@ import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
@@ -33,8 +30,6 @@ class OAuthOidcUserServiceTest {
 
   @Mock
   OidcUserService delegate;
-  @Mock
-  OAuthAccountService accountService;
   @Mock
   GoogleOAuthUserProfileMapper googleProfileMapper;
   @Mock
@@ -45,6 +40,8 @@ class OAuthOidcUserServiceTest {
   ClientRegistration clientRegistration;
   @Mock
   OidcUser oidcUser;
+  @Mock
+  OAuth2AccessToken accessToken;
 
   private OAuthOidcUserService service;
 
@@ -52,7 +49,6 @@ class OAuthOidcUserServiceTest {
   void setUp() {
     service = new OAuthOidcUserService(
         delegate,
-        accountService,
         googleProfileMapper,
         kakaoProfileMapper
     );
@@ -61,19 +57,19 @@ class OAuthOidcUserServiceTest {
   @Test
   void logsInGoogleUser() {
     OAuthUserProfile profile = profile(Provider.GOOGLE);
-    UUID userId = UUID.randomUUID();
     Map<String, Object> claims = Map.of("sub", "provider-user-id");
     prepareProvider("google");
+    prepareAccessToken();
 
     when(oidcUser.getClaims()).thenReturn(claims);
     when(googleProfileMapper.map(claims)).thenReturn(profile);
-    when(accountService.resolveOrCreate(profile))
-        .thenReturn(new OAuthAccountResult(userId, false));
 
     OidcUser result = service.loadUser(userRequest);
 
     assertThat(result).isInstanceOf(OAuthUserPrincipal.class);
-    assertThat(((OAuthUserPrincipal) result).getUserId()).isEqualTo(userId);
+    assertThat(((OAuthUserPrincipal) result).getOAuthProfile()).isEqualTo(profile);
+    assertThat(((OAuthUserPrincipal) result).getProviderAccessToken())
+        .isEqualTo("provider-access-token");
     verify(googleProfileMapper).map(claims);
     verify(kakaoProfileMapper, never()).map(claims);
   }
@@ -81,19 +77,17 @@ class OAuthOidcUserServiceTest {
   @Test
   void logsInKakaoUser() {
     OAuthUserProfile profile = profile(Provider.KAKAO);
-    UUID userId = UUID.randomUUID();
     Map<String, Object> claims = Map.of("sub", "provider-user-id");
     prepareProvider("kakao");
+    prepareAccessToken();
 
     when(oidcUser.getClaims()).thenReturn(claims);
     when(kakaoProfileMapper.map(claims)).thenReturn(profile);
-    when(accountService.resolveOrCreate(profile))
-        .thenReturn(new OAuthAccountResult(userId, true));
 
     OidcUser result = service.loadUser(userRequest);
 
     assertThat(result).isInstanceOf(OAuthUserPrincipal.class);
-    assertThat(((OAuthUserPrincipal) result).getUserId()).isEqualTo(userId);
+    assertThat(((OAuthUserPrincipal) result).getOAuthProfile()).isEqualTo(profile);
     verify(kakaoProfileMapper).map(claims);
     verify(googleProfileMapper, never()).map(claims);
   }
@@ -107,41 +101,7 @@ class OAuthOidcUserServiceTest {
             assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.INVALID_REQUEST)
         );
 
-    verifyNoInteractions(googleProfileMapper, kakaoProfileMapper, accountService);
-  }
-
-  @Test
-  void convertsAccountFailureToAuthenticationFailure() {
-    OAuthUserProfile profile = profile(Provider.GOOGLE);
-    Map<String, Object> claims = Map.of("sub", "provider-user-id");
-    prepareProvider("google");
-
-    when(oidcUser.getClaims()).thenReturn(claims);
-    when(googleProfileMapper.map(claims)).thenReturn(profile);
-    when(accountService.resolveOrCreate(profile))
-        .thenThrow(new BaseException(ErrorCode.USER_ACCOUNT_LOCKED));
-
-    assertThatThrownBy(() -> service.loadUser(userRequest))
-        .isInstanceOfSatisfying(CodedAuthenticationException.class, exception ->
-            assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.USER_ACCOUNT_LOCKED)
-        );
-  }
-
-  @Test
-  void rejectsOAuthSignupWhenEmailAlreadyExists() {
-    OAuthUserProfile profile = profile(Provider.GOOGLE);
-    Map<String, Object> claims = Map.of("sub", "new-provider-user-id");
-    prepareProvider("google");
-
-    when(oidcUser.getClaims()).thenReturn(claims);
-    when(googleProfileMapper.map(claims)).thenReturn(profile);
-    when(accountService.resolveOrCreate(profile))
-        .thenThrow(new BaseException(ErrorCode.EMAIL_ALREADY_EXISTS));
-
-    assertThatThrownBy(() -> service.loadUser(userRequest))
-        .isInstanceOfSatisfying(CodedAuthenticationException.class, exception ->
-            assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.EMAIL_ALREADY_EXISTS)
-        );
+    verifyNoInteractions(googleProfileMapper, kakaoProfileMapper);
   }
 
   @Test
@@ -153,13 +113,18 @@ class OAuthOidcUserServiceTest {
     assertThatThrownBy(() -> service.loadUser(userRequest))
         .isSameAs(providerFailure);
 
-    verifyNoInteractions(googleProfileMapper, kakaoProfileMapper, accountService);
+    verifyNoInteractions(googleProfileMapper, kakaoProfileMapper);
   }
 
   private void prepareProvider(String registrationId) {
     when(delegate.loadUser(userRequest)).thenReturn(oidcUser);
     when(userRequest.getClientRegistration()).thenReturn(clientRegistration);
     when(clientRegistration.getRegistrationId()).thenReturn(registrationId);
+  }
+
+  private void prepareAccessToken() {
+    when(userRequest.getAccessToken()).thenReturn(accessToken);
+    when(accessToken.getTokenValue()).thenReturn("provider-access-token");
   }
 
   private OAuthUserProfile profile(Provider provider) {

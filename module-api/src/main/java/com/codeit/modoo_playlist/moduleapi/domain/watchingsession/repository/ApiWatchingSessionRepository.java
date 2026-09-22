@@ -6,12 +6,18 @@ import com.codeit.modoo_playlist.infra.repository.watchingsession.WatchingSessio
 import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.RecommendedContentDto;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.UUID;
 
 public interface ApiWatchingSessionRepository extends JpaRepository<WatchingSession, UUID>, WatchingSessionRepositoryCustom {
+
+    @Modifying(flushAutomatically = true)
+    @Query("delete from WatchingSession ws where ws.watcher.id = :userId")
+    int deleteAllByWatcherId(@Param("userId") UUID userId);
 
     @Query("""
         select new com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.RecommendedContentDto(

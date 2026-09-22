@@ -84,6 +84,14 @@ public class SecurityConfig {
             // 회원가입
             .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
 
+            // 회원 탈퇴 인증 방식 조회
+            .requestMatchers(HttpMethod.GET, "/api/users/me/withdrawal-info").authenticated()
+            .requestMatchers(HttpMethod.POST, "/api/users/me/withdraw").authenticated()
+            .requestMatchers(
+                HttpMethod.POST,
+                "/api/users/me/withdrawal/oauth2/authorization"
+            ).authenticated()
+
             // 사용자 수정
             .requestMatchers(HttpMethod.PATCH, "/api/users/*").authenticated()
 
@@ -93,6 +101,7 @@ public class SecurityConfig {
                 "/api/users/*/role",
                 "/api/users/*/locked"
             ).authenticated()
+            .requestMatchers(HttpMethod.DELETE, "/api/users/*/purge").authenticated()
 
             // 그 외 요청은 현재는 개발 편의를 위해 모두 허용
             .anyRequest().permitAll()

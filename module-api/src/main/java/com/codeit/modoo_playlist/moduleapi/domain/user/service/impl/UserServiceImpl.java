@@ -4,23 +4,35 @@ import com.codeit.modoo_playlist.core.domain.user.entity.User;
 import com.codeit.modoo_playlist.core.domain.user.entity.UserRole;
 import com.codeit.modoo_playlist.core.global.exception.BaseException;
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
-import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
+import com.codeit.modoo_playlist.core.global.security.LoginSessionStore;
 import com.codeit.modoo_playlist.moduleapi.domain.image.storage.ImageCategory;
 import com.codeit.modoo_playlist.moduleapi.domain.image.storage.ImageStorage;
+import com.codeit.modoo_playlist.moduleapi.domain.message.repository.MessageRepository;
+import com.codeit.modoo_playlist.moduleapi.domain.review.repository.ReviewRepository;
+import com.codeit.modoo_playlist.moduleapi.domain.user.repository.SocialAccountRepository;
+import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.query.UserQueryPage;
 import com.codeit.modoo_playlist.moduleapi.domain.user.service.UserService;
+import com.codeit.modoo_playlist.moduleapi.domain.watchingsession.repository.ApiWatchingSessionRepository;
 import com.codeit.modoo_playlist.moduleapi.dto.UserDto;
 import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserCreateRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserListRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserProfileUpdateRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.user.response.CursorResponseUserDto;
+import com.codeit.modoo_playlist.moduleapi.dto.user.response.WithdrawalInfoResponse;
+import com.codeit.modoo_playlist.moduleapi.dto.user.response.WithdrawalVerificationMethod;
 import com.codeit.modoo_playlist.moduleapi.mapper.UserMapper;
 import java.io.IOException;
-import com.codeit.modoo_playlist.core.global.security.LoginSessionStore;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,10 +45,20 @@ import org.springframework.web.multipart.MultipartFile;
 public class UserServiceImpl implements UserService {
 
   private final UserRepository userRepository;
+  private final SocialAccountRepository socialAccountRepository;
+  private final MessageRepository messageRepository;
+  private final ApiWatchingSessionRepository watchingSessionRepository;
+  private final ReviewRepository reviewRepository;
   private final PasswordEncoder passwordEncoder;
   private final UserMapper userMapper;
   private final LoginSessionStore loginSessionStore;
   private final ImageStorage imageStorage;
+
+  @Value("${user-deletion.retention:1d}")
+  private Duration userDeletionRetention = Duration.ofDays(1);
+
+  @Value("${user-deletion.zone:Asia/Seoul}")
+  private ZoneId userDeletionZone = ZoneId.of("Asia/Seoul");
 
   @Transactional
   @Override
@@ -84,6 +106,38 @@ public class UserServiceImpl implements UserService {
 
   @Transactional(readOnly = true)
   @Override
+  public WithdrawalInfoResponse getWithdrawalInfo(UUID userId) {
+    return socialAccountRepository.findByUserId(userId)
+        .map(socialAccount -> new WithdrawalInfoResponse(
+            WithdrawalVerificationMethod.OAUTH,
+            socialAccount.getProvider()
+        ))
+        .orElseGet(() -> new WithdrawalInfoResponse(
+            WithdrawalVerificationMethod.PASSWORD,
+            null
+        ));
+  }
+
+  @Transactional
+  @Override
+  public void withdraw(UUID userId, String password) {
+    User user = userRepository.findByIdForUpdate(userId)
+        .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+
+    if (user.getDeletedAt() != null) {
+      throw new BaseException(ErrorCode.USER_ACCOUNT_WITHDRAWN);
+    }
+
+    if (user.getPassword() == null || !passwordEncoder.matches(password, user.getPassword())) {
+      throw new BaseException(ErrorCode.INVALID_CURRENT_PASSWORD);
+    }
+
+    user.withdraw(Instant.now());
+    loginSessionStore.invalidateAll(userId);
+  }
+
+  @Transactional(readOnly = true)
+  @Override
   public CursorResponseUserDto getAllUsers(
       UserListRequest request
   ) {
@@ -91,6 +145,7 @@ public class UserServiceImpl implements UserService {
 
     List<UserDto> data = page.users().stream()
         .map(userMapper::toDto)
+        .map(this::withScheduledDeletionAt)
         .toList();
 
     return new CursorResponseUserDto(
@@ -102,6 +157,28 @@ public class UserServiceImpl implements UserService {
         request.sortBy(),
         request.sortDirection()
     );
+  }
+
+  @Transactional
+  @Override
+  public void purgeUser(UUID actorId, UUID userId) {
+    validateNotSelf(actorId, userId);
+
+    User user = userRepository.findByIdForUpdate(userId)
+        .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+
+    validateManageableUser(user);
+
+    if (user.getDeletedAt() == null) {
+      throw new BaseException(ErrorCode.USER_NOT_WITHDRAWN);
+    }
+
+    messageRepository.deleteAllByUserId(userId);
+    watchingSessionRepository.deleteAllByWatcherId(userId);
+    reviewRepository.deleteAllByAuthorId(userId);
+    userRepository.delete(user);
+    userRepository.flush();
+    loginSessionStore.invalidateAll(userId);
   }
 
   @Transactional
@@ -133,11 +210,15 @@ public class UserServiceImpl implements UserService {
   }
 
   private void registerImageRollbackCleanup(String imageUrl) {
-    if (!TransactionSynchronizationManager.isSynchronizationActive()) return;
+    if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+      return;
+    }
     TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
       @Override
       public void afterCompletion(int status) {
-        if (status != STATUS_ROLLED_BACK) return;
+        if (status != STATUS_ROLLED_BACK) {
+          return;
+        }
         deleteImageQuietly(imageUrl);
       }
     });
@@ -145,11 +226,15 @@ public class UserServiceImpl implements UserService {
 
   private void registerPreviousImageCleanup(String previousImageUrl, String newImageUrl) {
     if (previousImageUrl == null || Objects.equals(previousImageUrl, newImageUrl)
-        || !TransactionSynchronizationManager.isSynchronizationActive()) return;
+        || !TransactionSynchronizationManager.isSynchronizationActive()) {
+      return;
+    }
     TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
       @Override
       public void afterCompletion(int status) {
-        if (status != STATUS_COMMITTED) return;
+        if (status != STATUS_COMMITTED) {
+          return;
+        }
         deleteImageQuietly(previousImageUrl);
       }
     });
@@ -234,6 +319,37 @@ public class UserServiceImpl implements UserService {
     if (!Objects.equals(actorId, userId)) {
       throw new BaseException(ErrorCode.ACCESS_DENIED);
     }
+  }
+
+  private UserDto withScheduledDeletionAt(UserDto user) {
+    Instant scheduledAt = calculateScheduledDeletionAt(user.deletedAt());
+    return new UserDto(
+        user.id(),
+        user.email(),
+        user.name(),
+        user.profileImageUrl(),
+        user.role(),
+        user.locked(),
+        user.createdAt(),
+        user.deletedAt(),
+        scheduledAt
+    );
+  }
+
+  private Instant calculateScheduledDeletionAt(Instant deletedAt) {
+    if (deletedAt == null) {
+      return null;
+    }
+
+    ZonedDateTime eligibleAt = deletedAt.plus(userDeletionRetention).atZone(userDeletionZone);
+    if (eligibleAt.toLocalTime().equals(LocalTime.MIDNIGHT)) {
+      return eligibleAt.toInstant();
+    }
+
+    return eligibleAt.toLocalDate()
+        .plusDays(1)
+        .atStartOfDay(userDeletionZone)
+        .toInstant();
   }
 
   //  BOT은 권한 변경 막음

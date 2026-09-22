@@ -1,8 +1,8 @@
 package com.codeit.modoo_playlist.moduleapi.security.oauth;
 
+import com.codeit.modoo_playlist.moduleapi.dto.oauth.OAuthUserProfile;
 import java.util.Collection;
 import java.util.Map;
-import java.util.UUID;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
@@ -10,16 +10,26 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
 public class OAuthUserPrincipal implements OidcUser {
 
-  private final UUID userId;
+  private final OAuthUserProfile profile;
+  private final String providerAccessToken;
   private final OidcUser delegate;
 
-  public OAuthUserPrincipal(UUID userId, OidcUser delegate) {
-    this.userId = userId;
+  public OAuthUserPrincipal(
+      OAuthUserProfile profile,
+      String providerAccessToken,
+      OidcUser delegate
+  ) {
+    this.profile = profile;
+    this.providerAccessToken = providerAccessToken;
     this.delegate = delegate;
   }
 
-  public UUID getUserId() {
-    return userId;
+  public OAuthUserProfile getOAuthProfile() {
+    return profile;
+  }
+
+  public String getProviderAccessToken() {
+    return providerAccessToken;
   }
 
   @Override
