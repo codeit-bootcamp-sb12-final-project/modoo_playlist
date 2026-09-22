@@ -60,7 +60,7 @@ public class WatchingSessionCommandService {
                 .build();
 
         // 새 세션 저장
-        watchingSessionRepository.saveAndFlush(session);
+        watchingSessionRepository.save(session);
 
         // 팔로워에게 "실시간 시청 시작" 알림을 보내기 위한 이벤트 발행
         eventPublisher.publishEvent(
@@ -142,7 +142,6 @@ public class WatchingSessionCommandService {
             );
 
             session.end(lastSeenAt);
-            watchingSessionRepository.flush();
 
             Content content = session.getContent();
             ContentSummaryResponse summary = contentSummaryMapper.toSummary(

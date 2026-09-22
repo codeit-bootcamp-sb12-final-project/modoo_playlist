@@ -1,4 +1,4 @@
-INSATNCE_ID: realtime-prod-1
+INSTANCE_ID: realtime-prod-1
 
 spring:
   config:
