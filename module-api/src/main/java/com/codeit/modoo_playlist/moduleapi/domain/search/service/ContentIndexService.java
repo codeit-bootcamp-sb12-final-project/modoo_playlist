@@ -2,6 +2,8 @@ package com.codeit.modoo_playlist.moduleapi.domain.search.service;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
+import co.elastic.clients.elasticsearch.core.BulkRequest;
+import co.elastic.clients.elasticsearch.core.BulkResponse;
 import com.codeit.modoo_playlist.moduleapi.domain.search.document.ContentDocument;
 import com.codeit.modoo_playlist.moduleapi.domain.search.repository.ContentIndexReader;
 import com.codeit.modoo_playlist.moduleapi.domain.search.repository.ContentSearchRepository;
@@ -130,15 +132,22 @@ public class ContentIndexService {
       }
 
       try {
+        BulkRequest.Builder bulkRequest = new BulkRequest.Builder();
+
         for (ContentDocument document : documents) {
-          elasticsearchClient.index(request -> request
+          bulkRequest.operations(operation -> operation.index(index -> index
               .index(indexName)
               .id(document.getId())
-              .document(document));
+              .document(document)));
+        }
+
+        BulkResponse response = elasticsearchClient.bulk(bulkRequest.build());
+
+        if (response.errors()) {
+          throw new IllegalStateException("ES 콘텐츠 Bulk 색인에 실패했습니다. index=" + indexName);
         }
       } catch (IOException exception) {
-        throw new IllegalStateException(
-            "ES 콘텐츠 색인 요청에 실패했습니다. index=" + indexName, exception);
+        throw new IllegalStateException("ES 콘텐츠 색인 요청에 실패했습니다. index=" + indexName, exception);
       }
 
       return documents;
