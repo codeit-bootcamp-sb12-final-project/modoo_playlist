@@ -44,15 +44,14 @@ class GetUserPreferenceToolTest {
   }
 
   @Test
-  void 조회_중_예외가_나면_빈_리스트를_반환한다() {
+  void 조회_중_예외가_나면_삼키지_않고_전파한다() {
     UUID userId = UUID.randomUUID();
     ToolContext toolContext = new ToolContext(Map.of(ChatToolContext.USER_ID, userId));
     when(userPreferenceTagService.getMyPreferenceTags(userId, 5))
         .thenThrow(new RuntimeException("DB 장애"));
 
-    List<UserPreferenceTagDto> result =
-        new GetUserPreferenceTool(userPreferenceTagService).getUserPreference(toolContext);
-
-    assertThat(result).isEmpty();
+    assertThatThrownBy(
+        () -> new GetUserPreferenceTool(userPreferenceTagService).getUserPreference(toolContext))
+        .hasMessage("DB 장애");
   }
 }

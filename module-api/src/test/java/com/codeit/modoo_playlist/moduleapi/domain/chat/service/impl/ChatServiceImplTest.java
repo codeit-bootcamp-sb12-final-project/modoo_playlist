@@ -22,10 +22,13 @@ import com.codeit.modoo_playlist.moduleapi.domain.chat.exception.ChatAccessDenie
 import com.codeit.modoo_playlist.moduleapi.domain.chat.exception.ChatNotFoundException;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.ChatToolContext;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.ContentCardCollector;
+import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.GetContentDetailTool;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.GetPersonalizedRecommendationsTool;
+import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.GetTrendingTool;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.GetUserPreferenceTool;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.RecommendContentsTool;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.SearchContentsTool;
+import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.SummarizeReviewsTool;
 import com.codeit.modoo_playlist.moduleapi.domain.conversation.repository.ConversationRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.message.repository.MessageRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
@@ -54,6 +57,9 @@ class ChatServiceImplTest {
   @Mock private RecommendContentsTool recommendContentsTool;
   @Mock private GetUserPreferenceTool getUserPreferenceTool;
   @Mock private GetPersonalizedRecommendationsTool getPersonalizedRecommendationsTool;
+  @Mock private GetTrendingTool getTrendingTool;
+  @Mock private SummarizeReviewsTool summarizeReviewsTool;
+  @Mock private GetContentDetailTool getContentDetailTool;
   @Mock private ConversationRepository conversationRepository;
   @Mock private UserRepository userRepository;
   @Mock private MessageRepository messageRepository;
@@ -61,7 +67,8 @@ class ChatServiceImplTest {
   private ChatServiceImpl service() {
     return new ChatServiceImpl(
         chatClient, searchContentsTool, recommendContentsTool, getUserPreferenceTool,
-        getPersonalizedRecommendationsTool, conversationRepository, userRepository, messageRepository);
+        getPersonalizedRecommendationsTool, getTrendingTool, summarizeReviewsTool, getContentDetailTool,
+        conversationRepository, userRepository, messageRepository);
   }
 
   @Test

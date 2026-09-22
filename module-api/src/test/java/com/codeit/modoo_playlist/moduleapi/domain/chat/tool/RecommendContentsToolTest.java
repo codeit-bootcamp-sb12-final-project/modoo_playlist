@@ -1,9 +1,12 @@
 package com.codeit.modoo_playlist.moduleapi.domain.chat.tool;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.codeit.modoo_playlist.core.global.exception.BaseException;
+import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.ContentDetailDto;
 import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.RecommendedContentDto;
 import com.codeit.modoo_playlist.moduleapi.domain.recommendation.service.RecommendationService;
@@ -60,14 +63,35 @@ class RecommendContentsToolTest {
   }
 
   @Test
-  void 조회_중_예외가_나면_빈_리스트를_반환한다() {
+  void 기준_콘텐츠가_없으면_빈_리스트를_반환한다() {
     UUID contentId = UUID.randomUUID();
     when(recommendationService.getSimilarContents(contentId, 5))
-        .thenThrow(new RuntimeException("DB 장애"));
+        .thenThrow(new BaseException(ErrorCode.CONTENT_NOT_FOUND));
 
     List<ContentDetailDto> result = tool().recommendContents(contentId.toString(), emptyContext);
 
     assertThat(result).isEmpty();
     verifyNoInteractions(contentDetailResolver);
+  }
+
+  @Test
+  void 그_외_예외는_삼키지_않고_전파한다() {
+    UUID contentId = UUID.randomUUID();
+    when(recommendationService.getSimilarContents(contentId, 5))
+        .thenThrow(new RuntimeException("DB 장애"));
+
+    assertThatThrownBy(() -> tool().recommendContents(contentId.toString(), emptyContext))
+        .hasMessage("DB 장애");
+    verifyNoInteractions(contentDetailResolver);
+  }
+
+  @Test
+  void 다른_BaseException도_삼키지_않고_전파한다() {
+    UUID contentId = UUID.randomUUID();
+    when(recommendationService.getSimilarContents(contentId, 5))
+        .thenThrow(new BaseException(ErrorCode.INTERNAL_SERVER_ERROR));
+
+    assertThatThrownBy(() -> tool().recommendContents(contentId.toString(), emptyContext))
+        .isInstanceOf(BaseException.class);
   }
 }

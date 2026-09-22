@@ -1,5 +1,7 @@
 package com.codeit.modoo_playlist.moduleapi.domain.chat.tool;
 
+import com.codeit.modoo_playlist.core.global.exception.BaseException;
+import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.ContentDetailDto;
 import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.RecommendedContentDto;
 import com.codeit.modoo_playlist.moduleapi.domain.recommendation.service.RecommendationService;
@@ -32,8 +34,9 @@ public class RecommendContentsTool {
       @ToolParam(description = "기준이 되는 콘텐츠 ID (UUID)") String contentId,
       ToolContext toolContext
   ) {
-    UUID id = parseContentId(contentId);
+    UUID id = ChatToolContext.parseUuid(contentId);
     if (id == null) {
+      log.warn("recommend_contents 호출: contentId가 없거나 형식이 올바르지 않습니다. value={}", contentId);
       return List.of();
     }
     log.info("recommend_contents 호출: contentId={}", id);
@@ -41,25 +44,14 @@ public class RecommendContentsTool {
     List<RecommendedContentDto> result;
     try {
       result = recommendationService.getSimilarContents(id, DEFAULT_LIMIT);
-    } catch (Exception e) {
-      log.error("recommend_contents 조회 실패: contentId={}", id, e);
-      return List.of();
+    } catch (BaseException e) {
+      if (e.getErrorCode() == ErrorCode.CONTENT_NOT_FOUND) {
+        return List.of();
+      }
+      throw e;
     }
     log.info("recommend_contents 결과: {}건", result.size());
 
     return contentDetailResolver.resolve(result, toolContext);
-  }
-
-  private UUID parseContentId(String contentId) {
-    if (contentId == null) {
-      log.warn("recommend_contents 호출: contentId가 없습니다");
-      return null;
-    }
-    try {
-      return UUID.fromString(contentId);
-    } catch (IllegalArgumentException e) {
-      log.warn("recommend_contents 호출: contentId 형식이 올바르지 않습니다. value={}", contentId);
-      return null;
-    }
   }
 }
