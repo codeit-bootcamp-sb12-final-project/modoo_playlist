@@ -9,7 +9,7 @@ import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.HomeRowDto;
 import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.RecommendedContentDto;
 import com.codeit.modoo_playlist.moduleapi.domain.recommendation.service.HomeFeedService;
 import com.codeit.modoo_playlist.moduleapi.domain.recommendation.service.RecommendationService;
-import com.codeit.modoo_playlist.moduleapi.domain.watchingsession.repository.WatchingSessionRepository;
+import com.codeit.modoo_playlist.moduleapi.domain.watchingsession.repository.ApiWatchingSessionRepository;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -33,7 +33,7 @@ public class HomeFeedServiceImpl implements HomeFeedService {
 
   private final RecommendationService recommendationService;
   private final UserPreferenceTagService userPreferenceTagService;
-  private final WatchingSessionRepository watchingSessionRepository;
+  private final ApiWatchingSessionRepository apiWatchingSessionRepository;
   private final FollowRepository followRepository;
   private final UserContentInteractionRepository userContentInteractionRepository;
 
@@ -62,7 +62,7 @@ public class HomeFeedServiceImpl implements HomeFeedService {
   }
 
   private HomeRowDto liveWatchingRow() {
-    List<RecommendedContentDto> contents = watchingSessionRepository
+    List<RecommendedContentDto> contents = apiWatchingSessionRepository
         .findLiveWatchingContents(PageRequest.of(0, ROW_LIMIT));
     if (contents.isEmpty()) {
       return null;

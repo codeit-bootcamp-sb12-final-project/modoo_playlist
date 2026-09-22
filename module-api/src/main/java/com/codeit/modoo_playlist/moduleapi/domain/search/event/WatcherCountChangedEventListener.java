@@ -6,9 +6,9 @@ import java.io.IOException;
 import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.annotation.Async;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
+import com.codeit.modoo_playlist.infra.event.kafka.WatcherCountChangedEvent;
 
 @Slf4j
 @Component
@@ -20,8 +20,12 @@ public class WatcherCountChangedEventListener {
 
   private final ContentIndexService contentIndexService;
 
-  @Async("searchAsyncExecutor")
-  @EventListener
+//  @Async("searchAsyncExecutor")
+//  @EventListener
+  @KafkaListener( // realtimemodule에서 신호를 받아서 수행해야함.
+          topics = WatcherCountChangedEvent.TOPIC,
+          groupId = "api-watcher-count-index"
+  )
   public void handle(WatcherCountChangedEvent event) {
     for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
       try {

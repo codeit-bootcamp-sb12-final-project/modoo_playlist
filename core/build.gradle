@@ -20,4 +20,7 @@ dependencies {
 
     // @Schema
     implementation 'io.swagger.core.v3:swagger-annotations-jakarta:2.2.55'
+
+    // validation
+    implementation 'jakarta.validation:jakarta.validation-api'
 }

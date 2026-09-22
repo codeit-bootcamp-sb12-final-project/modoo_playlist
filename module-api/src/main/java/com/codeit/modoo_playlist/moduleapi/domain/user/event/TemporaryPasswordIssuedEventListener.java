@@ -1,7 +1,7 @@
 package com.codeit.modoo_playlist.moduleapi.domain.user.event;
 
 import com.codeit.modoo_playlist.moduleapi.domain.user.service.TemporaryPasswordSender;
-import com.codeit.modoo_playlist.moduleapi.security.jwt.LoginSessionStore;
+import com.codeit.modoo_playlist.core.global.security.LoginSessionStore;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

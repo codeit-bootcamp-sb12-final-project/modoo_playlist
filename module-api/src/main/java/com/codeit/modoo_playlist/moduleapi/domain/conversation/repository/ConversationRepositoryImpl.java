@@ -6,7 +6,7 @@ import com.codeit.modoo_playlist.core.domain.message.entity.QMessage;
 import com.codeit.modoo_playlist.core.domain.user.entity.QUser;
 import com.codeit.modoo_playlist.core.domain.user.entity.User;
 import com.codeit.modoo_playlist.moduleapi.dto.ConversationDto;
-import com.codeit.modoo_playlist.moduleapi.dto.conversation.request.SliceCursorRequest;
+import com.codeit.modoo_playlist.core.global.common.dto.base.SliceCursorRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.conversation.response.CursorResponseConversationDto;
 import com.codeit.modoo_playlist.moduleapi.mapper.ConversationMapper;
 import com.querydsl.core.Tuple;
@@ -16,7 +16,6 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
-import javax.swing.*;
 import java.time.Instant;
 import java.util.*;
 

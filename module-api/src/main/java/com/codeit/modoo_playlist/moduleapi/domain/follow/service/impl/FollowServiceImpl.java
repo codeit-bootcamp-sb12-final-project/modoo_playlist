@@ -1,6 +1,7 @@
 package com.codeit.modoo_playlist.moduleapi.domain.follow.service.impl;
 
 import com.codeit.modoo_playlist.core.domain.follow.entity.Follow;
+import com.codeit.modoo_playlist.core.domain.user.dto.UserSummaryResponse;
 import com.codeit.modoo_playlist.core.domain.user.entity.User;
 import com.codeit.modoo_playlist.core.global.exception.BaseException;
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
@@ -21,7 +22,6 @@ import java.util.stream.Collectors;
 import com.codeit.modoo_playlist.moduleapi.dto.follow.request.FollowListRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.follow.response.FollowMemberCursorResponse;
 import com.codeit.modoo_playlist.moduleapi.dto.follow.response.FollowMemberResponse;
-import com.codeit.modoo_playlist.moduleapi.dto.user.response.UserSummaryResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;

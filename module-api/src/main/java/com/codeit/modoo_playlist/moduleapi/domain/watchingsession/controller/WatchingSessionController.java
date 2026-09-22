@@ -1,9 +1,9 @@
 package com.codeit.modoo_playlist.moduleapi.domain.watchingsession.controller;
 
+import com.codeit.modoo_playlist.core.domain.watchingSession.dto.WatchingSessionDto;
 import com.codeit.modoo_playlist.moduleapi.domain.watchingsession.service.WatchingSessionService;
-import com.codeit.modoo_playlist.moduleapi.dto.WatchingSessionDto;
-import com.codeit.modoo_playlist.moduleapi.dto.conversation.request.SliceCursorRequest;
-import com.codeit.modoo_playlist.moduleapi.dto.watchingsession.response.CursorResponseWatchingSessionDto;
+import com.codeit.modoo_playlist.core.global.common.dto.base.SliceCursorRequest;
+import com.codeit.modoo_playlist.core.domain.watchingSession.dto.CursorResponseWatchingSessionDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

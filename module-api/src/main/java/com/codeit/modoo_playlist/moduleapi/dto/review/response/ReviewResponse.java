@@ -1,6 +1,6 @@
 package com.codeit.modoo_playlist.moduleapi.dto.review.response;
 
-import com.codeit.modoo_playlist.moduleapi.dto.user.response.UserSummaryResponse;
+import com.codeit.modoo_playlist.core.domain.user.dto.UserSummaryResponse;
 
 import java.math.BigDecimal;
 import java.util.UUID;

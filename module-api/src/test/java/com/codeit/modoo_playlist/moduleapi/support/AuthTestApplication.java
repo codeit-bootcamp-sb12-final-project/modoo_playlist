@@ -25,7 +25,7 @@ import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtAuthenticationFilter;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtLoginSuccessHandler;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtLogoutHandler;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtTokenProvider;
-import com.codeit.modoo_playlist.moduleapi.security.jwt.RedisLoginSessionStore;
+import com.codeit.modoo_playlist.infra.store.RedisLoginSessionStore;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.RefreshTokenHasher;
 import com.codeit.modoo_playlist.moduleapi.security.oauth.GoogleOAuthUserProfileMapper;
 import com.codeit.modoo_playlist.moduleapi.security.oauth.KakaoOAuthUserProfileMapper;

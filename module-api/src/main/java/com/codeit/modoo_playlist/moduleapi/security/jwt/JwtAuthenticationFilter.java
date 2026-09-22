@@ -2,7 +2,7 @@ package com.codeit.modoo_playlist.moduleapi.security.jwt;
 
 import com.codeit.modoo_playlist.core.global.exception.BaseException;
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
-import com.codeit.modoo_playlist.moduleapi.dto.jwt.LoginSession;
+import com.codeit.modoo_playlist.core.global.security.LoginSession;
 import com.codeit.modoo_playlist.moduleapi.security.LoginCredentialType;
 import com.codeit.modoo_playlist.moduleapi.security.SecurityErrorResponseWriter;
 import com.codeit.modoo_playlist.moduleapi.security.UserDetails;
@@ -33,7 +33,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   private final JwtTokenProvider tokenProvider;
   private final UserDetailsService userDetailsService;
   private final SecurityErrorResponseWriter errorResponseWriter;
-  private final LoginSessionStore loginSessionStore;
+  private final com.codeit.modoo_playlist.core.global.security.LoginSessionStore loginSessionStore;
   private final RoleHierarchy roleHierarchy;
 
   @Override

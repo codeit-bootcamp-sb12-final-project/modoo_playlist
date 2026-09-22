@@ -17,7 +17,7 @@ import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository
 import com.codeit.modoo_playlist.moduleapi.dto.review.request.ReviewListRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.review.response.ReviewCursorResponse;
 import com.codeit.modoo_playlist.moduleapi.dto.review.response.ReviewResponse;
-import com.codeit.modoo_playlist.moduleapi.dto.user.response.UserSummaryResponse;
+import com.codeit.modoo_playlist.core.domain.user.dto.UserSummaryResponse;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;

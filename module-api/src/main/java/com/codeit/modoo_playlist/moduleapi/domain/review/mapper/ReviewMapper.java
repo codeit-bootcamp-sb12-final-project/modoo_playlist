@@ -4,7 +4,7 @@ import com.codeit.modoo_playlist.core.domain.review.entity.Review;
 import com.codeit.modoo_playlist.moduleapi.domain.review.repository.query.ReviewQueryPage;
 import com.codeit.modoo_playlist.moduleapi.dto.review.response.ReviewCursorResponse;
 import com.codeit.modoo_playlist.moduleapi.dto.review.response.ReviewResponse;
-import com.codeit.modoo_playlist.moduleapi.dto.user.response.UserSummaryResponse;
+import com.codeit.modoo_playlist.core.domain.user.dto.UserSummaryResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

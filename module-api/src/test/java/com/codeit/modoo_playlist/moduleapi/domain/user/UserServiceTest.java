@@ -21,7 +21,7 @@ import com.codeit.modoo_playlist.moduleapi.dto.UserDto;
 import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserCreateRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserProfileUpdateRequest;
 import com.codeit.modoo_playlist.moduleapi.mapper.UserMapper;
-import com.codeit.modoo_playlist.moduleapi.security.jwt.LoginSessionStore;
+import com.codeit.modoo_playlist.core.global.security.LoginSessionStore;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;

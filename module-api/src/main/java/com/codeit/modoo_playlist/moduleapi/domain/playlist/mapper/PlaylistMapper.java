@@ -7,10 +7,10 @@ import org.mapstruct.Mapping;
 
 import com.codeit.modoo_playlist.core.domain.playlist.entity.Playlist;
 import com.codeit.modoo_playlist.moduleapi.domain.playlist.repository.query.PlaylistQueryPage;
-import com.codeit.modoo_playlist.moduleapi.dto.content.response.ContentSummaryResponse;
+import com.codeit.modoo_playlist.core.domain.content.dto.ContentSummaryResponse;
 import com.codeit.modoo_playlist.moduleapi.dto.playlist.response.PlaylistCursorResponse;
 import com.codeit.modoo_playlist.moduleapi.dto.playlist.response.PlaylistResponse;
-import com.codeit.modoo_playlist.moduleapi.dto.user.response.UserSummaryResponse;
+import com.codeit.modoo_playlist.core.domain.user.dto.UserSummaryResponse;
 
 @Mapper(componentModel = "spring")
 public interface PlaylistMapper {

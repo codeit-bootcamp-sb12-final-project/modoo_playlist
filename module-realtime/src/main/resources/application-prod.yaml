@@ -1,0 +1,10 @@
+INSATNCE_ID: realtime-prod-1
+
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+
