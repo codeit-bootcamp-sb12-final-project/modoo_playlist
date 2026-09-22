@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.codeit.modoo_playlist.infra.mapper.ContentSummaryMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -31,7 +32,6 @@ import com.codeit.modoo_playlist.core.domain.playlist.entity.PlaylistSubscriptio
 import com.codeit.modoo_playlist.core.domain.user.entity.User;
 import com.codeit.modoo_playlist.core.global.exception.BaseException;
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
-import com.codeit.modoo_playlist.moduleapi.domain.content.mapper.ContentMapper;
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.jpa.ContentRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.jpa.ContentTagRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.notification.event.PlaylistContentAddedEvent;
@@ -44,11 +44,11 @@ import com.codeit.modoo_playlist.moduleapi.domain.playlist.repository.PlaylistSu
 import com.codeit.modoo_playlist.moduleapi.domain.playlist.repository.query.PlaylistListCondition;
 import com.codeit.modoo_playlist.moduleapi.domain.playlist.repository.query.PlaylistQueryPage;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
-import com.codeit.modoo_playlist.moduleapi.dto.content.response.ContentSummaryResponse;
+import com.codeit.modoo_playlist.core.domain.content.dto.ContentSummaryResponse;
 import com.codeit.modoo_playlist.moduleapi.dto.playlist.request.PlaylistListRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.playlist.response.PlaylistCursorResponse;
 import com.codeit.modoo_playlist.moduleapi.dto.playlist.response.PlaylistResponse;
-import com.codeit.modoo_playlist.moduleapi.dto.user.response.UserSummaryResponse;
+import com.codeit.modoo_playlist.core.domain.user.dto.UserSummaryResponse;
 
 @ExtendWith(MockitoExtension.class)
 class PlaylistServiceImplTest {
@@ -60,7 +60,7 @@ class PlaylistServiceImplTest {
     @Mock private ContentRepository contentRepository;
     @Mock private ContentTagRepository contentTagRepository;
     @Mock private PlaylistMapper playlistMapper;
-    @Mock private ContentMapper contentMapper;
+    @Mock private ContentSummaryMapper contentMapper;
     @Mock private ApplicationEventPublisher eventPublisher;
     @InjectMocks private PlaylistServiceImpl playlistService;
 

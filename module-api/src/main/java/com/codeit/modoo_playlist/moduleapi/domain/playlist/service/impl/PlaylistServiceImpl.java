@@ -10,7 +10,7 @@ import com.codeit.modoo_playlist.core.domain.playlist.entity.PlaylistSubscriptio
 import com.codeit.modoo_playlist.core.domain.user.entity.User;
 import com.codeit.modoo_playlist.core.global.exception.BaseException;
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
-import com.codeit.modoo_playlist.moduleapi.domain.content.mapper.ContentMapper;
+import com.codeit.modoo_playlist.infra.mapper.ContentSummaryMapper;
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.jpa.ContentRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.jpa.ContentTagRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.notification.event.PlaylistContentAddedEvent;
@@ -24,11 +24,11 @@ import com.codeit.modoo_playlist.moduleapi.domain.playlist.repository.query.Play
 import com.codeit.modoo_playlist.moduleapi.domain.playlist.repository.query.PlaylistQueryPage;
 import com.codeit.modoo_playlist.moduleapi.domain.playlist.service.PlaylistService;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
-import com.codeit.modoo_playlist.moduleapi.dto.content.response.ContentSummaryResponse;
+import com.codeit.modoo_playlist.core.domain.content.dto.ContentSummaryResponse;
 import com.codeit.modoo_playlist.moduleapi.dto.playlist.request.PlaylistListRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.playlist.response.PlaylistCursorResponse;
 import com.codeit.modoo_playlist.moduleapi.dto.playlist.response.PlaylistResponse;
-import com.codeit.modoo_playlist.moduleapi.dto.user.response.UserSummaryResponse;
+import com.codeit.modoo_playlist.core.domain.user.dto.UserSummaryResponse;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -51,7 +51,7 @@ public class PlaylistServiceImpl implements PlaylistService {
     private final ContentRepository contentRepository;
     private final ContentTagRepository contentTagRepository;
     private final PlaylistMapper playlistMapper;
-    private final ContentMapper contentMapper;
+    private final ContentSummaryMapper contentMapper;
     private final ApplicationEventPublisher eventPublisher;
 
     @Override
@@ -142,6 +142,7 @@ public class PlaylistServiceImpl implements PlaylistService {
                 .build();
 
         playlistSubscriptionRepository.save(subscription);
+        playlist.increaseSubscriberCount();
 
         eventPublisher.publishEvent(new PlaylistSubscribedEvent(playlistId, playlist.getOwnerId(), subscriberId));
     }
@@ -149,12 +150,16 @@ public class PlaylistServiceImpl implements PlaylistService {
     @Override
     @Transactional
     public void unsubscribe(UUID playlistId, UUID subscriberId) {
+        Playlist playlist = playlistRepository.findById(playlistId)
+                .orElseThrow(() -> new BaseException(ErrorCode.PLAYLIST_NOT_FOUND));
+
         PlaylistSubscriptionId id = new PlaylistSubscriptionId(playlistId, subscriberId);
 
         PlaylistSubscription subscription = playlistSubscriptionRepository.findById(id)
                 .orElseThrow(() -> new BaseException(ErrorCode.PLAYLIST_SUBSCRIPTION_NOT_FOUND));
 
         playlistSubscriptionRepository.delete(subscription);
+        playlist.decreaseSubscriberCount();
     }
 
     @Override
@@ -299,6 +304,7 @@ public class PlaylistServiceImpl implements PlaylistService {
         return switch (sortBy) {
             case "updatedAt" -> PlaylistListCondition.SortType.UPDATED_AT;
             case "createdAt" -> PlaylistListCondition.SortType.CREATED_AT;
+            case "subscribeCount" -> PlaylistListCondition.SortType.SUBSCRIBER_COUNT;
             default -> throw new IllegalArgumentException("지원하지 않는 sortBy 값입니다: " + sortBy);
         };
     }

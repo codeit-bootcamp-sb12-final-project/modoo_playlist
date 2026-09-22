@@ -12,7 +12,7 @@ import com.codeit.modoo_playlist.moduleapi.domain.message.repository.MessageRepo
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
 import com.codeit.modoo_playlist.moduleapi.dto.ConversationDto;
 import com.codeit.modoo_playlist.moduleapi.dto.conversation.request.ConversationCreateRequest;
-import com.codeit.modoo_playlist.moduleapi.dto.conversation.request.SliceCursorRequest;
+import com.codeit.modoo_playlist.core.global.common.dto.base.SliceCursorRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.conversation.response.CursorResponseConversationDto;
 import com.codeit.modoo_playlist.moduleapi.dto.conversation.response.CursorResponseMessageDto;
 import com.codeit.modoo_playlist.moduleapi.mapper.ConversationMapper;

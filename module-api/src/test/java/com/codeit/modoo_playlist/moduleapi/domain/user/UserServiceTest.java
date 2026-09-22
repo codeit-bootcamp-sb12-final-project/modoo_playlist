@@ -21,6 +21,8 @@ import com.codeit.modoo_playlist.moduleapi.domain.review.repository.ReviewReposi
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.SocialAccountRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.query.UserQueryPage;
+import com.codeit.modoo_playlist.moduleapi.domain.image.storage.ImageCategory;
+import com.codeit.modoo_playlist.moduleapi.domain.image.storage.ImageStorage;
 import com.codeit.modoo_playlist.moduleapi.domain.user.service.impl.UserServiceImpl;
 import com.codeit.modoo_playlist.moduleapi.domain.watchingsession.repository.WatchingSessionRepository;
 import com.codeit.modoo_playlist.moduleapi.dto.UserDto;
@@ -31,7 +33,7 @@ import com.codeit.modoo_playlist.moduleapi.dto.user.response.CursorResponseUserD
 import com.codeit.modoo_playlist.moduleapi.dto.user.response.WithdrawalInfoResponse;
 import com.codeit.modoo_playlist.moduleapi.dto.user.response.WithdrawalVerificationMethod;
 import com.codeit.modoo_playlist.moduleapi.mapper.UserMapper;
-import com.codeit.modoo_playlist.moduleapi.security.jwt.LoginSessionStore;
+import com.codeit.modoo_playlist.core.global.security.LoginSessionStore;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
@@ -78,6 +80,9 @@ class UserServiceTest {
   @Mock
   LoginSessionStore loginSessionStore;
 
+  @Mock
+  ImageStorage imageStorage;
+
   private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
   private UUID userId;
   private UserServiceImpl service;
@@ -102,7 +107,8 @@ class UserServiceTest {
         reviewRepository,
         encoder,
         Mappers.getMapper(UserMapper.class),
-        loginSessionStore
+        loginSessionStore,
+        imageStorage
     );
   }
 
@@ -271,18 +277,20 @@ class UserServiceTest {
 
   @Test
   @DisplayName("이미지 변경 프로필 수정")
-  void updateNameAndImage() {
+  void updateNameAndImage() throws Exception {
     when(userRepository.findById(userId)).thenReturn(Optional.of(existingUser));
 
     MockMultipartFile image =
         new MockMultipartFile("image", "new.png", "image/png", new byte[]{1, 2, 3});
+    String storedUrl = "/files/users/profiles/new.png";
+    when(imageStorage.store(image, ImageCategory.USER_PROFILE)).thenReturn(storedUrl);
 
     UserDto result = service.updateUser(userId, userId, updateRequest, image);
 
     assertThat(existingUser.getUsername()).isEqualTo(CHANGED_USERNAME);
-    assertThat(existingUser.getProfileImageUrl()).isEqualTo("new.png");
+    assertThat(existingUser.getProfileImageUrl()).isEqualTo(storedUrl);
     assertThat(result.name()).isEqualTo(CHANGED_USERNAME);
-    assertThat(result.profileImageUrl()).isEqualTo("new.png");
+    assertThat(result.profileImageUrl()).isEqualTo(storedUrl);
     assertUnchangedAccountFields(existingUser);
   }
 

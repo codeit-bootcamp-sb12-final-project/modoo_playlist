@@ -8,9 +8,9 @@ import com.codeit.modoo_playlist.moduleapi.domain.recommendation.service.Recomme
 import com.codeit.modoo_playlist.moduleapi.security.UserDetails;
 import jakarta.validation.Valid;
 import java.util.List;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -32,9 +32,9 @@ public class RecommendationController {
         recommendationService.getSimilarContents(query.contentId(), query.limit()));
   }
 
+  @PreAuthorize("hasRole('USER')")
   @GetMapping("/home")
   public ResponseEntity<HomeFeedResponse> getHomeFeed(@AuthenticationPrincipal UserDetails user) {
-    UUID userId = user != null ? user.getUserDto().id() : null;
-    return ResponseEntity.ok(homeFeedService.getHomeFeed(userId));
+    return ResponseEntity.ok(homeFeedService.getHomeFeed(user.getUserDto().id()));
   }
 }

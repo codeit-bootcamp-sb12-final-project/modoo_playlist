@@ -11,13 +11,32 @@
            c.title AS title,
            c.description AS description,
            c.thumbnail_url AS thumbnailUrl,
-           GROUP_CONCAT(t.name ORDER BY t.name) AS tagNames,
-           c.embedding_source_hash AS currentSourceHash
+           (SELECT GROUP_CONCAT(t.name ORDER BY t.name)
+              FROM content_tags ct
+              JOIN tags t ON t.id = ct.tag_id
+             WHERE ct.content_id = c.id) AS tagNames,
+           c.embedding_source_hash AS currentSourceHash,
+           c.type AS type,
+           YEAR(c.release_date) AS releaseYear,
+           c.origin_country AS originCountry,
+           (SELECT GROUP_CONCAT(p.person_name ORDER BY p.display_order, p.id)
+              FROM content_people p
+             WHERE p.content_id = c.id AND p.role_type = 'DIRECTOR') AS directors,
+           (SELECT GROUP_CONCAT(a.person_name ORDER BY a.display_order, a.id)
+              FROM (SELECT p.id, p.person_name, p.display_order
+                      FROM content_people p
+                     WHERE p.content_id = c.id AND p.role_type = 'ACTOR'
+                     ORDER BY p.display_order, p.id
+                     LIMIT 5) a) AS actors,
+           cs.sport_type AS sportType,
+           cs.league AS league,
+           cs.season AS season,
+           cs.home_team AS homeTeam,
+           cs.away_team AS awayTeam,
+           cs.venue AS venue
     FROM contents c
-    LEFT JOIN content_tags ct ON ct.content_id = c.id
-    LEFT JOIN tags t ON t.id = ct.tag_id
+    LEFT JOIN content_sports cs ON cs.content_id = c.id
     WHERE c.deleted_at IS NULL
-    GROUP BY c.id
     ORDER BY c.id
     LIMIT #{limit} OFFSET #{offset}
   </select>

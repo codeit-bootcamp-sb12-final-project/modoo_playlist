@@ -72,6 +72,21 @@ spring:
     uris: ${ELASTICSEARCH_URL:http://localhost:9200}
     connection-timeout: ${ELASTICSEARCH_CONNECTION_TIMEOUT:2s}
     socket-timeout: ${ELASTICSEARCH_SOCKET_TIMEOUT:30s}
+  jpa:
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 50
+        order_inserts: true
+
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      auto-offset-reset: earliest
+      properties:
+        spring.json.trusted.packages: com.codeit.modoo_playlist.infra.event.kafka
 
 user-deletion:
   retention: ${USER_DELETION_RETENTION:1d}
@@ -89,7 +104,7 @@ module-api:
     name: ${BOT_NAME:MoDoo Bot}
   auth:
     oauth2:
-      success-redirect-uri: ${OAUTH_SUCCESS_REDIRECT_URI:/#/contents}
+      success-redirect-uri: ${OAUTH_SUCCESS_REDIRECT_URI:/#/home}
       failure-redirect-uri: ${OAUTH_FAILURE_REDIRECT_URI:/#/sign-in}
       withdrawal:
         success-redirect-uri: ${OAUTH_WITHDRAWAL_SUCCESS_REDIRECT_URI:/#/sign-in}
@@ -116,3 +131,12 @@ external:
     access-token: ${TMDB_ACCESS_TOKEN:업서여}
   sports-db:
     api-key: ${THESPORTSDB_API_KEY}
+
+storage:
+  type: ${STORAGE_TYPE:local}
+  local:
+    root-path: ${STORAGE_LOCAL_ROOT_PATH:.blog/storage}
+  s3:
+    bucket: ${STORAGE_S3_BUCKET:}
+    region: ${AWS_REGION:ap-northeast-2}
+    public-base-url: ${STORAGE_PUBLIC_BASE_URL:}

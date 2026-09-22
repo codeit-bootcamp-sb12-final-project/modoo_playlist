@@ -50,7 +50,7 @@ public class SuggestSearchService {
     if (suggestions.size() < LIMIT) {
       Query query = Query.of(q -> q.bool(b -> b
           .must(m -> m.matchPhrasePrefix(p -> p
-              .field("title").query(keyword).maxExpansions(50)))
+              .field("normalizedTitle.analyzed").query(keyword).maxExpansions(50)))
           .mustNot(prefixQuery)));
 
       suggestions.addAll(search(query));

@@ -18,15 +18,17 @@ import com.codeit.modoo_playlist.core.domain.user.entity.User;
 import com.codeit.modoo_playlist.core.domain.user.entity.UserRole;
 import com.codeit.modoo_playlist.core.global.exception.BaseException;
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
-import com.codeit.modoo_playlist.moduleapi.domain.chat.dto.response.ChatDoneEvent;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.exception.ChatAccessDeniedException;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.exception.ChatNotFoundException;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.ChatToolContext;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.ContentCardCollector;
+import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.GetContentDetailTool;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.GetPersonalizedRecommendationsTool;
+import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.GetTrendingTool;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.GetUserPreferenceTool;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.RecommendContentsTool;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.SearchContentsTool;
+import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.SummarizeReviewsTool;
 import com.codeit.modoo_playlist.moduleapi.domain.conversation.repository.ConversationRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.message.repository.MessageRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
@@ -55,6 +57,9 @@ class ChatServiceImplTest {
   @Mock private RecommendContentsTool recommendContentsTool;
   @Mock private GetUserPreferenceTool getUserPreferenceTool;
   @Mock private GetPersonalizedRecommendationsTool getPersonalizedRecommendationsTool;
+  @Mock private GetTrendingTool getTrendingTool;
+  @Mock private SummarizeReviewsTool summarizeReviewsTool;
+  @Mock private GetContentDetailTool getContentDetailTool;
   @Mock private ConversationRepository conversationRepository;
   @Mock private UserRepository userRepository;
   @Mock private MessageRepository messageRepository;
@@ -62,7 +67,8 @@ class ChatServiceImplTest {
   private ChatServiceImpl service() {
     return new ChatServiceImpl(
         chatClient, searchContentsTool, recommendContentsTool, getUserPreferenceTool,
-        getPersonalizedRecommendationsTool, conversationRepository, userRepository, messageRepository);
+        getPersonalizedRecommendationsTool, getTrendingTool, summarizeReviewsTool, getContentDetailTool,
+        conversationRepository, userRepository, messageRepository);
   }
 
   @Test
@@ -213,41 +219,6 @@ class ChatServiceImplTest {
     List<ServerSentEvent<Object>> events = result.collectList().block();
 
     assertThat(events).extracting(ServerSentEvent::event).containsExactly("message", "cards", "done");
-  }
-
-  @Test
-  void chatAnonymous는_conversationId가_없으면_새_세션ID를_발급해_done에_담는다() {
-    stubChatChain(Flux.just("답변"));
-
-    List<ServerSentEvent<Object>> events = service().chatAnonymous(null, "안녕").collectList().block();
-
-    assertThat(events).extracting(ServerSentEvent::event).containsExactly("message", "done");
-    assertThat(events.get(1).data()).isInstanceOf(ChatDoneEvent.class);
-    assertThat(((ChatDoneEvent) events.get(1).data()).conversationId()).isNotNull();
-  }
-
-  @Test
-  void chatAnonymous는_conversationId가_있으면_그대로_세션ID로_사용한다() {
-    UUID conversationId = UUID.randomUUID();
-    stubChatChain(Flux.just("답변"));
-
-    List<ServerSentEvent<Object>> events =
-        service().chatAnonymous(conversationId, "안녕").collectList().block();
-
-    assertThat(events).hasSize(2);
-    Object doneData = events.get(1).data();
-    assertThat(doneData).isInstanceOf(ChatDoneEvent.class);
-    assertThat(((ChatDoneEvent) doneData)
-        .conversationId()).isEqualTo(conversationId);
-  }
-
-  @Test
-  void chatAnonymous는_스트림_중_오류가_나면_error_이벤트로_대체한다() {
-    stubChatChain(Flux.error(new RuntimeException("Gemini 오류")));
-
-    List<ServerSentEvent<Object>> events = service().chatAnonymous(null, "안녕").collectList().block();
-
-    assertThat(events).extracting(ServerSentEvent::event).containsExactly("error", "done");
   }
 
   private void stubChatChain(Flux<String> content) {

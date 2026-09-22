@@ -9,7 +9,7 @@ import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.HomeRowDto;
 import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.RecommendedContentDto;
 import com.codeit.modoo_playlist.moduleapi.domain.recommendation.service.HomeFeedService;
 import com.codeit.modoo_playlist.moduleapi.domain.recommendation.service.RecommendationService;
-import com.codeit.modoo_playlist.moduleapi.domain.watchingsession.repository.WatchingSessionRepository;
+import com.codeit.modoo_playlist.moduleapi.domain.watchingsession.repository.ApiWatchingSessionRepository;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -27,13 +27,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class HomeFeedServiceImpl implements HomeFeedService {
 
-  private static final int ROW_LIMIT = 5;
+  private static final int ROW_LIMIT = 10;
 
   private final Random random = new Random();
 
   private final RecommendationService recommendationService;
   private final UserPreferenceTagService userPreferenceTagService;
-  private final WatchingSessionRepository watchingSessionRepository;
+  private final ApiWatchingSessionRepository apiWatchingSessionRepository;
   private final FollowRepository followRepository;
   private final UserContentInteractionRepository userContentInteractionRepository;
 
@@ -41,11 +41,9 @@ public class HomeFeedServiceImpl implements HomeFeedService {
   public HomeFeedResponse getHomeFeed(UUID userId) {
     List<HomeRowDto> rows = new ArrayList<>();
     addIfPresent(rows, "지금 함께 보는 중", this::liveWatchingRow);
-    if (userId != null) {
-      addIfPresent(rows, "취향과 맞아요", () -> topTagMatchRow(userId));
-      addIfPresent(rows, "오늘의 추천", () -> todayRecommendationRow(userId));
-      addIfPresent(rows, "팔로우한 사람들이 본", () -> followingActivityRow(userId));
-    }
+    addIfPresent(rows, "취향과 맞아요", () -> topTagMatchRow(userId));
+    addIfPresent(rows, "오늘의 추천", () -> todayRecommendationRow(userId));
+    addIfPresent(rows, "팔로우한 사람들이 본", () -> followingActivityRow(userId));
     addIfPresent(rows, "인기 콘텐츠", this::trendingRow);
     return new HomeFeedResponse(rows);
   }
@@ -64,7 +62,7 @@ public class HomeFeedServiceImpl implements HomeFeedService {
   }
 
   private HomeRowDto liveWatchingRow() {
-    List<RecommendedContentDto> contents = watchingSessionRepository
+    List<RecommendedContentDto> contents = apiWatchingSessionRepository
         .findLiveWatchingContents(PageRequest.of(0, ROW_LIMIT));
     if (contents.isEmpty()) {
       return null;

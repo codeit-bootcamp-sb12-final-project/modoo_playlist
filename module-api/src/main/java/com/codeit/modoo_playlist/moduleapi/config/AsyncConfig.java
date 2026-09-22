@@ -34,6 +34,17 @@ public class AsyncConfig implements WebMvcConfigurer {
     return executor;
   }
 
+  @Bean(name = "notificationAsyncExecutor")
+  public Executor notificationAsyncExecutor() {
+    ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+    executor.setCorePoolSize(4);
+    executor.setMaxPoolSize(10);
+    executor.setQueueCapacity(200);
+    executor.setThreadNamePrefix("notification-async-");
+    executor.initialize();
+    return executor;
+  }
+
   @Override
   public void configureAsyncSupport(AsyncSupportConfigurer configurer) {
     configurer.setTaskExecutor(sseAsyncExecutor());

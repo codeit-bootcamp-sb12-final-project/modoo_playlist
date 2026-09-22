@@ -64,6 +64,8 @@ class ContentEmbeddingReaderTest {
   }
 
   private ContentEmbeddingTarget target(String contentId) {
-    return new ContentEmbeddingTarget(contentId, "제목", "설명", "https://thumb", "태그", null);
+    return ContentEmbeddingTarget.builder()
+        .contentId(contentId).title("제목").description("설명")
+        .thumbnailUrl("https://thumb").tagNames("태그").build();
   }
 }

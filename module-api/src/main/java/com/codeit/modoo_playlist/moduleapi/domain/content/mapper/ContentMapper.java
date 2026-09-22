@@ -23,8 +23,6 @@ public interface ContentMapper {
             long watcherCount
     );
 
-    ContentSummaryResponse toSummary(Content content, List<String> tags);
-
     ContentDetailResponse toDetail(
             Content content,
             List<String> tags,

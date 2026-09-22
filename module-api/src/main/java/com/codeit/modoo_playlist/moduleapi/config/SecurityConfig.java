@@ -71,11 +71,6 @@ public class SecurityConfig {
                 "/error"
             ).permitAll()
 
-            // WebSocket
-            .requestMatchers(
-                "/ws/**"
-            ).permitAll()
-
             // 인증 시작 및 복원
             .requestMatchers(
                 "/api/auth/sign-in",
@@ -108,11 +103,6 @@ public class SecurityConfig {
             ).authenticated()
             .requestMatchers(HttpMethod.DELETE, "/api/users/*/purge").authenticated()
 
-            // 로그인 필수 — 내 취향/유사 사용자 조회, 콘텐츠 반응
-            .requestMatchers(HttpMethod.PUT, "/api/contents/*/reaction").authenticated()
-            .requestMatchers("/api/users/preferences/tags/me").authenticated()
-            .requestMatchers("/api/users/similar-users/me").authenticated()
-
             // 그 외 요청은 현재는 개발 편의를 위해 모두 허용
             .anyRequest().permitAll()
         )
@@ -121,7 +111,6 @@ public class SecurityConfig {
         .csrf(csrf -> csrf
             .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
             .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler())
-            .ignoringRequestMatchers("/ws/**")
         )
 
         // 3) form login 사용 (JWT 발급용 로그인 엔드포인트)

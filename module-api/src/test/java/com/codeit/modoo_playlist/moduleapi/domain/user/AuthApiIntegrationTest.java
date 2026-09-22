@@ -20,8 +20,9 @@ import com.codeit.modoo_playlist.moduleapi.domain.review.repository.ReviewReposi
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.watchingsession.repository.WatchingSessionRepository;
 import com.codeit.modoo_playlist.moduleapi.dto.jwt.LoginSession;
+import com.codeit.modoo_playlist.core.global.security.LoginSession;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtTokenProvider;
-import com.codeit.modoo_playlist.moduleapi.security.jwt.LoginSessionStore;
+import com.codeit.modoo_playlist.core.global.security.LoginSessionStore;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.RefreshTokenHasher;
 import com.codeit.modoo_playlist.moduleapi.support.AuthTestApplication;
 import jakarta.servlet.http.Cookie;

@@ -182,9 +182,13 @@ CREATE TABLE `playlists` (
 	`created_at`	DATETIME(6)	NOT NULL	DEFAULT CURRENT_TIMESTAMP(6),
 	`updated_at`	DATETIME(6)	NOT NULL	DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)	COMMENT '플레이리스트 목록 정렬 기준(sortBy=updatedAt)',
 	`generated_by`	VARCHAR(20)	NOT NULL	DEFAULT 'USER'	COMMENT 'USER / AI',
+    `subscriber_count` BIGINT NOT NULL DEFAULT 0 COMMENT '구독자 수. 즉시 갱신(subscribe/unsubscribe 시 증감). 정렬 기준(sortBy=subscribeCount)',
 
-	PRIMARY KEY (`id`),
-	KEY `IDX_PLAYLISTS_OWNER` (`owner_id`, `updated_at` DESC)
+
+    PRIMARY KEY (`id`),
+	KEY `IDX_PLAYLISTS_OWNER` (`owner_id`, `updated_at` DESC),
+	KEY `IDX_PLAYLISTS_SUBSCRIBER_COUNT` (`subscriber_count` DESC)
+
 );
 
 
@@ -334,7 +338,8 @@ CREATE TABLE `notifications` (
 	`is_read`	BOOLEAN	NOT NULL	DEFAULT 0,
 
 	PRIMARY KEY (`id`),
-	KEY `IDX_NOTIFICATIONS_RECEIVER` (`receiver_id`, `created_at` DESC)	COMMENT 'SSE 재연결 시 Last-Event-ID 이후 조회에도 사용'
+	KEY `IDX_NOTIFICATIONS_RECEIVER` (`receiver_id`, `created_at` DESC)	COMMENT 'SSE 재연결 시 Last-Event-ID 이후 조회에도 사용',
+	KEY `IDX_NOTIFICATIONS_RECEIVER_READ` (`receiver_id`, `is_read`)        COMMENT '안읽은 개수 조회, 모두읽음 벌크 UPDATE용'
 );
 
 -- 대화 참여자 테이블

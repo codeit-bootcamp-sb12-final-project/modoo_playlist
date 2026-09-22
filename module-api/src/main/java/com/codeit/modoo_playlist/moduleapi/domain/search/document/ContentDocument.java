@@ -21,7 +21,7 @@ import org.springframework.data.elasticsearch.annotations.MultiField;
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@Document(indexName = "contents")
+@Document(indexName = "contents", createIndex = false)
 @Setting(settingPath = "elasticsearch/content-settings.json")
 public class ContentDocument {
 
@@ -44,7 +44,10 @@ public class ContentDocument {
   @Field(type = FieldType.Text, analyzer = "nori_analyzer", searchAnalyzer = "nori_analyzer")
   private String title;
 
-  @Field(type = FieldType.Keyword)
+  @MultiField(
+      mainField = @Field(type = FieldType.Keyword),
+      otherFields = @InnerField(suffix = "analyzed", type = FieldType.Text, analyzer = "nori_analyzer")
+  )
   private String normalizedTitle;
 
   @Field(type = FieldType.Text, analyzer = "nori_analyzer", searchAnalyzer = "nori_analyzer")
