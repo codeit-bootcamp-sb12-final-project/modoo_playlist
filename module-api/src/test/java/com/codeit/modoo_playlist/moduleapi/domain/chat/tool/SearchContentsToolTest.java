@@ -1,6 +1,7 @@
 package com.codeit.modoo_playlist.moduleapi.domain.chat.tool;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -60,12 +61,12 @@ class SearchContentsToolTest {
   }
 
   @Test
-  void 검색_중_예외가_나면_빈_리스트를_반환한다() {
+  void 검색_중_예외가_나면_삼키지_않고_전파한다() {
     when(semanticSearchService.search("질의", 5)).thenThrow(new RuntimeException("검색 엔진 장애"));
 
-    List<ContentDetailDto> result = tool().searchContents("질의", emptyContext);
-
-    assertThat(result).isEmpty();
+    assertThatThrownBy(() -> tool().searchContents("질의", emptyContext))
+        .isInstanceOf(RuntimeException.class)
+        .hasMessage("검색 엔진 장애");
     verifyNoInteractions(contentDetailResolver);
   }
 }

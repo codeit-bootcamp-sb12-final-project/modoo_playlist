@@ -21,7 +21,7 @@ import org.springframework.data.elasticsearch.annotations.MultiField;
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@Document(indexName = "contents")
+@Document(indexName = "contents", createIndex = false)
 @Setting(settingPath = "elasticsearch/content-settings.json")
 public class ContentDocument {
 

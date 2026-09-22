@@ -38,13 +38,7 @@ public class SearchContentsTool {
     }
     log.info("search_contents 호출: queryLength={}", query.length());
 
-    List<RecommendedContentDto> hits;
-    try {
-      hits = semanticSearchService.search(query, DEFAULT_LIMIT);
-    } catch (Exception e) {
-      log.error("search_contents 검색 실패", e);
-      return List.of();
-    }
+    List<RecommendedContentDto> hits = semanticSearchService.search(query, DEFAULT_LIMIT);
     log.info("search_contents 결과: {}건", hits.size());
 
     return contentDetailResolver.resolve(hits, toolContext);

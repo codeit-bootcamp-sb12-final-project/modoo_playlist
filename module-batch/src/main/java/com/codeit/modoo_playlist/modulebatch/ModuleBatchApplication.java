@@ -1,5 +1,6 @@
 package com.codeit.modoo_playlist.modulebatch;
 
+import com.codeit.modoo_playlist.infra.event.kafka.IndexKafkaPublisher;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Import;
@@ -10,7 +11,7 @@ import com.codeit.modoo_playlist.infra.client.sportsdb.SportsDbClientConfig;
 
 @SpringBootApplication
 @EnableScheduling
-@Import({TmdbClientConfig.class, SportsDbClientConfig.class})
+@Import({TmdbClientConfig.class, SportsDbClientConfig.class, IndexKafkaPublisher.class})
 public class ModuleBatchApplication {
 
 	public static void main(String[] args) {

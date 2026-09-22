@@ -30,13 +30,8 @@ public class GetPersonalizedRecommendationsTool {
     UUID userId = ChatToolContext.requireUserId(toolContext);
     log.info("get_personalized_recommendations 호출: userId={}", userId);
 
-    List<RecommendedContentDto> result;
-    try {
-      result = recommendationService.getRecommendationsForMe(userId, DEFAULT_LIMIT);
-    } catch (Exception e) {
-      log.error("get_personalized_recommendations 조회 실패: userId={}", userId, e);
-      return List.of();
-    }
+    List<RecommendedContentDto> result =
+        recommendationService.getRecommendationsForMe(userId, DEFAULT_LIMIT);
     log.info("get_personalized_recommendations 결과: {}건", result.size());
 
     return contentDetailResolver.resolve(result, toolContext);
