@@ -21,11 +21,13 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @Component
 public class NotificationEventListener {
 
+    private static final String NOTIFICATION_ASYNC_EXECUTOR = "notificationAsyncExecutor";
+
     private final NotificationService notificationService;
     private final FollowRepository followRepository;
     private final PlaylistSubscriptionRepository playlistSubscriptionRepository;
 
-    @Async
+    @Async(NOTIFICATION_ASYNC_EXECUTOR)
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleFollowed(FollowedEvent event) {
         notificationService.create(
@@ -37,7 +39,7 @@ public class NotificationEventListener {
         );
     }
 
-    @Async
+    @Async(NOTIFICATION_ASYNC_EXECUTOR)
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handlePlaylistCreated(PlaylistCreatedEvent event) {
         List<UUID> followerIds = followRepository.findFollowerIdsByFolloweeId(event.ownerId());
@@ -50,7 +52,7 @@ public class NotificationEventListener {
         );
     }
 
-    @Async
+    @Async(NOTIFICATION_ASYNC_EXECUTOR)
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handlePlaylistSubscribed(PlaylistSubscribedEvent event) {
         notificationService.create(
@@ -62,7 +64,7 @@ public class NotificationEventListener {
         );
     }
 
-    @Async
+    @Async(NOTIFICATION_ASYNC_EXECUTOR)
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handlePlaylistContentAdded(PlaylistContentAddedEvent event) {
         List<UUID> subscriberIds =
@@ -76,7 +78,7 @@ public class NotificationEventListener {
         );
     }
 
-    @Async
+    @Async(NOTIFICATION_ASYNC_EXECUTOR)
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleWatchingSessionStarted(WatchingSessionStartedEvent event) {
         List<UUID> followerIds = followRepository.findFollowerIdsByFolloweeId(event.watcherId());
