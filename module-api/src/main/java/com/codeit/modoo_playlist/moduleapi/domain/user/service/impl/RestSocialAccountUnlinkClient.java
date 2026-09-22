@@ -4,8 +4,10 @@ import com.codeit.modoo_playlist.core.domain.user.entity.Provider;
 import com.codeit.modoo_playlist.core.global.exception.BaseException;
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import com.codeit.modoo_playlist.moduleapi.domain.user.service.SocialAccountUnlinkClient;
+import java.time.Duration;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
@@ -23,7 +25,12 @@ public class RestSocialAccountUnlinkClient implements SocialAccountUnlinkClient 
   private final RestClient restClient;
 
   public RestSocialAccountUnlinkClient(RestClient.Builder restClientBuilder) {
-    this.restClient = restClientBuilder.build();
+    var requestFactory = new SimpleClientHttpRequestFactory();
+    requestFactory.setConnectTimeout(Duration.ofSeconds(3));
+    requestFactory.setReadTimeout(Duration.ofSeconds(5));
+    this.restClient = restClientBuilder
+        .requestFactory(requestFactory)
+        .build();
   }
 
   @Override
