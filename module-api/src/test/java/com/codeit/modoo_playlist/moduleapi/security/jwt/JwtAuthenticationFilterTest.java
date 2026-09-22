@@ -3,6 +3,7 @@ package com.codeit.modoo_playlist.moduleapi.security.jwt;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
+import com.codeit.modoo_playlist.core.global.security.LoginSessionStore;
 import com.codeit.modoo_playlist.moduleapi.security.SecurityErrorResponseWriter;
 import com.codeit.modoo_playlist.moduleapi.security.UserDetailsService;
 import org.junit.jupiter.api.Test;

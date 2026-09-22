@@ -18,8 +18,8 @@ import com.codeit.modoo_playlist.core.global.exception.BaseException;
 import com.codeit.modoo_playlist.moduleapi.domain.message.repository.MessageRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.review.repository.ReviewRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
-import com.codeit.modoo_playlist.moduleapi.domain.watchingsession.repository.WatchingSessionRepository;
-import com.codeit.modoo_playlist.moduleapi.dto.jwt.LoginSession;
+import com.codeit.modoo_playlist.moduleapi.domain.watchingsession.repository.ApiWatchingSessionRepository;
+import com.codeit.modoo_playlist.core.global.security.LoginSession;
 import com.codeit.modoo_playlist.core.global.security.LoginSession;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtTokenProvider;
 import com.codeit.modoo_playlist.core.global.security.LoginSessionStore;
@@ -97,7 +97,7 @@ class AuthApiIntegrationTest {
   MessageRepository messageRepository;
 
   @MockitoBean
-  WatchingSessionRepository watchingSessionRepository;
+  ApiWatchingSessionRepository watchingSessionRepository;
 
   @MockitoBean
   ReviewRepository reviewRepository;

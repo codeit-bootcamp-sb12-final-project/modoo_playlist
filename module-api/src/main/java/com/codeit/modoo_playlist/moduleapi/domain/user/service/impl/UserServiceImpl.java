@@ -4,15 +4,16 @@ import com.codeit.modoo_playlist.core.domain.user.entity.User;
 import com.codeit.modoo_playlist.core.domain.user.entity.UserRole;
 import com.codeit.modoo_playlist.core.global.exception.BaseException;
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
+import com.codeit.modoo_playlist.core.global.security.LoginSessionStore;
+import com.codeit.modoo_playlist.moduleapi.domain.image.storage.ImageCategory;
+import com.codeit.modoo_playlist.moduleapi.domain.image.storage.ImageStorage;
 import com.codeit.modoo_playlist.moduleapi.domain.message.repository.MessageRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.review.repository.ReviewRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.SocialAccountRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
-import com.codeit.modoo_playlist.moduleapi.domain.image.storage.ImageCategory;
-import com.codeit.modoo_playlist.moduleapi.domain.image.storage.ImageStorage;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.query.UserQueryPage;
 import com.codeit.modoo_playlist.moduleapi.domain.user.service.UserService;
-import com.codeit.modoo_playlist.moduleapi.domain.watchingsession.repository.WatchingSessionRepository;
+import com.codeit.modoo_playlist.moduleapi.domain.watchingsession.repository.ApiWatchingSessionRepository;
 import com.codeit.modoo_playlist.moduleapi.dto.UserDto;
 import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserCreateRequest;
 import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserListRequest;
@@ -22,8 +23,6 @@ import com.codeit.modoo_playlist.moduleapi.dto.user.response.WithdrawalInfoRespo
 import com.codeit.modoo_playlist.moduleapi.dto.user.response.WithdrawalVerificationMethod;
 import com.codeit.modoo_playlist.moduleapi.mapper.UserMapper;
 import java.io.IOException;
-import com.codeit.modoo_playlist.core.global.security.LoginSessionStore;
-import com.codeit.modoo_playlist.moduleapi.security.jwt.LoginSessionStore;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalTime;
@@ -48,7 +47,7 @@ public class UserServiceImpl implements UserService {
   private final UserRepository userRepository;
   private final SocialAccountRepository socialAccountRepository;
   private final MessageRepository messageRepository;
-  private final WatchingSessionRepository watchingSessionRepository;
+  private final ApiWatchingSessionRepository watchingSessionRepository;
   private final ReviewRepository reviewRepository;
   private final PasswordEncoder passwordEncoder;
   private final UserMapper userMapper;
@@ -211,11 +210,15 @@ public class UserServiceImpl implements UserService {
   }
 
   private void registerImageRollbackCleanup(String imageUrl) {
-    if (!TransactionSynchronizationManager.isSynchronizationActive()) return;
+    if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+      return;
+    }
     TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
       @Override
       public void afterCompletion(int status) {
-        if (status != STATUS_ROLLED_BACK) return;
+        if (status != STATUS_ROLLED_BACK) {
+          return;
+        }
         deleteImageQuietly(imageUrl);
       }
     });
@@ -223,11 +226,15 @@ public class UserServiceImpl implements UserService {
 
   private void registerPreviousImageCleanup(String previousImageUrl, String newImageUrl) {
     if (previousImageUrl == null || Objects.equals(previousImageUrl, newImageUrl)
-        || !TransactionSynchronizationManager.isSynchronizationActive()) return;
+        || !TransactionSynchronizationManager.isSynchronizationActive()) {
+      return;
+    }
     TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
       @Override
       public void afterCompletion(int status) {
-        if (status != STATUS_COMMITTED) return;
+        if (status != STATUS_COMMITTED) {
+          return;
+        }
         deleteImageQuietly(previousImageUrl);
       }
     });

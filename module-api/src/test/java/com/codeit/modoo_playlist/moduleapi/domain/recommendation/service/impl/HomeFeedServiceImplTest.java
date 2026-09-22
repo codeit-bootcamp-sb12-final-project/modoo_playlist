@@ -25,14 +25,14 @@ import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.HomeFeedRes
 import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.HomeRowDto;
 import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.RecommendedContentDto;
 import com.codeit.modoo_playlist.moduleapi.domain.recommendation.service.RecommendationService;
-import com.codeit.modoo_playlist.moduleapi.domain.watchingsession.repository.WatchingSessionRepository;
+import com.codeit.modoo_playlist.moduleapi.domain.watchingsession.repository.ApiWatchingSessionRepository;
 
 @ExtendWith(MockitoExtension.class)
 class HomeFeedServiceImplTest {
 
   @Mock private RecommendationService recommendationService;
   @Mock private UserPreferenceTagService userPreferenceTagService;
-  @Mock private WatchingSessionRepository watchingSessionRepository;
+  @Mock private ApiWatchingSessionRepository watchingSessionRepository;
   @Mock private FollowRepository followRepository;
   @Mock private UserContentInteractionRepository userContentInteractionRepository;
 
