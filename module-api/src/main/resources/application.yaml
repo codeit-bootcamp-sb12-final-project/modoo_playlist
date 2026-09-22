@@ -73,6 +73,10 @@ spring:
     connection-timeout: ${ELASTICSEARCH_CONNECTION_TIMEOUT:2s}
     socket-timeout: ${ELASTICSEARCH_SOCKET_TIMEOUT:30s}
 
+user-deletion:
+  retention: ${USER_DELETION_RETENTION:1d}
+  zone: ${USER_DELETION_ZONE:Asia/Seoul}
+
 module-api:
   admin: # dev에서 실패 방지를 위해 false로 명시
     enabled: ${ADMIN_ENABLED:false}

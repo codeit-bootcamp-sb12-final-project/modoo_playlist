@@ -11,6 +11,7 @@ public interface UserMapper {
 
   //  명세대로 name으로 일단 매퍼 수정. 수정 가능성 있음.
   @Mapping(target = "name", source = "username")
+  @Mapping(target = "scheduledDeletionAt", ignore = true)
   UserDto toDto(User user);
 
   @Mapping(target = "userId", source = "id")

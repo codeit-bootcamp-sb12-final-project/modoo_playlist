@@ -22,6 +22,8 @@ public interface UserService {
 
   CursorResponseUserDto getAllUsers(UserListRequest request);
 
+  void purgeUser(UUID actorId, UUID userId);
+
   UserDto updateUser(
       UUID actorId,
       UUID userId,

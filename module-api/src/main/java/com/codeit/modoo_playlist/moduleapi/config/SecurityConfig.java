@@ -106,6 +106,7 @@ public class SecurityConfig {
                 "/api/users/*/role",
                 "/api/users/*/locked"
             ).authenticated()
+            .requestMatchers(HttpMethod.DELETE, "/api/users/*/purge").authenticated()
 
             // 로그인 필수 — 내 취향/유사 사용자 조회, 콘텐츠 반응
             .requestMatchers(HttpMethod.PUT, "/api/contents/*/reaction").authenticated()

@@ -37,6 +37,7 @@ public enum ErrorCode {
   EMAIL_ALREADY_EXISTS(409, "이미 사용 중인 이메일입니다."),
   USER_ACCOUNT_LOCKED(403, "잠긴 계정입니다."),
   USER_ACCOUNT_WITHDRAWN(403, "탈퇴한 계정입니다."),
+  USER_NOT_WITHDRAWN(409, "탈퇴 상태인 사용자만 영구 삭제할 수 있습니다."),
   INVALID_CURRENT_PASSWORD(401, "현재 비밀번호가 올바르지 않습니다."),
   WITHDRAWAL_REQUEST_EXPIRED(400, "회원 탈퇴 인증 요청이 만료되었습니다. 다시 시도해 주세요."),
   OAUTH_ACCOUNT_MISMATCH(403, "기존에 연결된 소셜 계정과 일치하지 않습니다."),

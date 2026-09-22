@@ -23,6 +23,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -146,6 +147,19 @@ public class UserController {
       @Valid @ModelAttribute UserListRequest request
   ) {
     return ResponseEntity.ok(userService.getAllUsers(request));
+  }
+
+  @PreAuthorize("hasRole('ADMIN')")
+  @DeleteMapping(
+      name = "[ADMIN 권한] 탈퇴 사용자 조기 영구 삭제",
+      value = "/{userId}/purge"
+  )
+  public ResponseEntity<Void> purgeUser(
+      @PathVariable UUID userId,
+      @AuthenticationPrincipal UserDetails principal
+  ) {
+    userService.purgeUser(principal.getUserDto().id(), userId);
+    return ResponseEntity.noContent().build();
   }
 
   @PreAuthorize("hasRole('ADMIN')")

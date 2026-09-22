@@ -53,6 +53,10 @@ management:
     tags:
       application: ${spring.application.name}
 
+user-deletion:
+  retention: ${USER_DELETION_RETENTION:1d}
+  zone: ${USER_DELETION_ZONE:Asia/Seoul}
+
 external:
   tmdb:
     base-url: https://api.themoviedb.org/3
