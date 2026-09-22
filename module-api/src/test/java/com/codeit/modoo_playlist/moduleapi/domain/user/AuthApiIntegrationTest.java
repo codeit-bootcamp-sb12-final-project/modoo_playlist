@@ -14,7 +14,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.codeit.modoo_playlist.core.domain.user.entity.User;
 import com.codeit.modoo_playlist.core.domain.user.entity.UserRole;
 import com.codeit.modoo_playlist.core.global.exception.BaseException;
+import com.codeit.modoo_playlist.moduleapi.domain.message.repository.MessageRepository;
+import com.codeit.modoo_playlist.moduleapi.domain.review.repository.ReviewRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
+import com.codeit.modoo_playlist.moduleapi.domain.watchingsession.repository.WatchingSessionRepository;
 import com.codeit.modoo_playlist.moduleapi.dto.jwt.LoginSession;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtTokenProvider;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.LoginSessionStore;
@@ -47,6 +50,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder;
@@ -86,6 +90,15 @@ class AuthApiIntegrationTest {
 
   @Autowired
   StringRedisTemplate redis;
+
+  @MockitoBean
+  MessageRepository messageRepository;
+
+  @MockitoBean
+  WatchingSessionRepository watchingSessionRepository;
+
+  @MockitoBean
+  ReviewRepository reviewRepository;
 
   private String email;
   private Map<String, String> signupRequest;
