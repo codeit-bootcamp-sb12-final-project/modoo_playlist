@@ -36,7 +36,7 @@ public class ChatController {
   }
 
   @PreAuthorize("hasRole('USER')")
-  @GetMapping("conversations")
+  @GetMapping("/conversations")
   public ResponseEntity<ChatConversationCursorResponse> getConversations(
       @Valid @ModelAttribute SliceCursorRequest request, @AuthenticationPrincipal UserDetails user){
     return ResponseEntity.ok(chatService.getConversations(user.getUserDto().id(), request));
