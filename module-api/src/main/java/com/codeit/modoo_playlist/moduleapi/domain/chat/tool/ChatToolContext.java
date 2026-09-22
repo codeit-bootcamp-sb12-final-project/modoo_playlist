@@ -18,4 +18,15 @@ public final class ChatToolContext {
     }
     return (UUID) userId;
   }
+
+  public static UUID parseUuid(String value) {
+    if (value == null) {
+      return null;
+    }
+    try {
+      return UUID.fromString(value);
+    } catch (IllegalArgumentException e) {
+      return null;
+    }
+  }
 }

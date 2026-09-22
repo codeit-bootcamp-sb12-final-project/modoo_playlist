@@ -26,4 +26,17 @@ class ChatToolContextTest {
     assertThatThrownBy(() -> ChatToolContext.requireUserId(toolContext))
         .isInstanceOf(IllegalStateException.class);
   }
+
+  @Test
+  void parseUuid는_올바른_UUID_문자열을_변환한다() {
+    UUID id = UUID.randomUUID();
+
+    assertThat(ChatToolContext.parseUuid(id.toString())).isEqualTo(id);
+  }
+
+  @Test
+  void parseUuid는_null이나_잘못된_형식이면_null을_반환한다() {
+    assertThat(ChatToolContext.parseUuid(null)).isNull();
+    assertThat(ChatToolContext.parseUuid("uuid-아님")).isNull();
+  }
 }

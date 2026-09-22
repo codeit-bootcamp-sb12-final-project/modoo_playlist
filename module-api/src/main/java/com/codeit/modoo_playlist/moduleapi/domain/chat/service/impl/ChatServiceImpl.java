@@ -18,10 +18,13 @@ import com.codeit.modoo_playlist.moduleapi.domain.chat.exception.ChatNotFoundExc
 import com.codeit.modoo_playlist.moduleapi.domain.chat.service.ChatService;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.ChatToolContext;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.ContentCardCollector;
+import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.GetContentDetailTool;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.GetPersonalizedRecommendationsTool;
+import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.GetTrendingTool;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.GetUserPreferenceTool;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.RecommendContentsTool;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.SearchContentsTool;
+import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.SummarizeReviewsTool;
 import com.codeit.modoo_playlist.moduleapi.domain.conversation.repository.ConversationRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.message.repository.MessageRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
@@ -48,6 +51,9 @@ public class ChatServiceImpl implements ChatService {
   private final RecommendContentsTool recommendContentsTool;
   private final GetUserPreferenceTool getUserPreferenceTool;
   private final GetPersonalizedRecommendationsTool getPersonalizedRecommendationsTool;
+  private final GetTrendingTool getTrendingTool;
+  private final SummarizeReviewsTool summarizeReviewsTool;
+  private final GetContentDetailTool getContentDetailTool;
   private final ConversationRepository conversationRepository;
   private final UserRepository userRepository;
   private final MessageRepository messageRepository;
@@ -89,7 +95,8 @@ public class ChatServiceImpl implements ChatService {
 
     Flux<ServerSentEvent<Object>> messageEvents = chatClient.prompt()
         .user(message)
-        .tools(searchContentsTool, recommendContentsTool, getUserPreferenceTool, getPersonalizedRecommendationsTool)
+        .tools(searchContentsTool, recommendContentsTool, getUserPreferenceTool,
+            getPersonalizedRecommendationsTool, getTrendingTool, summarizeReviewsTool, getContentDetailTool)
         .toolContext(Map.of(ChatToolContext.USER_ID, userId, ChatToolContext.CARD_COLLECTOR, cardCollector))
         .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, conversation.getId().toString()))
         .stream()

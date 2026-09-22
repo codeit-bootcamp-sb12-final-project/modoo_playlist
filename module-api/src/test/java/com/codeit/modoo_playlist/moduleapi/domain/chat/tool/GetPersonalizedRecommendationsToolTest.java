@@ -53,15 +53,14 @@ class GetPersonalizedRecommendationsToolTest {
   }
 
   @Test
-  void 조회_중_예외가_나면_빈_리스트를_반환하고_예외를_삼킨다() {
+  void 조회_중_예외가_나면_삼키지_않고_전파한다() {
     UUID userId = UUID.randomUUID();
     ToolContext toolContext = new ToolContext(Map.of(ChatToolContext.USER_ID, userId));
     when(recommendationService.getRecommendationsForMe(userId, 5))
         .thenThrow(new RuntimeException("DB 장애"));
 
-    List<ContentDetailDto> result = tool().getPersonalizedRecommendations(toolContext);
-
-    assertThat(result).isEmpty();
+    assertThatThrownBy(() -> tool().getPersonalizedRecommendations(toolContext))
+        .hasMessage("DB 장애");
     verifyNoInteractions(contentDetailResolver);
   }
 
