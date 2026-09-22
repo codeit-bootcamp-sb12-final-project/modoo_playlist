@@ -2,6 +2,7 @@ package com.codeit.modoo_playlist.moduleapi.domain.user;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -492,6 +493,38 @@ class AuthApiIntegrationTest {
             .header("Authorization", "Bearer " + login.access()))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
+  }
+
+  @Test
+  @DisplayName("일반 사용자는 관리자 사용자 삭제 API를 호출할 수 없다")
+  void normalUserCannotDeleteUser() throws Exception {
+    Login actor = registeredLogin();
+    UUID targetId = UUID.randomUUID();
+
+    mvc.perform(withCsrf(delete("/api/users/{userId}/purge", targetId))
+            .header("Authorization", "Bearer " + actor.access()))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
+  }
+
+  @Test
+  @DisplayName("관리자가 탈퇴 사용자를 영구 삭제하면 기존 세션을 무효화한다")
+  void adminPurgesWithdrawnUserAndInvalidatesSession() throws Exception {
+    Login target = registeredLogin();
+    Login admin = adminLogin();
+    User withdrawnUser = users.findById(target.userId()).orElseThrow();
+    withdrawnUser.withdraw(Instant.now());
+    users.saveAndFlush(withdrawnUser);
+
+    mvc.perform(withCsrf(delete("/api/users/{userId}/purge", target.userId()))
+            .header("Authorization", "Bearer " + admin.access()))
+        .andExpect(status().isNoContent());
+
+    assertThat(users.findById(target.userId())).isEmpty();
+    mvc.perform(withCsrf(profile(target.userId(), "rejected"))
+            .header("Authorization", "Bearer " + target.access()))
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.code").value("LOGIN_SESSION_INVALIDATED"));
   }
 
   @Test
