@@ -1,6 +1,7 @@
 package com.codeit.modoo_playlist.moduleapi.domain.search.service;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.inOrder;
@@ -54,6 +55,40 @@ public class InitialIndexServiceTest {
     verify(reindexStateRepository, never()).start(any());
     verify(contentIndexService, never()).createIndex(any());
     verify(contentIndexService, never()).switchAlias(any(), any());
+  }
+
+  @Test
+  @DisplayName("다른 인스턴스가 재색인 중이면 재색인을 시작하지 않는다")
+  void skipReindexWhenAnotherInstanceIsReindexing() {
+    when(contentIndexService.getAliasIndex(INDEX_ALIAS)).thenReturn(Optional.empty());
+    when(reindexStateRepository.start(TARGET_INDEX)).thenReturn(false);
+
+    contentInitialIndexService.run(null);
+
+    verify(contentIndexService, never()).createIndex(any());
+    verify(contentIndexService, never()).deleteIndex(any());
+    verify(contentIndexService, never()).indexBatch(any(), anyInt(), any());
+    verify(contentIndexService, never()).finalizeReindex(any(), any(), any());
+    verify(reindexStateRepository, never()).finish();
+  }
+
+  @Test
+  @DisplayName("인덱스 전환 상태 변경에 실패하면 미완성 인덱스를 삭제하고 재색인 상태를 정리한다")
+  void cleanUpWhenStartSwitchingFails() {
+    when(contentIndexService.getAliasIndex(INDEX_ALIAS)).thenReturn(Optional.empty());
+    when(reindexStateRepository.start(TARGET_INDEX)).thenReturn(true);
+    when(contentIndexService.concreteIndexExists(TARGET_INDEX)).thenReturn(false);
+    when(contentIndexService.indexBatch(null, 100, TARGET_INDEX)).thenReturn(List.of());
+    when(reindexStateRepository.popChangedContentId()).thenReturn(null);
+    when(reindexStateRepository.startSwitching()).thenReturn(false);
+
+    assertThatThrownBy(() -> contentInitialIndexService.run(null))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessage("콘텐츠 검색 인덱스 전환 상태 변경에 실패했습니다. index=" + TARGET_INDEX);
+
+    verify(contentIndexService).deleteIndex(TARGET_INDEX);
+    verify(contentIndexService, never()).finalizeReindex(any(), any(), any());
+    verify(reindexStateRepository).finish();
   }
 
   @Test
