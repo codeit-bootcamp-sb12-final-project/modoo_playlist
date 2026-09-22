@@ -186,7 +186,7 @@ CREATE TABLE `playlists` (
 
 
     PRIMARY KEY (`id`),
-	KEY `IDX_PLAYLISTS_OWNER` (`owner_id`, `updated_at` DESC)
+	KEY `IDX_PLAYLISTS_OWNER` (`owner_id`, `updated_at` DESC),
 	KEY `IDX_PLAYLISTS_SUBSCRIBER_COUNT` (`subscriber_count` DESC)
 
 );
@@ -338,7 +338,8 @@ CREATE TABLE `notifications` (
 	`is_read`	BOOLEAN	NOT NULL	DEFAULT 0,
 
 	PRIMARY KEY (`id`),
-	KEY `IDX_NOTIFICATIONS_RECEIVER` (`receiver_id`, `created_at` DESC)	COMMENT 'SSE 재연결 시 Last-Event-ID 이후 조회에도 사용'
+	KEY `IDX_NOTIFICATIONS_RECEIVER` (`receiver_id`, `created_at` DESC)	COMMENT 'SSE 재연결 시 Last-Event-ID 이후 조회에도 사용',
+	KEY `IDX_NOTIFICATIONS_RECEIVER_READ` (`receiver_id`, `is_read`)        COMMENT '안읽은 개수 조회, 모두읽음 벌크 UPDATE용'
 );
 
 -- 대화 참여자 테이블
