@@ -4,10 +4,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.job.Job;
-import org.springframework.batch.core.job.JobExecution;
 import org.springframework.batch.core.job.parameters.JobParametersBuilder;
 import org.springframework.batch.core.launch.JobExecutionAlreadyRunningException;
 import org.springframework.batch.core.launch.JobInstanceAlreadyCompleteException;
@@ -54,15 +52,9 @@ public class UserDeletionBatchScheduler {
       zone = "Asia/Seoul"
   )
   public void run() throws Exception {
-//    복구 먼저 실행.
-    Set<JobExecution> staleExecutions =
-        jobRepository.findRunningJobExecutions(userDeletionJob.getName());
-    for (JobExecution staleExecution : staleExecutions) {
-      log.warn(
-          "탈퇴 사용자 삭제 Job이 STARTED 상태로 남아 있어 비정상 종료로 보고 복구합니다: jobExecutionId={}",
-          staleExecution.getId()
-      );
-      jobOperator.recover(staleExecution);
+    if (!jobRepository.findRunningJobExecutions(userDeletionJob.getName()).isEmpty()) {
+      log.warn("탈퇴 사용자 삭제 Job이 이미 실행 중이므로 이번 스케줄을 건너뜁니다.");
+      return;
     }
 
     Instant now = Instant.now();
