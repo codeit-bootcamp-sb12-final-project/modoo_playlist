@@ -2,6 +2,7 @@ package com.codeit.modoo_playlist.moduleapi.config;
 
 import com.codeit.modoo_playlist.core.domain.user.entity.UserRole;
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
+import com.codeit.modoo_playlist.moduleapi.config.properties.CorsProperties;
 import com.codeit.modoo_playlist.moduleapi.security.Http403ForbiddenAccessDeniedHandler;
 import com.codeit.modoo_playlist.moduleapi.security.LoginFailureHandler;
 import com.codeit.modoo_playlist.moduleapi.security.SecurityErrorResponseWriter;
@@ -10,8 +11,8 @@ import com.codeit.modoo_playlist.moduleapi.security.UserAuthenticationProvider;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtAuthenticationFilter;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtLoginSuccessHandler;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtLogoutHandler;
-import com.codeit.modoo_playlist.moduleapi.security.oauth.OAuthOidcUserService;
 import com.codeit.modoo_playlist.moduleapi.security.oauth.OAuthLoginSuccessHandler;
+import com.codeit.modoo_playlist.moduleapi.security.oauth.OAuthOidcUserService;
 import java.util.List;
 import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
@@ -28,14 +29,16 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Slf4j
 @Configuration
@@ -55,7 +58,8 @@ public class SecurityConfig {
       UserAuthenticationProvider userAuthenticationProvider,
       OAuthOidcUserService oauthOidcUserService,
       OAuthLoginSuccessHandler oauthLoginSuccessHandler,
-      OAuth2AuthorizationRequestResolver oauth2AuthorizationRequestResolver
+      OAuth2AuthorizationRequestResolver oauth2AuthorizationRequestResolver,
+      CorsConfigurationSource corsConfigurationSource
   ) throws Exception {
 
     http
@@ -68,7 +72,10 @@ public class SecurityConfig {
                 "/index.html",
                 "/assets/**",
                 "/favicon.svg",
-                "/error"
+                "/error",
+                "/sign-in",
+                "/sign-up",
+                "/reset-password"
             ).permitAll()
 
             // 인증 시작 및 복원
@@ -103,8 +110,8 @@ public class SecurityConfig {
             ).authenticated()
             .requestMatchers(HttpMethod.DELETE, "/api/users/*/purge").authenticated()
 
-            // 그 외 요청은 현재는 개발 편의를 위해 모두 허용
-            .anyRequest().permitAll()
+            // 그 외 요청은 인증 필요
+            .anyRequest().authenticated()
         )
 
         // 2) CSRF 설정 (Cookie 방식)
@@ -122,8 +129,6 @@ public class SecurityConfig {
 
         // 4) OIDC OAuth login
         .oauth2Login(oauth -> oauth
-            // "/oauth2/authorization/google"
-            // "/oauth2/authorization/kakao"
             .authorizationEndpoint(auth -> auth
                 .baseUri("/oauth2/authorization")
                 .authorizationRequestResolver(oauth2AuthorizationRequestResolver)
@@ -170,14 +175,7 @@ public class SecurityConfig {
         );
 
     // 8) CORS 설정
-    http.cors(cors -> cors.configurationSource(request -> {
-      CorsConfiguration config = new CorsConfiguration();
-      config.addAllowedOriginPattern("*");
-      config.addAllowedHeader("*");
-      config.addAllowedMethod("*");
-      config.setAllowCredentials(true);
-      return config;
-    }));
+    http.cors(cors -> cors.configurationSource(corsConfigurationSource));
 
     return http.build();
   }
@@ -187,6 +185,18 @@ public class SecurityConfig {
     return new BCryptPasswordEncoder();
   }
 
+  @Bean
+  public CorsConfigurationSource corsConfigurationSource(CorsProperties properties) {
+    CorsConfiguration config = new CorsConfiguration();
+    config.setAllowedOrigins(properties.allowedOrigins());
+    config.addAllowedHeader("*");
+    config.addAllowedMethod("*");
+    config.setAllowCredentials(true);
+
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", config);
+    return source;
+  }
 
   @Bean
   public RoleHierarchy roleHierarchy() {

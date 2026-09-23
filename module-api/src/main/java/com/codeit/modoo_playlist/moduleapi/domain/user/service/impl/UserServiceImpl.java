@@ -63,7 +63,6 @@ public class UserServiceImpl implements UserService {
   @Transactional
   @Override
   public UserDto create(UserCreateRequest request) {
-//    핸들러에서 409로 처리 중
     if (userRepository.existsByEmail(request.email())) {
       throw new BaseException(ErrorCode.EMAIL_ALREADY_EXISTS);
     }
@@ -77,20 +76,6 @@ public class UserServiceImpl implements UserService {
     );
 
     User savedUser = userRepository.save(user);
-//    유저 동시 저장시 unique로 DB는 409 conflict
-//    서비스에서 이메일 중복시 409 email_already_exists
-//    아래 처럼 db의 에러메시지와 서비스의 에러메시지를 통일 가능함.
-//    try {
-//      User savedUser = userRepository.saveAndFlush(user);
-//      return userMapper.toDto(savedUser);
-//
-//    } catch (DataIntegrityViolationException e) {
-//      throw new BaseException(
-//          ErrorCode.EMAIL_ALREADY_EXISTS,
-//          e
-//      );
-//    }
-
     return userMapper.toDto(savedUser);
   }
 
@@ -173,11 +158,13 @@ public class UserServiceImpl implements UserService {
       throw new BaseException(ErrorCode.USER_NOT_WITHDRAWN);
     }
 
+    String profileImageUrl = user.getProfileImageUrl();
     messageRepository.deleteAllByUserId(userId);
     watchingSessionRepository.deleteAllByWatcherId(userId);
     reviewRepository.deleteAllByAuthorId(userId);
     userRepository.delete(user);
     userRepository.flush();
+    registerImageCommitCleanup(profileImageUrl);
     loginSessionStore.invalidateAll(userId);
   }
 
@@ -225,8 +212,14 @@ public class UserServiceImpl implements UserService {
   }
 
   private void registerPreviousImageCleanup(String previousImageUrl, String newImageUrl) {
-    if (previousImageUrl == null || Objects.equals(previousImageUrl, newImageUrl)
-        || !TransactionSynchronizationManager.isSynchronizationActive()) {
+    if (Objects.equals(previousImageUrl, newImageUrl)) {
+      return;
+    }
+    registerImageCommitCleanup(previousImageUrl);
+  }
+
+  private void registerImageCommitCleanup(String imageUrl) {
+    if (imageUrl == null || !TransactionSynchronizationManager.isSynchronizationActive()) {
       return;
     }
     TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
@@ -235,7 +228,7 @@ public class UserServiceImpl implements UserService {
         if (status != STATUS_COMMITTED) {
           return;
         }
-        deleteImageQuietly(previousImageUrl);
+        deleteImageQuietly(imageUrl);
       }
     });
   }

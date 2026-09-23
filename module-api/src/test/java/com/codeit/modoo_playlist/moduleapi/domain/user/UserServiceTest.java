@@ -51,6 +51,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
@@ -451,6 +453,28 @@ class UserServiceTest {
     purgeOrder.verify(userRepository).delete(existingUser);
     purgeOrder.verify(userRepository).flush();
     purgeOrder.verify(loginSessionStore).invalidateAll(userId);
+  }
+
+  @Test
+  @DisplayName("영구 삭제가 커밋되면 사용자의 프로필 이미지도 삭제한다")
+  void purgeDeletesProfileImageAfterCommit() throws Exception {
+    UUID adminId = UUID.randomUUID();
+    existingUser.withdraw(Instant.now());
+    when(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.of(existingUser));
+    TransactionSynchronizationManager.initSynchronization();
+
+    try {
+      service.purgeUser(adminId, userId);
+
+      verify(imageStorage, never()).delete(any());
+      TransactionSynchronizationManager.getSynchronizations()
+          .forEach(synchronization ->
+              synchronization.afterCompletion(TransactionSynchronization.STATUS_COMMITTED));
+
+      verify(imageStorage).delete(ORIGINAL_IMAGE);
+    } finally {
+      TransactionSynchronizationManager.clearSynchronization();
+    }
   }
 
   @Test

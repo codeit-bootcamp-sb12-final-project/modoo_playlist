@@ -5,6 +5,7 @@ import com.codeit.modoo_playlist.infra.config.QuerydslConfig;
 import com.codeit.modoo_playlist.moduleapi.config.OAuth2AuthorizationRequestConfig;
 import com.codeit.modoo_playlist.moduleapi.config.SecurityConfig;
 import com.codeit.modoo_playlist.moduleapi.config.properties.AuthCookieProperties;
+import com.codeit.modoo_playlist.moduleapi.config.properties.CorsProperties;
 import com.codeit.modoo_playlist.moduleapi.domain.user.controller.AuthController;
 import com.codeit.modoo_playlist.moduleapi.domain.image.storage.ImageStorage;
 import com.codeit.modoo_playlist.moduleapi.domain.user.controller.UserController;
@@ -59,7 +60,7 @@ import org.testcontainers.utility.DockerImageName;
 @EntityScan(basePackageClasses = User.class)
 @EnableJpaRepositories(basePackageClasses = UserRepository.class)
 @EnableJpaAuditing
-@EnableConfigurationProperties(AuthCookieProperties.class)
+@EnableConfigurationProperties({AuthCookieProperties.class, CorsProperties.class})
 @Import({
     SecurityConfig.class,
     QuerydslConfig.class,
