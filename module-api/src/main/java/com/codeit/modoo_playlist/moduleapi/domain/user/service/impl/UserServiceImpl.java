@@ -173,11 +173,13 @@ public class UserServiceImpl implements UserService {
       throw new BaseException(ErrorCode.USER_NOT_WITHDRAWN);
     }
 
+    String profileImageUrl = user.getProfileImageUrl();
     messageRepository.deleteAllByUserId(userId);
     watchingSessionRepository.deleteAllByWatcherId(userId);
     reviewRepository.deleteAllByAuthorId(userId);
     userRepository.delete(user);
     userRepository.flush();
+    registerImageCommitCleanup(profileImageUrl);
     loginSessionStore.invalidateAll(userId);
   }
 
@@ -225,8 +227,14 @@ public class UserServiceImpl implements UserService {
   }
 
   private void registerPreviousImageCleanup(String previousImageUrl, String newImageUrl) {
-    if (previousImageUrl == null || Objects.equals(previousImageUrl, newImageUrl)
-        || !TransactionSynchronizationManager.isSynchronizationActive()) {
+    if (Objects.equals(previousImageUrl, newImageUrl)) {
+      return;
+    }
+    registerImageCommitCleanup(previousImageUrl);
+  }
+
+  private void registerImageCommitCleanup(String imageUrl) {
+    if (imageUrl == null || !TransactionSynchronizationManager.isSynchronizationActive()) {
       return;
     }
     TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
@@ -235,7 +243,7 @@ public class UserServiceImpl implements UserService {
         if (status != STATUS_COMMITTED) {
           return;
         }
-        deleteImageQuietly(previousImageUrl);
+        deleteImageQuietly(imageUrl);
       }
     });
   }
