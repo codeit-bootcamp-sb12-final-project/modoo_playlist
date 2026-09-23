@@ -11,8 +11,8 @@ import com.codeit.modoo_playlist.moduleapi.security.UserAuthenticationProvider;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtAuthenticationFilter;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtLoginSuccessHandler;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtLogoutHandler;
-import com.codeit.modoo_playlist.moduleapi.security.oauth.OAuthOidcUserService;
 import com.codeit.modoo_playlist.moduleapi.security.oauth.OAuthLoginSuccessHandler;
+import com.codeit.modoo_playlist.moduleapi.security.oauth.OAuthOidcUserService;
 import java.util.List;
 import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
@@ -29,9 +29,9 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
@@ -129,8 +129,6 @@ public class SecurityConfig {
 
         // 4) OIDC OAuth login
         .oauth2Login(oauth -> oauth
-            // "/oauth2/authorization/google"
-            // "/oauth2/authorization/kakao"
             .authorizationEndpoint(auth -> auth
                 .baseUri("/oauth2/authorization")
                 .authorizationRequestResolver(oauth2AuthorizationRequestResolver)
@@ -199,7 +197,6 @@ public class SecurityConfig {
     source.registerCorsConfiguration("/**", config);
     return source;
   }
-
 
   @Bean
   public RoleHierarchy roleHierarchy() {
