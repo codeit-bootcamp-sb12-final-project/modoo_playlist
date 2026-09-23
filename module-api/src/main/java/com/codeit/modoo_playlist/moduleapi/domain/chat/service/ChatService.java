@@ -11,4 +11,6 @@ public interface ChatService {
 	Flux<ServerSentEvent<Object>> chat(UUID userId, UUID conversationId, @NotBlank String message);
 
 	ChatConversationCursorResponse getConversations(UUID userId, SliceCursorRequest request);
+
+	void deleteConversation(UUID userId, UUID conversationId);
 }

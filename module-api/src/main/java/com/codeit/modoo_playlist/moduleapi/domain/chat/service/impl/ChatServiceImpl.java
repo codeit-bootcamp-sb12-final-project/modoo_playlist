@@ -15,6 +15,7 @@ import com.codeit.modoo_playlist.moduleapi.domain.chat.dto.response.ChatConversa
 import com.codeit.modoo_playlist.moduleapi.domain.chat.dto.response.ChatDoneEvent;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.dto.response.ChatErrorEvent;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.dto.response.ContentCardDto;
+import com.codeit.modoo_playlist.moduleapi.domain.chat.event.ChatMemoryClearRequestedEvent;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.exception.ChatAccessDeniedException;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.exception.ChatNotFoundException;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.service.ChatService;
@@ -37,6 +38,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -59,6 +61,7 @@ public class ChatServiceImpl implements ChatService {
   private final ConversationRepository conversationRepository;
   private final UserRepository userRepository;
   private final MessageRepository messageRepository;
+  private final ApplicationEventPublisher eventPublisher;
 
   @Override
   @Transactional
@@ -98,8 +101,10 @@ public class ChatServiceImpl implements ChatService {
     Flux<ServerSentEvent<Object>> messageEvents = chatClient.prompt()
         .user(message)
         .tools(searchContentsTool, recommendContentsTool, getUserPreferenceTool,
-            getPersonalizedRecommendationsTool, getTrendingTool, summarizeReviewsTool, getContentDetailTool)
-        .toolContext(Map.of(ChatToolContext.USER_ID, userId, ChatToolContext.CARD_COLLECTOR, cardCollector))
+            getPersonalizedRecommendationsTool, getTrendingTool, summarizeReviewsTool,
+            getContentDetailTool)
+        .toolContext(
+            Map.of(ChatToolContext.USER_ID, userId, ChatToolContext.CARD_COLLECTOR, cardCollector))
         .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, conversation.getId().toString()))
         .stream()
         .content()
@@ -138,13 +143,28 @@ public class ChatServiceImpl implements ChatService {
     return conversationRepository.findAiConversations(userId, request);
   }
 
+  @Override
+  @Transactional
+  public void deleteConversation(UUID userId, UUID conversationId) {
+    Conversation conversation = conversationRepository.findById(conversationId)
+        .orElseThrow(ChatNotFoundException::new);
+    boolean isParticipant = conversation.getParticipants().stream()
+        .anyMatch(p -> p.getUser().getId().equals(userId));
+    if (!conversation.getType().equals(ConversationType.AI) || !isParticipant) {
+      throw new ChatAccessDeniedException();
+    }
+    conversationRepository.delete(conversation);
+    eventPublisher.publishEvent(new ChatMemoryClearRequestedEvent(conversationId));
+  }
+
   private Flux<ServerSentEvent<Object>> cardsEvent(ContentCardCollector cardCollector) {
     return Flux.defer(() -> {
       List<ContentCardDto> cards = cardCollector.getCards();
       if (cards.isEmpty()) {
         return Flux.empty();
       }
-      return Flux.just(ServerSentEvent.builder((Object) new ChatCardsEvent(cards)).event("cards").build());
+      return Flux.just(
+          ServerSentEvent.builder((Object) new ChatCardsEvent(cards)).event("cards").build());
     });
   }
 }
