@@ -276,6 +276,21 @@ class AuthApiIntegrationTest {
     assertThat(users.findById(otherId).orElseThrow().getUsername()).isEqualTo(USERNAME);
   }
 
+  @Test
+  @DisplayName("공개 목록에 없는 모든 요청은 인증이 필요하다")
+  void defaultAuthorizationPolicyRequiresAuthentication() throws Exception {
+    Login login = registeredLogin();
+
+    mvc.perform(get("/api/users/{userId}", login.userId()))
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.code").value("AUTHENTICATION_REQUIRED"));
+
+    mvc.perform(get("/api/users/{userId}", login.userId())
+            .header("Authorization", "Bearer " + login.access()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(login.userId().toString()));
+  }
+
   @ParameterizedTest
   @ValueSource(strings = {"", " ", "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz"})
   @DisplayName("유효하지 않은 프로필 수정은 400.")
