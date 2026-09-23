@@ -2,6 +2,7 @@ package com.codeit.modoo_playlist.moduleapi.config;
 
 import com.codeit.modoo_playlist.core.domain.user.entity.UserRole;
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
+import com.codeit.modoo_playlist.moduleapi.config.properties.CorsProperties;
 import com.codeit.modoo_playlist.moduleapi.security.Http403ForbiddenAccessDeniedHandler;
 import com.codeit.modoo_playlist.moduleapi.security.LoginFailureHandler;
 import com.codeit.modoo_playlist.moduleapi.security.SecurityErrorResponseWriter;
@@ -55,7 +56,8 @@ public class SecurityConfig {
       UserAuthenticationProvider userAuthenticationProvider,
       OAuthOidcUserService oauthOidcUserService,
       OAuthLoginSuccessHandler oauthLoginSuccessHandler,
-      OAuth2AuthorizationRequestResolver oauth2AuthorizationRequestResolver
+      OAuth2AuthorizationRequestResolver oauth2AuthorizationRequestResolver,
+      CorsConfigurationSource corsConfigurationSource
   ) throws Exception {
 
     http
@@ -170,14 +172,7 @@ public class SecurityConfig {
         );
 
     // 8) CORS 설정
-    http.cors(cors -> cors.configurationSource(request -> {
-      CorsConfiguration config = new CorsConfiguration();
-      config.addAllowedOriginPattern("*");
-      config.addAllowedHeader("*");
-      config.addAllowedMethod("*");
-      config.setAllowCredentials(true);
-      return config;
-    }));
+    http.cors(cors -> cors.configurationSource(corsConfigurationSource));
 
     return http.build();
   }
@@ -185,6 +180,19 @@ public class SecurityConfig {
   @Bean
   public PasswordEncoder passwordEncoder() {
     return new BCryptPasswordEncoder();
+  }
+
+  @Bean
+  public CorsConfigurationSource corsConfigurationSource(CorsProperties properties) {
+    CorsConfiguration config = new CorsConfiguration();
+    config.setAllowedOrigins(properties.allowedOrigins());
+    config.addAllowedHeader("*");
+    config.addAllowedMethod("*");
+    config.setAllowCredentials(true);
+
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", config);
+    return source;
   }
 
 
