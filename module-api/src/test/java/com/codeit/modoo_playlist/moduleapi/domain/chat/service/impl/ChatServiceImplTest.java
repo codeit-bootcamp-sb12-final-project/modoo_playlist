@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.codeit.modoo_playlist.core.domain.conversation.entity.Conversation;
@@ -43,6 +44,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.test.util.ReflectionTestUtils;
 import reactor.core.publisher.Flux;
@@ -63,12 +65,13 @@ class ChatServiceImplTest {
   @Mock private ConversationRepository conversationRepository;
   @Mock private UserRepository userRepository;
   @Mock private MessageRepository messageRepository;
+  @Mock private ChatMemory chatMemory;
 
   private ChatServiceImpl service() {
     return new ChatServiceImpl(
         chatClient, searchContentsTool, recommendContentsTool, getUserPreferenceTool,
         getPersonalizedRecommendationsTool, getTrendingTool, summarizeReviewsTool, getContentDetailTool,
-        conversationRepository, userRepository, messageRepository);
+        conversationRepository, userRepository, messageRepository, chatMemory);
   }
 
   @Test
@@ -237,6 +240,63 @@ class ChatServiceImplTest {
     ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
     verify(requestSpec).toolContext(captor.capture());
     return captor;
+  }
+
+  @Test
+  void deleteConversation은_존재하지_않는_대화면_예외를_던진다() {
+    UUID userId = UUID.randomUUID();
+    UUID conversationId = UUID.randomUUID();
+    when(conversationRepository.findById(conversationId)).thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> service().deleteConversation(userId, conversationId))
+        .isInstanceOf(ChatNotFoundException.class);
+    verify(conversationRepository, never()).delete(any());
+    verifyNoInteractions(chatMemory);
+  }
+
+  @Test
+  void deleteConversation은_AI_타입이_아닌_대화면_접근을_거부한다() {
+    UUID userId = UUID.randomUUID();
+    UUID conversationId = UUID.randomUUID();
+    User user = user(userId, "user");
+    Conversation nonAiConversation = Conversation.builder().id(conversationId).type(ConversationType.DM).build();
+    ConversationParticipant.create(nonAiConversation, user);
+    when(conversationRepository.findById(conversationId)).thenReturn(Optional.of(nonAiConversation));
+
+    assertThatThrownBy(() -> service().deleteConversation(userId, conversationId))
+        .isInstanceOf(ChatAccessDeniedException.class);
+    verify(conversationRepository, never()).delete(any());
+    verifyNoInteractions(chatMemory);
+  }
+
+  @Test
+  void deleteConversation은_대화_참가자가_아니면_접근을_거부한다() {
+    UUID userId = UUID.randomUUID();
+    UUID conversationId = UUID.randomUUID();
+    User otherUser = user(UUID.randomUUID(), "다른사람");
+    Conversation conversation = Conversation.builder().id(conversationId).type(ConversationType.AI).build();
+    ConversationParticipant.create(conversation, otherUser);
+    when(conversationRepository.findById(conversationId)).thenReturn(Optional.of(conversation));
+
+    assertThatThrownBy(() -> service().deleteConversation(userId, conversationId))
+        .isInstanceOf(ChatAccessDeniedException.class);
+    verify(conversationRepository, never()).delete(any());
+    verifyNoInteractions(chatMemory);
+  }
+
+  @Test
+  void deleteConversation은_소유자면_대화를_삭제한다() {
+    UUID userId = UUID.randomUUID();
+    UUID conversationId = UUID.randomUUID();
+    User user = user(userId, "user");
+    Conversation conversation = Conversation.builder().id(conversationId).type(ConversationType.AI).build();
+    ConversationParticipant.create(conversation, user);
+    when(conversationRepository.findById(conversationId)).thenReturn(Optional.of(conversation));
+
+    service().deleteConversation(userId, conversationId);
+
+    verify(conversationRepository).delete(conversation);
+    verify(chatMemory).clear(conversationId.toString());
   }
 
   private User user(UUID id, String username) {

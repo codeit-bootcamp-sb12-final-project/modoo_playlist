@@ -59,6 +59,7 @@ public class ChatServiceImpl implements ChatService {
   private final ConversationRepository conversationRepository;
   private final UserRepository userRepository;
   private final MessageRepository messageRepository;
+  private final ChatMemory chatMemory;
 
   @Override
   @Transactional
@@ -98,8 +99,10 @@ public class ChatServiceImpl implements ChatService {
     Flux<ServerSentEvent<Object>> messageEvents = chatClient.prompt()
         .user(message)
         .tools(searchContentsTool, recommendContentsTool, getUserPreferenceTool,
-            getPersonalizedRecommendationsTool, getTrendingTool, summarizeReviewsTool, getContentDetailTool)
-        .toolContext(Map.of(ChatToolContext.USER_ID, userId, ChatToolContext.CARD_COLLECTOR, cardCollector))
+            getPersonalizedRecommendationsTool, getTrendingTool, summarizeReviewsTool,
+            getContentDetailTool)
+        .toolContext(
+            Map.of(ChatToolContext.USER_ID, userId, ChatToolContext.CARD_COLLECTOR, cardCollector))
         .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, conversation.getId().toString()))
         .stream()
         .content()
@@ -138,13 +141,28 @@ public class ChatServiceImpl implements ChatService {
     return conversationRepository.findAiConversations(userId, request);
   }
 
+  @Override
+  @Transactional
+  public void deleteConversation(UUID userId, UUID conversationId) {
+    Conversation conversation = conversationRepository.findById(conversationId)
+        .orElseThrow(ChatNotFoundException::new);
+    boolean isParticipant = conversation.getParticipants().stream()
+        .anyMatch(p -> p.getUser().getId().equals(userId));
+    if (!conversation.getType().equals(ConversationType.AI) || !isParticipant) {
+      throw new ChatAccessDeniedException();
+    }
+    conversationRepository.delete(conversation);
+    chatMemory.clear(conversationId.toString());
+  }
+
   private Flux<ServerSentEvent<Object>> cardsEvent(ContentCardCollector cardCollector) {
     return Flux.defer(() -> {
       List<ContentCardDto> cards = cardCollector.getCards();
       if (cards.isEmpty()) {
         return Flux.empty();
       }
-      return Flux.just(ServerSentEvent.builder((Object) new ChatCardsEvent(cards)).event("cards").build());
+      return Flux.just(
+          ServerSentEvent.builder((Object) new ChatCardsEvent(cards)).event("cards").build());
     });
   }
 }
