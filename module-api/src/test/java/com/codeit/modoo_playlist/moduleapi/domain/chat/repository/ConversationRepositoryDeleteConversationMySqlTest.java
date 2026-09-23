@@ -1,6 +1,7 @@
 package com.codeit.modoo_playlist.moduleapi.domain.chat.repository;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.Mockito.mock;
 
 import com.codeit.modoo_playlist.core.domain.conversation.entity.Conversation;
@@ -15,33 +16,45 @@ import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.persistence.autoconfigure.EntityScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import org.springframework.test.context.ActiveProfiles;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.util.ReflectionTestUtils;
 
 /**
- * ChatServiceImpl.deleteConversation()에서 실제로 발생했던
- * TransientPropertyValueException(participants 지연 로딩 후 delete)을 재현·검증한다.
- * Mockito 단위 테스트로는 실제 Hibernate flush가 없어 재현되지 않는 버그라 별도로 둔다.
+ * conversation_participants.conversation_id는 운영 schema.sql에서
+ * ON DELETE CASCADE로 선언돼 있다(Conversation.participants 엔티티 매핑에는
+ * cascade=REMOVE가 없음). H2(ddl-auto) 스키마는 이 DB 레벨 cascade를
+ * 포함하지 않아 검증이 불가능하므로, 실제 schema.sql을 적용하는 Testcontainers
+ * MySQL로 검증한다.
  */
-@DataJpaTest
-@ActiveProfiles("test")
-@ContextConfiguration(classes = ConversationRepositoryDeleteConversationTest.JpaConfig.class)
-class ConversationRepositoryDeleteConversationTest {
+@DataJpaTest(properties = {
+    "spring.datasource.url=jdbc:tc:mysql:8.4.7:///modoo_mysql",
+    "spring.datasource.driver-class-name=org.testcontainers.jdbc.ContainerDatabaseDriver",
+    "spring.datasource.username=test",
+    "spring.datasource.password=test",
+    "spring.jpa.hibernate.ddl-auto=none",
+    "spring.sql.init.mode=always",
+    "spring.sql.init.schema-locations=file:../infra/src/main/resources/schema.sql",
+    "spring.test.database.replace=NONE"
+})
+@ContextConfiguration(classes = ConversationRepositoryDeleteConversationMySqlTest.JpaTestConfiguration.class)
+class ConversationRepositoryDeleteConversationMySqlTest {
 
   private static final Instant BASE = Instant.parse("2026-09-01T00:00:00Z");
 
   @Configuration(proxyBeanMethods = false)
+  @EnableAutoConfiguration
   @EntityScan(basePackages = "com.codeit.modoo_playlist.core.domain")
   @EnableJpaRepositories(basePackageClasses = ConversationRepository.class)
   @Import(QuerydslConfig.class)
-  static class JpaConfig {
+  static class JpaTestConfiguration {
 
     @Bean
     ConversationMapper conversationMapper() {
@@ -51,24 +64,32 @@ class ConversationRepositoryDeleteConversationTest {
 
   @Autowired private ConversationRepository conversationRepository;
   @Autowired private EntityManager entityManager;
+  @Autowired private JdbcTemplate jdbcTemplate;
 
   @Test
-  void participants를_먼저_로딩하고_delete하면_TransientPropertyValueException이_발생한다() {
+  void existsParticipant로_확인_후_delete하면_참여자행이_DB_cascade로_함께_삭제된다() {
     User requester = persistUser();
     Conversation conversation = persistConversation(requester);
     entityManager.flush();
     entityManager.clear();
 
     Conversation loaded = conversationRepository.findById(conversation.getId()).orElseThrow();
-    // ChatServiceImpl의 옛 코드가 하던 것과 동일 — 지연 로딩된 participants를 관리 상태로 끌어옴
-    loaded.getParticipants().stream().findAny();
-    conversationRepository.delete(loaded);
+    boolean isParticipant =
+        conversationRepository.existsParticipant(conversation.getId(), requester.getId());
+    assertThat(isParticipant).isTrue();
 
-    // Hibernate가 JPA 스펙에 맞춰 IllegalStateException으로 감싸서 던진다.
-    assertThatThrownBy(() -> entityManager.flush())
-        .isInstanceOf(IllegalStateException.class)
-        .hasMessageContaining("TransientPropertyValueException");
+    assertThatCode(() -> {
+      conversationRepository.delete(loaded);
+      entityManager.flush();
+    }).doesNotThrowAnyException();
+
+    assertThat(conversationRepository.findById(conversation.getId())).isEmpty();
+    Integer remainingParticipants = jdbcTemplate.queryForObject(
+        "select count(*) from conversation_participants where conversation_id = UUID_TO_BIN(?)",
+        Integer.class, conversation.getId().toString());
+    assertThat(remainingParticipants).isZero();
   }
+
   private User persistUser() {
     User user = User.create("requester-" + UUID.randomUUID() + "@test.com", "requester", "encoded-password");
     ReflectionTestUtils.setField(user, "createdAt", BASE);
