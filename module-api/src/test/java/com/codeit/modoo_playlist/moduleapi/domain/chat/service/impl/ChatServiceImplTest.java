@@ -259,10 +259,9 @@ class ChatServiceImplTest {
   void deleteConversation은_AI_타입이_아닌_대화면_접근을_거부한다() {
     UUID userId = UUID.randomUUID();
     UUID conversationId = UUID.randomUUID();
-    User user = user(userId, "user");
     Conversation nonAiConversation = Conversation.builder().id(conversationId).type(ConversationType.DM).build();
-    ConversationParticipant.create(nonAiConversation, user);
     when(conversationRepository.findById(conversationId)).thenReturn(Optional.of(nonAiConversation));
+    when(conversationRepository.existsParticipant(conversationId, userId)).thenReturn(true);
 
     assertThatThrownBy(() -> service().deleteConversation(userId, conversationId))
         .isInstanceOf(ChatAccessDeniedException.class);
@@ -274,10 +273,9 @@ class ChatServiceImplTest {
   void deleteConversation은_대화_참가자가_아니면_접근을_거부한다() {
     UUID userId = UUID.randomUUID();
     UUID conversationId = UUID.randomUUID();
-    User otherUser = user(UUID.randomUUID(), "다른사람");
     Conversation conversation = Conversation.builder().id(conversationId).type(ConversationType.AI).build();
-    ConversationParticipant.create(conversation, otherUser);
     when(conversationRepository.findById(conversationId)).thenReturn(Optional.of(conversation));
+    when(conversationRepository.existsParticipant(conversationId, userId)).thenReturn(false);
 
     assertThatThrownBy(() -> service().deleteConversation(userId, conversationId))
         .isInstanceOf(ChatAccessDeniedException.class);
@@ -289,10 +287,9 @@ class ChatServiceImplTest {
   void deleteConversation은_소유자면_대화를_삭제한다() {
     UUID userId = UUID.randomUUID();
     UUID conversationId = UUID.randomUUID();
-    User user = user(userId, "user");
     Conversation conversation = Conversation.builder().id(conversationId).type(ConversationType.AI).build();
-    ConversationParticipant.create(conversation, user);
     when(conversationRepository.findById(conversationId)).thenReturn(Optional.of(conversation));
+    when(conversationRepository.existsParticipant(conversationId, userId)).thenReturn(true);
 
     service().deleteConversation(userId, conversationId);
 

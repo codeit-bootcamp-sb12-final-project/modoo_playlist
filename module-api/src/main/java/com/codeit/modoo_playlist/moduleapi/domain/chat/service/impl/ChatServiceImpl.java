@@ -148,8 +148,7 @@ public class ChatServiceImpl implements ChatService {
   public void deleteConversation(UUID userId, UUID conversationId) {
     Conversation conversation = conversationRepository.findById(conversationId)
         .orElseThrow(ChatNotFoundException::new);
-    boolean isParticipant = conversation.getParticipants().stream()
-        .anyMatch(p -> p.getUser().getId().equals(userId));
+    boolean isParticipant = conversationRepository.existsParticipant(conversationId, userId);
     if (!conversation.getType().equals(ConversationType.AI) || !isParticipant) {
       throw new ChatAccessDeniedException();
     }
