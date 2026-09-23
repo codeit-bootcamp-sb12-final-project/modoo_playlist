@@ -19,6 +19,7 @@ import com.codeit.modoo_playlist.core.domain.user.entity.User;
 import com.codeit.modoo_playlist.core.domain.user.entity.UserRole;
 import com.codeit.modoo_playlist.core.global.exception.BaseException;
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
+import com.codeit.modoo_playlist.moduleapi.domain.chat.event.ChatMemoryClearRequestedEvent;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.exception.ChatAccessDeniedException;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.exception.ChatNotFoundException;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.ChatToolContext;
@@ -43,8 +44,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.test.util.ReflectionTestUtils;
 import reactor.core.publisher.Flux;
@@ -65,13 +66,13 @@ class ChatServiceImplTest {
   @Mock private ConversationRepository conversationRepository;
   @Mock private UserRepository userRepository;
   @Mock private MessageRepository messageRepository;
-  @Mock private ChatMemory chatMemory;
+  @Mock private ApplicationEventPublisher eventPublisher;
 
   private ChatServiceImpl service() {
     return new ChatServiceImpl(
         chatClient, searchContentsTool, recommendContentsTool, getUserPreferenceTool,
         getPersonalizedRecommendationsTool, getTrendingTool, summarizeReviewsTool, getContentDetailTool,
-        conversationRepository, userRepository, messageRepository, chatMemory);
+        conversationRepository, userRepository, messageRepository, eventPublisher);
   }
 
   @Test
@@ -251,7 +252,7 @@ class ChatServiceImplTest {
     assertThatThrownBy(() -> service().deleteConversation(userId, conversationId))
         .isInstanceOf(ChatNotFoundException.class);
     verify(conversationRepository, never()).delete(any());
-    verifyNoInteractions(chatMemory);
+    verifyNoInteractions(eventPublisher);
   }
 
   @Test
@@ -266,7 +267,7 @@ class ChatServiceImplTest {
     assertThatThrownBy(() -> service().deleteConversation(userId, conversationId))
         .isInstanceOf(ChatAccessDeniedException.class);
     verify(conversationRepository, never()).delete(any());
-    verifyNoInteractions(chatMemory);
+    verifyNoInteractions(eventPublisher);
   }
 
   @Test
@@ -281,7 +282,7 @@ class ChatServiceImplTest {
     assertThatThrownBy(() -> service().deleteConversation(userId, conversationId))
         .isInstanceOf(ChatAccessDeniedException.class);
     verify(conversationRepository, never()).delete(any());
-    verifyNoInteractions(chatMemory);
+    verifyNoInteractions(eventPublisher);
   }
 
   @Test
@@ -296,7 +297,7 @@ class ChatServiceImplTest {
     service().deleteConversation(userId, conversationId);
 
     verify(conversationRepository).delete(conversation);
-    verify(chatMemory).clear(conversationId.toString());
+    verify(eventPublisher).publishEvent(new ChatMemoryClearRequestedEvent(conversationId));
   }
 
   private User user(UUID id, String username) {

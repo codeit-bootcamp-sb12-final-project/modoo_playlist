@@ -15,6 +15,7 @@ import com.codeit.modoo_playlist.moduleapi.domain.chat.dto.response.ChatConversa
 import com.codeit.modoo_playlist.moduleapi.domain.chat.dto.response.ChatDoneEvent;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.dto.response.ChatErrorEvent;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.dto.response.ContentCardDto;
+import com.codeit.modoo_playlist.moduleapi.domain.chat.event.ChatMemoryClearRequestedEvent;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.exception.ChatAccessDeniedException;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.exception.ChatNotFoundException;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.service.ChatService;
@@ -37,6 +38,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -59,7 +61,7 @@ public class ChatServiceImpl implements ChatService {
   private final ConversationRepository conversationRepository;
   private final UserRepository userRepository;
   private final MessageRepository messageRepository;
-  private final ChatMemory chatMemory;
+  private final ApplicationEventPublisher eventPublisher;
 
   @Override
   @Transactional
@@ -152,7 +154,7 @@ public class ChatServiceImpl implements ChatService {
       throw new ChatAccessDeniedException();
     }
     conversationRepository.delete(conversation);
-    chatMemory.clear(conversationId.toString());
+    eventPublisher.publishEvent(new ChatMemoryClearRequestedEvent(conversationId));
   }
 
   private Flux<ServerSentEvent<Object>> cardsEvent(ContentCardCollector cardCollector) {
