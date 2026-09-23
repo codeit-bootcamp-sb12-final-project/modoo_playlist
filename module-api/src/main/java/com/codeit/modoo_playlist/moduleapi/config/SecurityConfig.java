@@ -37,6 +37,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Slf4j
 @Configuration
@@ -70,7 +72,10 @@ public class SecurityConfig {
                 "/index.html",
                 "/assets/**",
                 "/favicon.svg",
-                "/error"
+                "/error",
+                "/sign-in",
+                "/sign-up",
+                "/reset-password"
             ).permitAll()
 
             // 인증 시작 및 복원
@@ -105,8 +110,8 @@ public class SecurityConfig {
             ).authenticated()
             .requestMatchers(HttpMethod.DELETE, "/api/users/*/purge").authenticated()
 
-            // 그 외 요청은 현재는 개발 편의를 위해 모두 허용
-            .anyRequest().permitAll()
+            // 그 외 요청은 인증 필요
+            .anyRequest().authenticated()
         )
 
         // 2) CSRF 설정 (Cookie 방식)
