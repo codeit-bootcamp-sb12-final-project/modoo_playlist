@@ -32,8 +32,7 @@ import org.springframework.http.ResponseEntity;
 @ExtendWith(MockitoExtension.class)
 public class SearchControllerTest {
 
-  private static final UUID USER_ID =
-      UUID.fromString("019ed8a0-0000-7000-8000-000000000001");
+  private static final UUID USER_ID = UUID.fromString("019ed8a0-0000-7000-8000-000000000001");
 
   @Mock
   private ContentService contentService;
@@ -58,11 +57,9 @@ public class SearchControllerTest {
     ContentListRequest request = request("우주");
     ContentCursorResponse expected = emptyResponse();
 
-    when(contentSearchService.searchPage(request))
-        .thenReturn(expected);
+    when(contentSearchService.searchPage(request)).thenReturn(expected);
 
-    ResponseEntity<ContentCursorResponse> response =
-        controller.getContents(request, user());
+    ResponseEntity<ContentCursorResponse> response = controller.getContents(request, user());
 
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     assertThat(response.getBody()).isSameAs(expected);
@@ -78,11 +75,9 @@ public class SearchControllerTest {
     ContentListRequest request = request(keyword);
     ContentCursorResponse expected = emptyResponse();
 
-    when(contentService.getContents(request, USER_ID))
-        .thenReturn(expected);
+    when(contentService.getContents(request, USER_ID)).thenReturn(expected);
 
-    ResponseEntity<ContentCursorResponse> response =
-        controller.getContents(request, user());
+    ResponseEntity<ContentCursorResponse> response = controller.getContents(request, user());
 
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     assertThat(response.getBody()).isSameAs(expected);
@@ -119,6 +114,18 @@ public class SearchControllerTest {
     assertThat(response.getBody()).isEqualTo(expected);
     verify(suggestSearchService).suggest(keyword);
     verifyNoInteractions(popularSearchService);
+  }
+
+  @Test
+  void 검색어를_인기검색어_집계에_반영한다() {
+    String keyword = "인터스텔라";
+
+    ResponseEntity<Void> response = searchController.recordSearch(keyword);
+
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+    assertThat(response.getBody()).isNull();
+    verify(popularSearchService).recordSearch(keyword);
+    verifyNoInteractions(suggestSearchService);
   }
 
   private ContentListRequest request(String keyword) {

@@ -65,6 +65,19 @@ public class SearchServicePageTest {
       when(searchHits.getTotalHits()).thenReturn(0L);
     }
 
+    @Test
+    void 검색결과가_없으면_빈페이지를_반환한다() {
+      givenEmptyResults();
+
+      ContentCursorResponse response = service.searchPage(request("movie", null, null));
+
+      assertThat(response.data()).isEmpty();
+      assertThat(response.totalCount()).isZero();
+      assertThat(response.hasNext()).isFalse();
+      assertThat(response.nextCursor()).isNull();
+      assertThat(response.nextIdAfter()).isNull();
+    }
+
     private ContentListRequest request(String keyword, String cursor, UUID idAfter) {
       return new ContentListRequest(
           null, keyword, null, cursor, idAfter, 20, "DESCENDING", "createdAt"
