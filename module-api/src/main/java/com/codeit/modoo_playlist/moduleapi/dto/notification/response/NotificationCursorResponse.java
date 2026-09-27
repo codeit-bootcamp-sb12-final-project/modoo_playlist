@@ -1,5 +1,7 @@
 package com.codeit.modoo_playlist.moduleapi.dto.notification.response;
 
+import com.codeit.modoo_playlist.core.domain.notification.dto.NotificationResponse;
+
 import java.util.List;
 import java.util.UUID;
 

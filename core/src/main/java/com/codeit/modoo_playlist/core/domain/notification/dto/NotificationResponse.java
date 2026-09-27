@@ -1,4 +1,4 @@
-package com.codeit.modoo_playlist.moduleapi.dto.notification.response;
+package com.codeit.modoo_playlist.core.domain.notification.dto;
 
 import com.codeit.modoo_playlist.core.domain.notification.entity.NotificationLevel;
 import java.time.Instant;

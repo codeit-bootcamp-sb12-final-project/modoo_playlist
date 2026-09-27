@@ -6,41 +6,29 @@ import com.codeit.modoo_playlist.moduleapi.domain.notification.mapper.Notificati
 import com.codeit.modoo_playlist.moduleapi.domain.notification.repository.query.NotificationListCondition;
 import com.codeit.modoo_playlist.moduleapi.domain.notification.repository.query.NotificationQueryPage;
 import com.codeit.modoo_playlist.moduleapi.domain.notification.service.NotificationService;
-import com.codeit.modoo_playlist.moduleapi.domain.notification.sse.SseEmitterRepository;
+import com.codeit.modoo_playlist.moduleapi.sse.SseEmitterRepository;
 import com.codeit.modoo_playlist.moduleapi.dto.notification.response.NotificationCursorResponse;
-import com.codeit.modoo_playlist.moduleapi.dto.notification.response.NotificationResponse;
+import com.codeit.modoo_playlist.core.domain.notification.dto.NotificationResponse;
 import com.codeit.modoo_playlist.moduleapi.dto.notification.response.NotificationUnreadCountResponse;
 import com.codeit.modoo_playlist.moduleapi.security.UserDetails;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
+@RequestMapping("/api/notifications")
 public class NotificationController {
 
     private final NotificationService notificationService;
     private final NotificationMapper notificationMapper;
-    private final SseEmitterRepository sseEmitterRepository;
 
     @PreAuthorize("hasRole('USER')")
-    @GetMapping(value = "/api/sse", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter subscribe(@AuthenticationPrincipal UserDetails user) {
-        return sseEmitterRepository.connect(user.getUserDto().id());
-    }
-
-    @PreAuthorize("hasRole('USER')")
-    @GetMapping("/api/notifications")
+    @GetMapping
     public ResponseEntity<NotificationCursorResponse> getNotifications(
             @RequestParam(required = false) String cursor,
             @RequestParam(required = false) UUID idAfter,
@@ -76,7 +64,7 @@ public class NotificationController {
     }
 
     @PreAuthorize("hasRole('USER')")
-    @GetMapping("/api/notifications/unread-count")
+    @GetMapping("/unread-count")
     public ResponseEntity<NotificationUnreadCountResponse> getUnreadCount(
             @AuthenticationPrincipal UserDetails user
     ) {
@@ -85,7 +73,7 @@ public class NotificationController {
     }
 
     @PreAuthorize("hasRole('USER')")
-    @PatchMapping("/api/notifications/{notificationId}/read")
+    @PatchMapping("/{notificationId}/read")
     public ResponseEntity<Void> readNotification(
             @PathVariable UUID notificationId,
             @AuthenticationPrincipal UserDetails user
@@ -95,7 +83,7 @@ public class NotificationController {
     }
 
     @PreAuthorize("hasRole('USER')")
-    @PatchMapping("/api/notifications/read-all")
+    @PatchMapping("/read-all")
     public ResponseEntity<Void> readAllNotifications(
             @AuthenticationPrincipal UserDetails user
     ) {

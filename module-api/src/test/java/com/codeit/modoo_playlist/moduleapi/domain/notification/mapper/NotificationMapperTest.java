@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.codeit.modoo_playlist.core.domain.notification.entity.Notification;
 import com.codeit.modoo_playlist.core.domain.notification.entity.NotificationLevel;
-import com.codeit.modoo_playlist.moduleapi.dto.notification.response.NotificationResponse;
+import com.codeit.modoo_playlist.core.domain.notification.dto.NotificationResponse;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 

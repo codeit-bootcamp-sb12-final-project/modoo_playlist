@@ -9,22 +9,24 @@ import com.codeit.modoo_playlist.moduleapi.domain.notification.repository.Notifi
 import com.codeit.modoo_playlist.moduleapi.domain.notification.repository.query.NotificationListCondition;
 import com.codeit.modoo_playlist.moduleapi.domain.notification.repository.query.NotificationQueryPage;
 import com.codeit.modoo_playlist.moduleapi.domain.notification.service.NotificationService;
-import com.codeit.modoo_playlist.moduleapi.domain.notification.sse.SseEmitterRepository;
+import com.codeit.modoo_playlist.moduleapi.event.NotificationCreatedEvent;
+
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
-@RequiredArgsConstructor
 @Service
+@RequiredArgsConstructor
 public class NotificationServiceImpl implements NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final NotificationMapper notificationMapper;
-    private final SseEmitterRepository sseEmitterRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -34,7 +36,7 @@ public class NotificationServiceImpl implements NotificationService {
 
         Notification saved = notificationRepository.save(notification);
 
-        sseEmitterRepository.sendToUser(receiverId, "notifications", notificationMapper.toResponse(saved));
+        eventPublisher.publishEvent(new NotificationCreatedEvent(notificationMapper.toResponse(saved)));
 
         return saved;
     }
@@ -54,9 +56,12 @@ public class NotificationServiceImpl implements NotificationService {
 
         List<Notification> saved = notificationRepository.saveAll(notifications);
 
-        saved.forEach(notification -> sseEmitterRepository.sendToUser(
-                notification.getReceiverId(), "notifications", notificationMapper.toResponse(notification)
-        ));
+        saved.forEach(notification ->
+                eventPublisher.publishEvent(
+                        new NotificationCreatedEvent(notificationMapper.toResponse(notification)
+                    )
+                )
+        );
 
         return saved;
     }
