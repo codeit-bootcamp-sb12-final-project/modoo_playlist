@@ -19,8 +19,9 @@ import com.codeit.modoo_playlist.infra.mapper.UserSummaryMapper;
 import com.codeit.modoo_playlist.modulerealtime.dto.chat.ContentChatDto;
 import com.codeit.modoo_playlist.modulerealtime.dto.chat.ContentChatSendRequest;
 import com.codeit.modoo_playlist.modulerealtime.dto.chat.DirectMessageSendRequest;
+import com.codeit.modoo_playlist.modulerealtime.event.DMCreateEvent;
 import lombok.RequiredArgsConstructor;
-//import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,7 +34,7 @@ public class MessageService {
     private final RealtimeMessageRepository messageRepository;
     private final RealtimeUserRepository userRepository;
     private final RealtimeConversationRepository conversationRepository;
-//    private final ApplicationEventPublisher eventPublisher;
+    private final ApplicationEventPublisher eventPublisher;
     private final RealtimeContentRepository contentRepository;
     private final MessageMapper messageMapper;
     private final UserSummaryMapper userSummaryMapper;
@@ -84,7 +85,8 @@ public class MessageService {
         Message saved = messageRepository.save(message);
 
         MessageDto response = messageMapper.toDto(saved);
-//        eventPublisher.publishEvent(new DMCreatedEvent(receiverUserId, response));
+
+        eventPublisher.publishEvent(new DMCreateEvent(receiver.getId(), response));
         return response;
     }
 
@@ -113,11 +115,10 @@ public class MessageService {
                 .build();
 
         Message saved = messageRepository.save(message);
-        ContentChatDto response = new ContentChatDto(
+
+        return new ContentChatDto(
                 userSummaryMapper.toSummary(sender),
                 saved.getMessage()
         );
-//        eventPublisher.publishEvent(new DMCreatedEvent(receiverUserId, response));
-        return response;
     }
 }
