@@ -27,11 +27,17 @@ public class OAuthAccountServiceImpl implements OAuthAccountService {
             profile.provider(),
             profile.providerUserId()
         )
-        .map(socialAccount -> new OAuthAccountResult(
-            socialAccount.getUser().getId(),
-            false
-        ))
+        .map(this::resolveExistingAccount)
         .orElseGet(() -> createAccount(profile));
+  }
+
+  private OAuthAccountResult resolveExistingAccount(SocialAccount socialAccount) {
+    User user = socialAccount.getUser();
+    if (user.getDeletedAt() != null) {
+      throw new BaseException(ErrorCode.USER_ACCOUNT_WITHDRAWN);
+    }
+
+    return new OAuthAccountResult(user.getId(), false);
   }
 
   private OAuthAccountResult createAccount(OAuthUserProfile profile) {

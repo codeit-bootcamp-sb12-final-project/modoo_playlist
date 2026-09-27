@@ -60,6 +60,10 @@ management:
     tags:
       application: ${spring.application.name}
 
+user-deletion:
+  retention: ${USER_DELETION_RETENTION:1d}
+  zone: ${USER_DELETION_ZONE:Asia/Seoul}
+
 external:
   tmdb:
     base-url: https://api.themoviedb.org/3
@@ -83,6 +87,12 @@ external:
     retry-max-delay: ${SPORTSDB_RETRY_MAX_DELAY:4s}
 
 batch:
+  user-deletion:
+    enabled: ${USER_DELETION_BATCH_ENABLED:true}
+    cron: ${USER_DELETION_BATCH_CRON:0 0 0 * * *}
+    chunk-size: ${USER_DELETION_BATCH_CHUNK_SIZE:20}
+    page-size: ${USER_DELETION_BATCH_PAGE_SIZE:100}
+    max-items-per-run: ${USER_DELETION_BATCH_MAX_ITEMS_PER_RUN:10000}
   recommendation:
     enabled: ${RECOMMENDATION_BATCH_ENABLED:true}
     cron: ${RECOMMENDATION_BATCH_CRON:0 30 0 * * *}

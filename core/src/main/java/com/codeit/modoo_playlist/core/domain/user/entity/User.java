@@ -153,4 +153,12 @@ public class User extends BaseUpdatableEntity {
     this.tempPassword = null;
     this.tempPasswordExpiresAt = null;
   }
+
+  public void withdraw(Instant withdrawnAt) {
+    if (deletedAt != null) {
+      throw new IllegalStateException("이미 탈퇴한 계정입니다.");
+    }
+
+    this.deletedAt = Objects.requireNonNull(withdrawnAt, "탈퇴 시각은 필수입니다.");
+  }
 }

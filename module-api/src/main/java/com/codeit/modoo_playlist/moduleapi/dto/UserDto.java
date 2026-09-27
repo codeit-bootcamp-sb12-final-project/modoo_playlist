@@ -12,7 +12,20 @@ public record UserDto(
     String profileImageUrl,
     UserRole role,
     boolean locked,
-    Instant createdAt
+    Instant createdAt,
+    Instant deletedAt,
+    Instant scheduledDeletionAt
 ) {
 
+  public UserDto(
+      UUID id,
+      String email,
+      String name,
+      String profileImageUrl,
+      UserRole role,
+      boolean locked,
+      Instant createdAt
+  ) {
+    this(id, email, name, profileImageUrl, role, locked, createdAt, null, null);
+  }
 }

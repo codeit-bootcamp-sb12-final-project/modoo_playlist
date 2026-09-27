@@ -1,7 +1,10 @@
 package com.codeit.modoo_playlist.moduleapi.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
+import com.codeit.modoo_playlist.moduleapi.security.oauth.withdrawal.OAuthWithdrawalRequestStore;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
@@ -13,18 +16,39 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequ
 
 class OAuthAuthorizationRequestResolverTest {
 
+  private final OAuthWithdrawalRequestStore withdrawalRequestStore =
+      mock(OAuthWithdrawalRequestStore.class);
   private final OAuth2AuthorizationRequestResolver resolver =
       new OAuth2AuthorizationRequestConfig().oauth2AuthorizationRequestResolver(
           new InMemoryClientRegistrationRepository(
               registration("google"),
               registration("kakao")
-          )
+          ),
+          withdrawalRequestStore
       );
 
   @Test
   void addsSelectAccountPromptToGoogleAndKakaoRequests() {
     assertSelectAccountPrompt("/oauth2/authorization/google");
     assertSelectAccountPrompt("/oauth2/authorization/kakao");
+  }
+
+  @Test
+  void bindsWithdrawalRequestToPrefixedOAuthState() {
+    MockHttpServletRequest request = request("/oauth2/authorization/google");
+    request.addParameter("withdrawalRequestId", "withdrawal-request-id");
+
+    OAuth2AuthorizationRequest authorizationRequest = resolver.resolve(request);
+
+    assertThat(authorizationRequest).isNotNull();
+    assertThat(authorizationRequest.getState()).startsWith("withdrawal.");
+    assertThat(authorizationRequest.getAuthorizationRequestUri())
+        .contains("state=withdrawal.");
+    verify(withdrawalRequestStore).bindState(
+        "withdrawal-request-id",
+        authorizationRequest.getState(),
+        "google"
+    );
   }
 
   private void assertSelectAccountPrompt(String requestUri) {

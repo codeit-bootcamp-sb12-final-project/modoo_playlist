@@ -1,6 +1,7 @@
 package com.codeit.modoo_playlist.moduleapi.domain.search.service;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.inOrder;
@@ -26,8 +27,7 @@ public class InitialIndexServiceTest {
 
   private static final String INDEX_ALIAS = "contents";
   private static final String TARGET_INDEX = "contents_v2";
-  private static final UUID CONTENT_ID =
-      UUID.fromString("019ed8a0-0000-7000-9300-000000000001");
+  private static final UUID CONTENT_ID = UUID.fromString("019ed8a0-0000-7000-9300-000000000001");
 
   @Mock
   private ContentIndexService contentIndexService;
@@ -39,15 +39,13 @@ public class InitialIndexServiceTest {
 
   @BeforeEach
   void setUp() {
-    contentInitialIndexService =
-        new ContentInitialIndexService(contentIndexService, reindexStateRepository);
+    contentInitialIndexService = new ContentInitialIndexService(contentIndexService, reindexStateRepository);
   }
 
   @Test
   @DisplayName("현재 alias가 최신 인덱스를 가리키면 재색인하지 않는다")
   void skipReindexWhenCurrentIndexIsLatest() {
-    when(contentIndexService.getAliasIndex(INDEX_ALIAS))
-        .thenReturn(Optional.of(TARGET_INDEX));
+    when(contentIndexService.getAliasIndex(INDEX_ALIAS)).thenReturn(Optional.of(TARGET_INDEX));
 
     contentInitialIndexService.run(null);
 
@@ -57,26 +55,51 @@ public class InitialIndexServiceTest {
   }
 
   @Test
+  @DisplayName("다른 인스턴스가 재색인 중이면 재색인을 시작하지 않는다")
+  void skipReindexWhenAnotherInstanceIsReindexing() {
+    when(contentIndexService.getAliasIndex(INDEX_ALIAS)).thenReturn(Optional.empty());
+    when(reindexStateRepository.start(TARGET_INDEX)).thenReturn(false);
+
+    contentInitialIndexService.run(null);
+
+    verify(contentIndexService, never()).createIndex(any());
+    verify(contentIndexService, never()).deleteIndex(any());
+    verify(contentIndexService, never()).indexBatch(any(), anyInt(), any());
+    verify(contentIndexService, never()).finalizeReindex(any(), any(), any());
+    verify(reindexStateRepository, never()).finish();
+  }
+
+  @Test
+  @DisplayName("인덱스 전환 상태 변경에 실패하면 미완성 인덱스를 삭제하고 재색인 상태를 정리한다")
+  void cleanUpWhenStartSwitchingFails() {
+    when(contentIndexService.getAliasIndex(INDEX_ALIAS)).thenReturn(Optional.empty());
+    when(reindexStateRepository.start(TARGET_INDEX)).thenReturn(true);
+    when(contentIndexService.concreteIndexExists(TARGET_INDEX)).thenReturn(false);
+    when(contentIndexService.indexBatch(null, 100, TARGET_INDEX)).thenReturn(List.of());
+    when(reindexStateRepository.popChangedContentId()).thenReturn(null);
+    when(reindexStateRepository.startSwitching()).thenReturn(false);
+
+    assertThatThrownBy(() -> contentInitialIndexService.run(null))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessage("콘텐츠 검색 인덱스 전환 상태 변경에 실패했습니다. index=" + TARGET_INDEX);
+
+    verify(contentIndexService).deleteIndex(TARGET_INDEX);
+    verify(contentIndexService, never()).finalizeReindex(any(), any(), any());
+    verify(reindexStateRepository).finish();
+  }
+
+  @Test
   @DisplayName("인덱스 버전이 변경되면 전체 색인 후 alias를 전환한다")
   void reindexAndSwitchAlias() {
-    ContentDocument document = ContentDocument.builder()
-        .id(CONTENT_ID.toString())
-        .build();
+    ContentDocument document = ContentDocument.builder().id(CONTENT_ID.toString()).build();
 
-    when(contentIndexService.getAliasIndex(INDEX_ALIAS))
-        .thenReturn(Optional.empty());
-    when(reindexStateRepository.start(TARGET_INDEX))
-        .thenReturn(true);
-    when(contentIndexService.concreteIndexExists(TARGET_INDEX))
-        .thenReturn(false);
-    when(contentIndexService.indexBatch(null, 100, TARGET_INDEX))
-        .thenReturn(List.of(document));
-    when(contentIndexService.indexBatch(CONTENT_ID, 100, TARGET_INDEX))
-        .thenReturn(List.of());
-    when(reindexStateRepository.popChangedContentId())
-        .thenReturn(null);
-    when(reindexStateRepository.startSwitching())
-        .thenReturn(true);
+    when(contentIndexService.getAliasIndex(INDEX_ALIAS)).thenReturn(Optional.empty());
+    when(reindexStateRepository.start(TARGET_INDEX)).thenReturn(true);
+    when(contentIndexService.concreteIndexExists(TARGET_INDEX)).thenReturn(false);
+    when(contentIndexService.indexBatch(null, 100, TARGET_INDEX)).thenReturn(List.of(document));
+    when(contentIndexService.indexBatch(CONTENT_ID, 100, TARGET_INDEX)).thenReturn(List.of());
+    when(reindexStateRepository.popChangedContentId()).thenReturn(null);
+    when(reindexStateRepository.startSwitching()).thenReturn(true);
 
     contentInitialIndexService.run(null);
 
@@ -91,16 +114,45 @@ public class InitialIndexServiceTest {
   }
 
   @Test
+  @DisplayName("재색인 대상 인덱스가 이미 존재하면 삭제 후 다시 생성한다")
+  void recreateExistingTargetIndex() {
+    when(contentIndexService.getAliasIndex(INDEX_ALIAS)).thenReturn(Optional.empty());
+    when(reindexStateRepository.start(TARGET_INDEX)).thenReturn(true);
+    when(contentIndexService.concreteIndexExists(TARGET_INDEX)).thenReturn(true);
+    when(contentIndexService.indexBatch(null, 100, TARGET_INDEX)).thenReturn(List.of());
+    when(reindexStateRepository.popChangedContentId()).thenReturn(null);
+    when(reindexStateRepository.startSwitching()).thenReturn(true);
+
+    contentInitialIndexService.run(null);
+
+    InOrder inOrder = inOrder(contentIndexService);
+    inOrder.verify(contentIndexService).deleteIndex(TARGET_INDEX);
+    inOrder.verify(contentIndexService).createIndex(TARGET_INDEX);
+  }
+
+  @Test
+  @DisplayName("전체 색인 중 변경된 콘텐츠를 대상 인덱스에 다시 반영한다")
+  void applyChangedContentsAfterReindex() {
+    when(contentIndexService.getAliasIndex(INDEX_ALIAS)).thenReturn(Optional.empty());
+    when(reindexStateRepository.start(TARGET_INDEX)).thenReturn(true);
+    when(contentIndexService.concreteIndexExists(TARGET_INDEX)).thenReturn(false);
+    when(contentIndexService.indexBatch(null, 100, TARGET_INDEX)).thenReturn(List.of());
+    when(reindexStateRepository.popChangedContentId()).thenReturn(CONTENT_ID.toString()).thenReturn(null);
+    when(reindexStateRepository.startSwitching()).thenReturn(true);
+
+    contentInitialIndexService.run(null);
+
+    verify(contentIndexService).index(CONTENT_ID, TARGET_INDEX);
+    verify(contentIndexService).finalizeReindex(eq(INDEX_ALIAS), eq(TARGET_INDEX), any(Runnable.class));
+  }
+
+  @Test
   @DisplayName("전체 색인에 실패하면 미완성 인덱스를 삭제하고 재색인 상태를 정리한다")
   void cleanUpWhenReindexFails() {
-    when(contentIndexService.getAliasIndex(INDEX_ALIAS))
-        .thenReturn(Optional.empty());
-    when(reindexStateRepository.start(TARGET_INDEX))
-        .thenReturn(true);
-    when(contentIndexService.concreteIndexExists(TARGET_INDEX))
-        .thenReturn(false);
-    when(contentIndexService.indexBatch(null, 100, TARGET_INDEX))
-        .thenThrow(new IllegalStateException("색인 실패"));
+    when(contentIndexService.getAliasIndex(INDEX_ALIAS)).thenReturn(Optional.empty());
+    when(reindexStateRepository.start(TARGET_INDEX)).thenReturn(true);
+    when(contentIndexService.concreteIndexExists(TARGET_INDEX)).thenReturn(false);
+    when(contentIndexService.indexBatch(null, 100, TARGET_INDEX)).thenThrow(new IllegalStateException("색인 실패"));
 
     assertThatThrownBy(() -> contentInitialIndexService.run(null))
         .isInstanceOf(IllegalStateException.class)

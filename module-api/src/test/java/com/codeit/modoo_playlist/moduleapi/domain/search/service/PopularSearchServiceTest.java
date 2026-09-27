@@ -1,5 +1,6 @@
 package com.codeit.modoo_playlist.moduleapi.domain.search.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -11,6 +12,8 @@ import com.codeit.modoo_playlist.moduleapi.domain.search.document.ContentDocumen
 import com.codeit.modoo_playlist.moduleapi.domain.search.event.SearchExecutedEvent;
 import com.codeit.modoo_playlist.moduleapi.domain.search.repository.ContentSearchRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.search.repository.PopularSearchRedisRepository;
+import com.codeit.modoo_playlist.moduleapi.dto.PopularKeywordDto;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,6 +36,16 @@ public class PopularSearchServiceTest {
 
   @InjectMocks
   private PopularSearchService popularSearchService;
+
+  @Test
+  void 인기_검색어를_조회한다() {
+    PopularKeywordDto keyword = mock(PopularKeywordDto.class);
+    when(popularSearchRedisRepository.getTopKeywords(7, 10)).thenReturn(List.of(keyword));
+
+    assertThat(popularSearchService.getPopularKeywords()).containsExactly(keyword);
+
+    verify(popularSearchRedisRepository).getTopKeywords(7, 10);
+  }
 
   @Test
   void 두글자_이상_검색어는_이벤트를_발행한다() {

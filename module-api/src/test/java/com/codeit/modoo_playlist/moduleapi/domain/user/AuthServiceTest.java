@@ -172,6 +172,34 @@ class AuthServiceTest {
     ));
   }
 
+  @Test
+  @DisplayName("탈퇴한 계정은 새 로그인 세션을 발급하지 않는다")
+  void withdrawnAccountCannotLogin() {
+    User user = user();
+    user.withdraw(clock.instant());
+    when(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.of(user));
+
+    assertError(
+        () -> authService.issueLogin(userId, LoginCredentialType.PERMANENT),
+        ErrorCode.USER_ACCOUNT_WITHDRAWN
+    );
+
+    verifyNoInteractions(tokens, sessions, userMapper);
+  }
+
+  @Test
+  @DisplayName("탈퇴한 계정의 비밀번호 초기화 요청은 무시한다")
+  void withdrawnAccountCannotResetPassword() {
+    User user = user();
+    user.withdraw(clock.instant());
+    when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+
+    authService.resetPassword(EMAIL);
+
+    verifyNoInteractions(passwordEncoder, temporaryPasswordGenerator, eventPublisher);
+    verify(userRepository, never()).saveAndFlush(any());
+  }
+
   @ParameterizedTest
   @NullAndEmptySource
   @ValueSource(strings = {" ", "\t"})

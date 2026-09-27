@@ -4,6 +4,8 @@ import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.util.UUID;
 
 public record SliceCursorRequest(
@@ -20,5 +22,18 @@ public record SliceCursorRequest(
                 boolean hasIdAfter = idAfter != null;
 
                 return hasCursor == hasIdAfter;
+        }
+
+        @AssertTrue(message = "cursor 형식이 올바르지 않습니다.")
+        public boolean isCursorFormatValid() {
+                if (cursor == null || cursor.isBlank()) {
+                        return true;
+                }
+                try {
+                        Instant.parse(cursor);
+                        return true;
+                } catch (DateTimeParseException e) {
+                        return false;
+                }
         }
 }

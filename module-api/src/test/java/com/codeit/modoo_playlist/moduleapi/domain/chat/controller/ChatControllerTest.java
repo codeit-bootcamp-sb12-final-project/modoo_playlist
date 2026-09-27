@@ -41,4 +41,17 @@ class ChatControllerTest {
     verify(chatService).chat(userId, conversationId, "안녕");
     verifyNoMoreInteractions(chatService);
   }
+
+  @Test
+  void 대화_삭제는_userId와_conversationId_순서로_서비스를_호출한다() {
+    UUID userId = UUID.randomUUID();
+    UUID conversationId = UUID.randomUUID();
+    UserDetails user = new UserDetails(
+        new UserDto(userId, "user@test.com", "user", null, UserRole.USER, false, null), "password");
+
+    controller.deleteConversation(conversationId, user);
+
+    verify(chatService).deleteConversation(userId, conversationId);
+    verifyNoMoreInteractions(chatService);
+  }
 }

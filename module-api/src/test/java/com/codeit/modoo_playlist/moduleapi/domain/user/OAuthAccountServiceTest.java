@@ -20,6 +20,7 @@ import com.codeit.modoo_playlist.moduleapi.dto.oauth.OAuthAccountResult;
 import com.codeit.modoo_playlist.moduleapi.dto.oauth.OAuthUserProfile;
 import java.util.Optional;
 import java.util.UUID;
+import java.time.Instant;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -67,6 +68,30 @@ class OAuthAccountServiceTest {
 
     assertThat(result.userId()).isEqualTo(userId);
     assertThat(result.newlyRegistered()).isFalse();
+    verify(users, never()).save(any());
+    verify(socialAccounts, never()).save(any());
+  }
+
+  @Test
+  @DisplayName("rejects an OAuth login for a withdrawn social account")
+  void rejectsWithdrawnSocialAccount() {
+    User user = User.createOAuth(EMAIL, "OAuth User", null);
+    user.withdraw(Instant.now());
+    SocialAccount socialAccount = SocialAccount.create(
+        user,
+        Provider.GOOGLE,
+        PROVIDER_USER_ID
+    );
+    when(socialAccounts.findByProviderAndProviderUserId(
+        Provider.GOOGLE,
+        PROVIDER_USER_ID
+    )).thenReturn(Optional.of(socialAccount));
+
+    assertThatThrownBy(() -> service.resolveOrCreate(profile()))
+        .isInstanceOfSatisfying(BaseException.class, exception ->
+            assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.USER_ACCOUNT_WITHDRAWN)
+        );
+
     verify(users, never()).save(any());
     verify(socialAccounts, never()).save(any());
   }
