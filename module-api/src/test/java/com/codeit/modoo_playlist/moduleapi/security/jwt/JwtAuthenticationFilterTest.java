@@ -1,5 +1,7 @@
 package com.codeit.modoo_playlist.moduleapi.security.jwt;
 
+import com.codeit.modoo_playlist.core.global.security.LoginSessionStore;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 

@@ -14,7 +14,7 @@ import com.codeit.modoo_playlist.moduleapi.domain.user.service.impl.AuthServiceI
 import com.codeit.modoo_playlist.moduleapi.mapper.UserMapper;
 import com.codeit.modoo_playlist.moduleapi.security.UserDetailsService;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtTokenProvider;
-import com.codeit.modoo_playlist.moduleapi.security.jwt.LoginSessionStore;
+import com.codeit.modoo_playlist.core.global.security.LoginSessionStore;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.RefreshTokenHasher;
 import java.time.Clock;
 import java.time.Instant;
