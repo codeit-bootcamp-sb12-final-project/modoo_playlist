@@ -22,7 +22,7 @@ import com.codeit.modoo_playlist.core.domain.follow.entity.Follow;
 import com.codeit.modoo_playlist.core.global.exception.BaseException;
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import com.codeit.modoo_playlist.moduleapi.domain.follow.repository.FollowRepository;
-import com.codeit.modoo_playlist.moduleapi.domain.notification.event.FollowedEvent;
+import com.codeit.modoo_playlist.moduleapi.event.FollowedEvent;
 
 @ExtendWith(MockitoExtension.class)
 class FollowServiceImplTest {

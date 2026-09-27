@@ -16,7 +16,7 @@ import com.codeit.modoo_playlist.infra.mapper.WatchingSessionMapper;
 import com.codeit.modoo_playlist.modulerealtime.dto.watchingsession.ChangeType;
 import com.codeit.modoo_playlist.modulerealtime.dto.watchingsession.StartResult;
 import com.codeit.modoo_playlist.modulerealtime.dto.watchingsession.WatchingSessionChange;
-import com.codeit.modoo_playlist.infra.event.kafka.WatchingSessionStartedEvent;
+import com.codeit.modoo_playlist.infra.event.WatchingSessionStartedEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;

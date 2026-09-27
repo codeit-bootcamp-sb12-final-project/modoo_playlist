@@ -1,14 +1,18 @@
-package com.codeit.modoo_playlist.moduleapi.domain.notification.listener;
+package com.codeit.modoo_playlist.moduleapi.event.listener;
 
 import com.codeit.modoo_playlist.core.domain.notification.entity.NotificationLevel;
 import com.codeit.modoo_playlist.moduleapi.domain.follow.repository.FollowRepository;
-import com.codeit.modoo_playlist.moduleapi.domain.notification.event.*;
 import com.codeit.modoo_playlist.moduleapi.domain.notification.service.NotificationService;
 import com.codeit.modoo_playlist.moduleapi.domain.playlist.repository.PlaylistSubscriptionRepository;
-import com.codeit.modoo_playlist.infra.event.kafka.WatchingSessionStartedEvent;
+import com.codeit.modoo_playlist.infra.event.WatchingSessionStartedEvent;
 
 import java.util.List;
 import java.util.UUID;
+
+import com.codeit.modoo_playlist.moduleapi.event.FollowedEvent;
+import com.codeit.modoo_playlist.moduleapi.event.PlaylistContentAddedEvent;
+import com.codeit.modoo_playlist.moduleapi.event.PlaylistCreatedEvent;
+import com.codeit.modoo_playlist.moduleapi.event.PlaylistSubscribedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;

@@ -34,9 +34,9 @@ import com.codeit.modoo_playlist.core.global.exception.BaseException;
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.jpa.ContentRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.jpa.ContentTagRepository;
-import com.codeit.modoo_playlist.moduleapi.domain.notification.event.PlaylistContentAddedEvent;
-import com.codeit.modoo_playlist.moduleapi.domain.notification.event.PlaylistCreatedEvent;
-import com.codeit.modoo_playlist.moduleapi.domain.notification.event.PlaylistSubscribedEvent;
+import com.codeit.modoo_playlist.moduleapi.event.PlaylistContentAddedEvent;
+import com.codeit.modoo_playlist.moduleapi.event.PlaylistCreatedEvent;
+import com.codeit.modoo_playlist.moduleapi.event.PlaylistSubscribedEvent;
 import com.codeit.modoo_playlist.moduleapi.domain.playlist.mapper.PlaylistMapper;
 import com.codeit.modoo_playlist.moduleapi.domain.playlist.repository.PlaylistContentRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.playlist.repository.PlaylistRepository;
@@ -311,6 +311,8 @@ class PlaylistServiceImplTest {
     void 구독을_취소하면_삭제된다() {
         UUID playlistId = UUID.randomUUID();
         UUID subscriberId = UUID.randomUUID();
+        when(playlistRepository.findById(playlistId))
+                .thenReturn(Optional.of(playlist(playlistId, UUID.randomUUID(), "제목", "설명")));
         PlaylistSubscriptionId id = new PlaylistSubscriptionId(playlistId, subscriberId);
         PlaylistSubscription subscription = PlaylistSubscription.builder().id(id).build();
         when(playlistSubscriptionRepository.findById(id)).thenReturn(Optional.of(subscription));
@@ -324,6 +326,8 @@ class PlaylistServiceImplTest {
     void 구독하지_않은_상태에서_취소하면_PLAYLIST_SUBSCRIPTION_NOT_FOUND를_반환한다() {
         UUID playlistId = UUID.randomUUID();
         UUID subscriberId = UUID.randomUUID();
+        when(playlistRepository.findById(playlistId))
+                .thenReturn(Optional.of(playlist(playlistId, UUID.randomUUID(), "제목", "설명")));
         PlaylistSubscriptionId id = new PlaylistSubscriptionId(playlistId, subscriberId);
         when(playlistSubscriptionRepository.findById(id)).thenReturn(Optional.empty());
 

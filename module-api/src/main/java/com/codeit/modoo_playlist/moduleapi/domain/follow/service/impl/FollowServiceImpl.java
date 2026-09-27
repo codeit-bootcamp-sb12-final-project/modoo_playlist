@@ -10,7 +10,7 @@ import com.codeit.modoo_playlist.moduleapi.domain.follow.repository.query.Follow
 import com.codeit.modoo_playlist.moduleapi.domain.follow.repository.query.FollowListType;
 import com.codeit.modoo_playlist.moduleapi.domain.follow.repository.query.FollowQueryPage;
 import com.codeit.modoo_playlist.moduleapi.domain.follow.service.FollowService;
-import com.codeit.modoo_playlist.moduleapi.domain.notification.event.FollowedEvent;
+import com.codeit.modoo_playlist.moduleapi.event.FollowedEvent;
 import com.codeit.modoo_playlist.moduleapi.domain.user.repository.UserRepository;
 
 import java.util.List;

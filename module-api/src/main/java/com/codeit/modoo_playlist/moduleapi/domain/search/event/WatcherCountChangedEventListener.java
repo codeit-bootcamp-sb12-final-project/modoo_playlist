@@ -8,7 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
-import com.codeit.modoo_playlist.infra.event.kafka.WatcherCountChangedEvent;
+import com.codeit.modoo_playlist.infra.event.WatcherCountChangedEvent;
 
 @Slf4j
 @Component
