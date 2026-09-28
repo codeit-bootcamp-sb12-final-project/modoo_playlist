@@ -45,6 +45,12 @@ public class ContentSports {
     @Column(length = 100)
     private String venue;
 
+    @Column(name = "home_team_badge", length = 500)
+    private String homeTeamBadge;
+
+    @Column(name = "away_team_badge", length = 500)
+    private String awayTeamBadge;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     @Builder.Default

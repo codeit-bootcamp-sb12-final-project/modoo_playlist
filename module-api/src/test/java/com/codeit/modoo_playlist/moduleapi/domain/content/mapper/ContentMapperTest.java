@@ -53,6 +53,7 @@ class ContentMapperTest {
         ContentSports sports = ContentSports.builder()
                 .contentId(content.getId()).content(content).sportType("Soccer")
                 .league("Premier League").homeTeam("Arsenal").awayTeam("Chelsea")
+                .homeTeamBadge("home.png").awayTeamBadge("away.png")
                 .status(SportsStatus.SCHEDULED).kickoffAt(kickoffAt).build();
 
         ContentDetailResponse response = mapper.toDetail(content, List.of("Soccer"), 3,
@@ -62,6 +63,8 @@ class ContentMapperTest {
         assertThat(response.video()).isNull();
         assertThat(response.sports().sportType()).isEqualTo("Soccer");
         assertThat(response.sports().kickoffAt()).isEqualTo(kickoffAt);
+        assertThat(response.sports().homeTeamBadge()).isEqualTo("home.png");
+        assertThat(response.sports().awayTeamBadge()).isEqualTo("away.png");
         assertThat(response.myReaction()).isEqualTo(InteractionType.LIKE);
     }
 

@@ -17,6 +17,8 @@ public record ExistingSportsContent(
         String homeTeam,
         String awayTeam,
         String venue,
+        String homeTeamBadge,
+        String awayTeamBadge,
         String status,
         Instant kickoffAt
 ) {

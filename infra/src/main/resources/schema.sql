@@ -99,6 +99,8 @@ CREATE TABLE `content_sports` (
 	`home_team`	VARCHAR(100)	NULL,
 	`away_team`	VARCHAR(100)	NULL,
 	`venue`	VARCHAR(100)	NULL,
+	`home_team_badge`	VARCHAR(500)	NULL	COMMENT 'strHomeTeamBadge. 홈팀 로고 URL',
+	`away_team_badge`	VARCHAR(500)	NULL	COMMENT 'strAwayTeamBadge. 원정팀 로고 URL',
 	`status`	VARCHAR(20)	NOT NULL	DEFAULT 'SCHEDULED'	COMMENT 'SCHEDULED / LIVE / FINISHED / CANCELED / POSTPONED',
 	`kickoff_at`	DATETIME(6)	NOT NULL	COMMENT 'strTimestamp를 UTC Instant로 변환. contents.release_date는 날짜만 담는다',
 

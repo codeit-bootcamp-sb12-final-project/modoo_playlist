@@ -17,6 +17,7 @@ public record SportsDbEvent(
         String strThumb,
         String strLeagueBadge,
         String strHomeTeamBadge,
+        String strAwayTeamBadge,
         String strStatus,
         String strPostponed
 ) {

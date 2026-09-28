@@ -11,6 +11,8 @@ public record ContentSportsResponse(
         String homeTeam,
         String awayTeam,
         String venue,
+        String homeTeamBadge,
+        String awayTeamBadge,
         SportsStatus status,
         Instant kickoffAt
 ) {
