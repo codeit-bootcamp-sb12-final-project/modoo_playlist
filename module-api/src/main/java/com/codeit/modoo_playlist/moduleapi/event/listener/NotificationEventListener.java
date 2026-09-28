@@ -4,15 +4,13 @@ import com.codeit.modoo_playlist.core.domain.notification.entity.NotificationLev
 import com.codeit.modoo_playlist.moduleapi.domain.follow.repository.FollowRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.notification.service.NotificationService;
 import com.codeit.modoo_playlist.moduleapi.domain.playlist.repository.PlaylistSubscriptionRepository;
-import com.codeit.modoo_playlist.infra.event.WatchingSessionStartedEvent;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
-import com.codeit.modoo_playlist.moduleapi.event.FollowedEvent;
-import com.codeit.modoo_playlist.moduleapi.event.PlaylistContentAddedEvent;
-import com.codeit.modoo_playlist.moduleapi.event.PlaylistCreatedEvent;
-import com.codeit.modoo_playlist.moduleapi.event.PlaylistSubscribedEvent;
+import com.codeit.modoo_playlist.moduleapi.event.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -80,19 +78,31 @@ public class NotificationEventListener {
                 NotificationLevel.INFO,
                 event.playlistId()
         );
+        Set<UUID> subscriberIdSet = new HashSet<>(subscriberIds);
+
+        List<UUID> followerIds = followRepository
+                .findFollowerIdsByFolloweeId(event.ownerId())
+                .stream()
+                .filter(id -> !subscriberIdSet.contains(id))
+                .toList();
+        notificationService.createBatch(
+                followerIds,
+                "팔로우한 사용자의 플레이리스트에 콘텐츠 추가",
+                "회원님이 팔로우한 사용자가 플레이리스트에 새 콘텐츠를 추가했습니다.",
+                NotificationLevel.INFO,
+                event.playlistId()
+        );
     }
 
     @Async(NOTIFICATION_ASYNC_EXECUTOR)
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handleWatchingSessionStarted(WatchingSessionStartedEvent event) {
-        List<UUID> followerIds = followRepository.findFollowerIdsByFolloweeId(event.watcherId());
-        notificationService.createBatch(
-                followerIds,
-                "팔로우한 사용자의 실시간 시청",
-                "회원님이 팔로우한 사용자가 콘텐츠를 시청하기 시작했습니다.",
+    public void handleAuthorizationChanged(AuthorizationChangedEvent event) {
+        notificationService.create(
+                event.userId(),
+                "권한 변경",
+                "회원님의 권한이 " + event.newRole().name() + "(으)로 변경되었습니다.",
                 NotificationLevel.INFO,
-                event.contentId()
+                event.userId()
         );
     }
-
 }

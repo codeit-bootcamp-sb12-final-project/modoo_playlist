@@ -8,6 +8,7 @@ import java.util.UUID;
  */
 public record PlaylistContentAddedEvent(
         UUID playlistId,
-        UUID contentId
+        UUID contentId,
+        UUID ownerId
 ) {
 }

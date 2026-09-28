@@ -21,6 +21,7 @@ import com.codeit.modoo_playlist.moduleapi.dto.user.request.UserProfileUpdateReq
 import com.codeit.modoo_playlist.moduleapi.dto.user.response.CursorResponseUserDto;
 import com.codeit.modoo_playlist.moduleapi.dto.user.response.WithdrawalInfoResponse;
 import com.codeit.modoo_playlist.moduleapi.dto.user.response.WithdrawalVerificationMethod;
+import com.codeit.modoo_playlist.moduleapi.event.AuthorizationChangedEvent;
 import com.codeit.modoo_playlist.moduleapi.mapper.UserMapper;
 import java.io.IOException;
 import java.time.Duration;
@@ -33,6 +34,7 @@ import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,6 +55,7 @@ public class UserServiceImpl implements UserService {
   private final UserMapper userMapper;
   private final LoginSessionStore loginSessionStore;
   private final ImageStorage imageStorage;
+  private final ApplicationEventPublisher eventPublisher;
 
   @Value("${user-deletion.retention:1d}")
   private Duration userDeletionRetention = Duration.ofDays(1);
@@ -280,6 +283,7 @@ public class UserServiceImpl implements UserService {
     }
 
     user.changeRole(role);
+    eventPublisher.publishEvent(new AuthorizationChangedEvent(user.getId(),role));
     loginSessionStore.invalidateAll(userId);
   }
 

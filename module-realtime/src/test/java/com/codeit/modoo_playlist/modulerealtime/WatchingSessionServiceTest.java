@@ -7,12 +7,12 @@ import com.codeit.modoo_playlist.core.domain.tag.entity.Tag;
 import com.codeit.modoo_playlist.core.domain.watchingSession.dto.WatchingSessionDto;
 import com.codeit.modoo_playlist.core.domain.watchingSession.entity.WatchingSession;
 import com.codeit.modoo_playlist.infra.mapper.ContentSummaryMapper;
+import com.codeit.modoo_playlist.infra.mapper.WatchingSessionMapper;
 import com.codeit.modoo_playlist.infra.repository.RealtimeContentRepository;
 import com.codeit.modoo_playlist.infra.repository.RealtimeContentTagRepository;
+import com.codeit.modoo_playlist.core.domain.content.dto.ContentSummaryResponse;
 import com.codeit.modoo_playlist.infra.repository.RealtimeUserRepository;
 import com.codeit.modoo_playlist.infra.repository.watchingsession.WatchingSessionRepository;
-import com.codeit.modoo_playlist.core.domain.content.dto.ContentSummaryResponse;
-import com.codeit.modoo_playlist.infra.mapper.WatchingSessionMapper;
 import com.codeit.modoo_playlist.modulerealtime.dto.watchingsession.ChangeType;
 import com.codeit.modoo_playlist.modulerealtime.watchingSession.service.WatchingSessionCommandService;
 import org.junit.jupiter.api.Test;
@@ -34,12 +34,18 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class WatchingSessionServiceTest {
-    @Mock WatchingSessionRepository apiWatchingSessionRepository;
-    @Mock RealtimeUserRepository userRepository;
-    @Mock RealtimeContentRepository contentRepository;
-    @Mock RealtimeContentTagRepository contentTagRepository;
-    @Mock WatchingSessionMapper watchingSessionMapper;
-    @Mock ContentSummaryMapper contentMapper;
+    @Mock
+    WatchingSessionRepository apiWatchingSessionRepository;
+    @Mock
+    RealtimeUserRepository userRepository;
+    @Mock
+    RealtimeContentRepository contentRepository;
+    @Mock
+    RealtimeContentTagRepository contentTagRepository;
+    @Mock
+    WatchingSessionMapper watchingSessionMapper;
+    @Mock
+    ContentSummaryMapper contentMapper;
     @InjectMocks WatchingSessionCommandService service;
 
     @Test

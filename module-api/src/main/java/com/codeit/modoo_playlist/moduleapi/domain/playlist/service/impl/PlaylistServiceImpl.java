@@ -109,7 +109,7 @@ public class PlaylistServiceImpl implements PlaylistService {
 
         playlistContentRepository.save(playlistContent);
 
-        eventPublisher.publishEvent(new PlaylistContentAddedEvent(playlistId, contentId));
+        eventPublisher.publishEvent(new PlaylistContentAddedEvent(playlistId, contentId, ownerId));
     }
 
     @Override
