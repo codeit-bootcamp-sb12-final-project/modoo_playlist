@@ -12,7 +12,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 public class RealtimeNotifierConfig {
 
     @Bean
-    public RealtimeNotifier apiRealtimeNotifier(
+    public RealtimeNotifier realtimeNotifier(
             KafkaTemplate<String, Object> kafkaTemplate) {
         return new RealtimeKafkaPublisher(kafkaTemplate);
     }

@@ -6,7 +6,6 @@ import com.codeit.modoo_playlist.moduleapi.domain.notification.mapper.Notificati
 import com.codeit.modoo_playlist.moduleapi.domain.notification.repository.query.NotificationListCondition;
 import com.codeit.modoo_playlist.moduleapi.domain.notification.repository.query.NotificationQueryPage;
 import com.codeit.modoo_playlist.moduleapi.domain.notification.service.NotificationService;
-import com.codeit.modoo_playlist.moduleapi.sse.SseEmitterRepository;
 import com.codeit.modoo_playlist.moduleapi.dto.notification.response.NotificationCursorResponse;
 import com.codeit.modoo_playlist.core.domain.notification.dto.NotificationResponse;
 import com.codeit.modoo_playlist.moduleapi.dto.notification.response.NotificationUnreadCountResponse;

@@ -1,8 +1,8 @@
-package com.codeit.modoo_playlist.moduleapi.sse;
+package com.codeit.modoo_playlist.modulerealtime.sse;
 
 import com.codeit.modoo_playlist.core.global.exception.BaseException;
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
-import com.codeit.modoo_playlist.moduleapi.security.UserDetails;
+import com.codeit.modoo_playlist.modulerealtime.security.RealtimePrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -26,7 +26,7 @@ public class SseController {
     @PreAuthorize("hasRole('USER')")
     @GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter subscribe(
-            @AuthenticationPrincipal UserDetails user,
+            @AuthenticationPrincipal RealtimePrincipal user,
             @RequestParam(value = "LastEventId", required = false) String lastEventId
     ) {
         if(user == null){
@@ -38,7 +38,7 @@ public class SseController {
         if(lastEventId != null && !lastEventId.isBlank()){
             last = UUID.fromString(lastEventId);
         }
-        return sseService.connect(user.getUserDto().id(), last);
+        return sseService.connect(user.userId(), last);
     }
 
 }

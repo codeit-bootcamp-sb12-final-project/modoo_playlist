@@ -11,6 +11,7 @@ import org.springframework.boot.persistence.autoconfigure.EntityScan;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 
 @SpringBootApplication(scanBasePackages = {
 		"com.codeit.modoo_playlist.modulerealtime",
@@ -19,6 +20,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EntityScan("com.codeit.modoo_playlist.core")
 @EnableJpaRepositories("com.codeit.modoo_playlist.infra")
 @EnableScheduling
+@EnableMethodSecurity
 @Import({
 		AccessTokenVerifier.class,
 		RedisLoginSessionStore.class,

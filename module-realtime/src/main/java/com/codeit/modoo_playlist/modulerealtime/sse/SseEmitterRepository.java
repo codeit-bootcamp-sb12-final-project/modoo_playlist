@@ -1,6 +1,5 @@
-package com.codeit.modoo_playlist.moduleapi.sse;
+package com.codeit.modoo_playlist.modulerealtime.sse;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;

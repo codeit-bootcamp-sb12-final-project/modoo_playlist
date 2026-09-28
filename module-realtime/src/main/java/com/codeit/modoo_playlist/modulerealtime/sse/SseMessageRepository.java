@@ -1,4 +1,4 @@
-package com.codeit.modoo_playlist.moduleapi.sse;
+package com.codeit.modoo_playlist.modulerealtime.sse;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;

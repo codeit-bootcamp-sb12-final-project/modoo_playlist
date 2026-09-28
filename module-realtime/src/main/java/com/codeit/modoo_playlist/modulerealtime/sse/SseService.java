@@ -1,4 +1,4 @@
-package com.codeit.modoo_playlist.moduleapi.sse;
+package com.codeit.modoo_playlist.modulerealtime.sse;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -107,7 +107,7 @@ public class SseService {
 
     private boolean ping(SseEmitter emitter) {
         try {
-            emitter.send(SseEmitter.event().name("ping").build());
+            emitter.send(SseEmitter.event().comment("ping").build());
             return true;
         } catch (IOException | IllegalStateException e) {
             log.debug("Failed to send ping event: {}", e.getMessage());

@@ -1,4 +1,4 @@
-package com.codeit.modoo_playlist.modulerealtime.event;
+package com.codeit.modoo_playlist.modulerealtime.event.listener;
 
 import com.codeit.modoo_playlist.infra.event.kafka.RealtimeKafkaPublisher;
 import com.codeit.modoo_playlist.infra.event.kafka.StompKafkaEvent;

@@ -1,4 +1,4 @@
-package com.codeit.modoo_playlist.moduleapi.sse;
+package com.codeit.modoo_playlist.modulerealtime.sse;
 
 import lombok.Getter;
 import org.springframework.http.MediaType;
