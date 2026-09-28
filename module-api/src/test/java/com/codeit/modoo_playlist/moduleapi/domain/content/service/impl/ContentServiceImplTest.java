@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -550,6 +551,114 @@ class ContentServiceImplTest {
         assertDisplayTags(content,
                 List.of(tag("두번째", TagKind.KEYWORD), tag("첫번째", TagKind.KEYWORD)),
                 null, List.of("두번째", "첫번째"));
+    }
+
+    @Test
+    void 빈_목록은_태그와_스포츠를_추가조회하지_않는다() {
+        ContentQueryPage page = new ContentQueryPage(List.of(), null, null, false, 0);
+        ContentCursorResponse expected = new ContentCursorResponse(
+                List.of(), null, null, false, 0, "watcherCount", "DESCENDING"
+        );
+        when(contentRepository.findAllByCondition(any(), eq(userId))).thenReturn(page);
+        when(contentMapper.toCursorResponse(page, List.of(), "watcherCount", "DESCENDING"))
+                .thenReturn(expected);
+
+        assertThat(contentService.getContents(
+                new ContentListRequest(null, null, null, null, null, null, null, null), userId
+        )).isSameAs(expected);
+
+        verify(contentTagRepository, never()).findAllWithTagByContentIds(anyList());
+        verify(contentSportsRepository, never()).findAllById(anyList());
+    }
+
+    @Test
+    void 스포츠_상세조회는_반응이_없으면_null과_스포츠정보를_반환한다() {
+        Content content = content(ContentType.SPORT, ContentSource.SPORTS_DB);
+        ContentSports sports = ContentSports.builder()
+                .contentId(content.getId()).content(content).sportType("Soccer")
+                .league("Premier League").homeTeam("Arsenal").awayTeam("Chelsea")
+                .kickoffAt(Instant.now()).build();
+        ContentDetailResponse expected = detail(content.getId());
+        when(contentRepository.findByIdAndDeletedAtIsNull(content.getId()))
+                .thenReturn(Optional.of(content));
+        when(userContentInteractionRepository.findAllByUserIdAndContentIdAndTypeInOrderByUpdatedAtDescIdDesc(
+                eq(userId), eq(content.getId()), any())).thenReturn(List.of());
+        when(contentTagRepository.findAllWithTagByContentIds(List.of(content.getId())))
+                .thenReturn(List.of());
+        when(contentSportsRepository.findAllById(List.of(content.getId())))
+                .thenReturn(List.of(sports));
+        when(contentSportsRepository.findById(content.getId())).thenReturn(Optional.of(sports));
+        when(contentPersonRepository.findAllByContent_IdOrderByDisplayOrderAsc(content.getId()))
+                .thenReturn(List.of());
+        when(contentMapper.toDetail(
+                eq(content), anyList(), eq(0L), isNull(), eq(sports), anyList(), isNull()))
+                .thenReturn(expected);
+
+        assertThat(contentService.getContent(content.getId(), userId)).isSameAs(expected);
+        verify(contentVideoRepository, never()).findById(content.getId());
+    }
+
+    @Test
+    void 유효하지_않은_공개연도는_생성과_수정에서_거부한다() {
+        Content content = content(ContentType.MOVIE, null);
+        when(contentRepository.findByIdAndDeletedAtIsNull(content.getId()))
+                .thenReturn(Optional.of(content));
+
+        assertThatThrownBy(() -> contentService.createContent(new ContentCreateRequest(
+                "movie", "제목", null, LocalDate.of(999, 1, 1), null,
+                List.of(), null, null, null
+        ), null)).isInstanceOfSatisfying(BaseException.class, exception ->
+                assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.CONTENT_DETAIL_INVALID));
+
+        assertThatThrownBy(() -> contentService.updateContent(
+                content.getId(),
+                new ContentUpdateRequest(null, null, LocalDate.of(10000, 1, 1),
+                        null, null, null, null, null),
+                null
+        )).isInstanceOfSatisfying(BaseException.class, exception ->
+                assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.CONTENT_DETAIL_INVALID));
+
+        verify(contentRepository, never()).save(any(Content.class));
+    }
+
+    @Test
+    void 스포츠_수정은_기존_상세가_없으면_거부한다() {
+        Content content = content(ContentType.SPORT, null);
+        ContentSportsRequest sports = new ContentSportsRequest(
+                "Soccer", "Premier League", null, "Arsenal", "Chelsea",
+                null, null, Instant.now()
+        );
+        when(contentRepository.findByIdAndDeletedAtIsNull(content.getId()))
+                .thenReturn(Optional.of(content));
+        when(contentSportsRepository.findById(content.getId())).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> contentService.updateContent(
+                content.getId(),
+                new ContentUpdateRequest(null, null, null, null, null, null, sports, null),
+                null
+        )).isInstanceOfSatisfying(BaseException.class, exception ->
+                assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.CONTENT_DETAIL_INVALID));
+    }
+
+    @Test
+    void TMDB_TV에서_애니메이션이_없으면_드라마를_첫_표시태그로_사용한다() {
+        Content content = content(ContentType.TV, ContentSource.TMDB);
+        List<Tag> tags = List.of(
+                tag("Drama", TagKind.GENRE), tag("Mystery", TagKind.GENRE),
+                tag("Comedy", TagKind.GENRE)
+        );
+
+        assertDisplayTags(content, tags, null, List.of("드라마", "Comedy", "Mystery"));
+    }
+
+    @Test
+    void 스포츠_상세가_없으면_장르를_표시태그로_사용한다() {
+        Content content = content(ContentType.SPORT, ContentSource.SPORTS_DB);
+        List<Tag> tags = List.of(
+                tag("Soccer", TagKind.GENRE), tag("Premier League", TagKind.GENRE)
+        );
+
+        assertDisplayTags(content, tags, null, List.of("Premier League", "Soccer"));
     }
 
     private void assertDisplayTags(

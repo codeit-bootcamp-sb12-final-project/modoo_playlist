@@ -48,6 +48,8 @@ public class SportsSyncItemProcessor implements ItemProcessor<SportsDbEvent, Spo
                 && Objects.equals(existing.homeTeam(), sports.homeTeam())
                 && Objects.equals(existing.awayTeam(), sports.awayTeam())
                 && Objects.equals(existing.venue(), sports.venue())
+                && Objects.equals(existing.homeTeamBadge(), sports.homeTeamBadge())
+                && Objects.equals(existing.awayTeamBadge(), sports.awayTeamBadge())
                 && Objects.equals(existing.status(), sports.status())
                 && Objects.equals(existing.kickoffAt(), sports.kickoffAt())
                 && sameTags(contentMapper.findTagsByContentId(existing.id()), incoming.tags());

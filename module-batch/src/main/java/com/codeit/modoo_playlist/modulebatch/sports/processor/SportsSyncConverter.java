@@ -57,6 +57,8 @@ public class SportsSyncConverter {
         String season = preserve(event.strSeason(), existing == null ? null : existing.season());
         String venue = preserve(event.strVenue(), existing == null ? null : existing.venue());
         String country = preserve(event.strCountry(), existing == null ? null : existing.originCountry());
+        String homeTeamBadge = badge(event.strHomeTeamBadge(), existing == null ? null : existing.homeTeamBadge());
+        String awayTeamBadge = badge(event.strAwayTeamBadge(), existing == null ? null : existing.awayTeamBadge());
 
         SportsSyncContent.Sports sports = new SportsSyncContent.Sports(
                 limit(sportType, 50),
@@ -65,6 +67,8 @@ public class SportsSyncConverter {
                 limit(homeTeam, 100),
                 limit(awayTeam, 100),
                 limit(venue, 100),
+                homeTeamBadge,
+                awayTeamBadge,
                 status.name(),
                 kickoffAt
         );
@@ -206,6 +210,12 @@ public class SportsSyncConverter {
 
     private String preserve(String incoming, String existing) {
         return blank(incoming) ? existing : incoming.trim();
+    }
+
+    // 잘린 URL은 깨진 링크가 되므로 컬럼 길이(500)를 넘으면 자르지 않고 기존 값을 유지한다.
+    private String badge(String incoming, String existing) {
+        String value = preserve(incoming, existing);
+        return value != null && value.codePointCount(0, value.length()) > 500 ? existing : value;
     }
 
     private String firstPresent(String... values) {
