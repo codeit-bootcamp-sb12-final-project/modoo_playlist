@@ -200,7 +200,7 @@ class PlaylistServiceImplTest {
         ArgumentCaptor<PlaylistContent> captor = ArgumentCaptor.forClass(PlaylistContent.class);
         verify(playlistContentRepository).save(captor.capture());
         assertThat(captor.getValue().getId()).isEqualTo(id);
-        verify(eventPublisher).publishEvent(new PlaylistContentAddedEvent(playlistId, contentId));
+        verify(eventPublisher).publishEvent(new PlaylistContentAddedEvent(playlistId, contentId, ownerId));
     }
 
     @Test

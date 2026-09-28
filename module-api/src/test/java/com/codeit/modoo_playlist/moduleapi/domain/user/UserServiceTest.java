@@ -48,6 +48,7 @@ import org.mapstruct.factory.Mappers;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -86,6 +87,9 @@ class UserServiceTest {
   @Mock
   ImageStorage imageStorage;
 
+  @Mock
+  ApplicationEventPublisher applicationEventPublisher;
+
   private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
   private UUID userId;
   private UserServiceImpl service;
@@ -111,7 +115,8 @@ class UserServiceTest {
         encoder,
         Mappers.getMapper(UserMapper.class),
         loginSessionStore,
-        imageStorage
+        imageStorage,
+        applicationEventPublisher
     );
   }
 
@@ -553,7 +558,7 @@ class UserServiceTest {
     UUID adminId = UUID.randomUUID();
     User bot = User.createBot("bot@example.com", "bot");
     ReflectionTestUtils.setField(bot, "id", userId);
-    
+
     when(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.of(bot));
 
     assertThatThrownBy(() -> service.updateLocked(adminId, userId, true))

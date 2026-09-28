@@ -63,7 +63,7 @@ public class DMSentEventListener {
         );
 
         return new NotificationResponse(
-                saved.getReceiverId(),
+                saved.getId(),
                 saved.getCreatedAt(),
                 saved.getReceiverId(),
                 saved.getTitle(),
