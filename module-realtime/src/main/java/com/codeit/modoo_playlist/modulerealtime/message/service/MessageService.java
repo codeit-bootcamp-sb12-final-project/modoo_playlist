@@ -10,6 +10,7 @@ import com.codeit.modoo_playlist.core.domain.message.entity.MessageDto;
 import com.codeit.modoo_playlist.core.global.exception.BaseException;
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 
+import com.codeit.modoo_playlist.infra.event.DMSentEvent;
 import com.codeit.modoo_playlist.infra.repository.RealtimeContentRepository;
 import com.codeit.modoo_playlist.infra.repository.RealtimeConversationRepository;
 import com.codeit.modoo_playlist.infra.repository.RealtimeMessageRepository;
@@ -47,10 +48,10 @@ public class MessageService {
             DirectMessageSendRequest payload
     ) {
         User sender = userRepository.findById(senderId)
-                .orElseThrow(()-> new BaseException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
 
         Conversation conversation = conversationRepository.findById(conversationId)
-                .orElseThrow(()-> new BaseException(ErrorCode.CONVERSATION_NOT_FOUND));
+                .orElseThrow(() -> new BaseException(ErrorCode.CONVERSATION_NOT_FOUND));
 
         // sender가 해당 대화에 속하는지 검사
         boolean senderParticipates =
@@ -86,7 +87,12 @@ public class MessageService {
 
         MessageDto response = messageMapper.toDto(saved);
 
-        eventPublisher.publishEvent(new DMCreateEvent(receiver.getId(), response));
+        eventPublisher.publishEvent(
+                new DMCreateEvent(receiver.getId(), response));
+
+        eventPublisher.publishEvent(
+                new DMSentEvent(receiver.getId(), senderId, payload.content(), message.getId()));
+
         return response;
     }
 
@@ -98,7 +104,7 @@ public class MessageService {
             ContentChatSendRequest payload
     ) {
         User sender = userRepository.findById(senderId)
-                .orElseThrow(()-> new BaseException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
 
         Content content = contentRepository.findById(contentId)
                 .filter(value -> value.getDeletedAt() == null)
