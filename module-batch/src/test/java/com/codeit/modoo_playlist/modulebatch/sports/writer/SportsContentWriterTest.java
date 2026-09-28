@@ -79,7 +79,7 @@ class SportsContentWriterTest {
 
     private SportsSyncContent content() {
         var sports = new SportsSyncContent.Sports("Soccer", "Premier League", "2026",
-                "A", "B", null, "SCHEDULED", Instant.parse("2026-09-14T12:00:00Z"));
+                "A", "B", null, null, null, "SCHEDULED", Instant.parse("2026-09-14T12:00:00Z"));
         return new SportsSyncContent("id", "A vs B", null, null, "event-1", null, null,
                 sports, List.of(new SportsSyncContent.Tag("tag", "축구", "GENRE")));
     }

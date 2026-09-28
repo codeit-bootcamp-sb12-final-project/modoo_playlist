@@ -67,20 +67,35 @@ class SportsSyncItemProcessorTest {
         assertThat(new SportsSyncItemProcessor(mapper, converter).process(event)).isSameAs(converted);
     }
 
+    @Test
+    void 기존경기에_로고만_새로_채워져도_저장대상으로_반환한다() throws Exception {
+        SportsDbEvent event = event();
+        ExistingSportsContent existing = existing(null);
+        SportsSyncContent converted = sync("title", "home.png", "away.png");
+        when(mapper.findBySourceId("event-1")).thenReturn(existing);
+        when(converter.convert(event, existing)).thenReturn(converted);
+
+        assertThat(new SportsSyncItemProcessor(mapper, converter).process(event)).isSameAs(converted);
+    }
+
     private SportsDbEvent event() {
         return new SportsDbEvent("event-1", null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null);
     }
 
     private ExistingSportsContent existing(Instant deletedAt) {
         return new ExistingSportsContent("id", "title", null, null, deletedAt, null, null,
-                "Soccer", "League", "2026", "A", "B", null, "SCHEDULED",
+                "Soccer", "League", "2026", "A", "B", null, null, null, "SCHEDULED",
                 Instant.parse("2026-12-01T12:00:00Z"));
     }
 
     private SportsSyncContent sync(String title) {
+        return sync(title, null, null);
+    }
+
+    private SportsSyncContent sync(String title, String homeTeamBadge, String awayTeamBadge) {
         var sports = new SportsSyncContent.Sports("Soccer", "League", "2026", "A", "B",
-                null, "SCHEDULED", Instant.parse("2026-12-01T12:00:00Z"));
+                null, homeTeamBadge, awayTeamBadge, "SCHEDULED", Instant.parse("2026-12-01T12:00:00Z"));
         return new SportsSyncContent("id", title, null, null, "event-1", null, null,
                 sports, List.of(new SportsSyncContent.Tag("tag", "축구", "GENRE")));
     }

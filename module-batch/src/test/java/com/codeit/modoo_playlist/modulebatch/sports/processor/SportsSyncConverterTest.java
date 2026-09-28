@@ -52,7 +52,7 @@ class SportsSyncConverterTest {
     void 신규경기의_필수값이나_시각이_없으면_저장대상에서_제외한다() {
         assertInvalid(() -> converter.convert(new SportsDbEvent(
                 null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null
+                null, null, null, null, null, null, null, null
         ), null), "idEvent");
         assertInvalid(() -> converter.convert(event("NS", null, null), null), "strTimestamp");
     }
@@ -71,22 +71,56 @@ class SportsSyncConverterTest {
                 .thumbnailUrl()).isEqualTo("old.png");
     }
 
+    @Test
+    void 팀_로고는_이벤트값을_쓰고_비어_오면_기존값을_유지한다() {
+        var created = converter.convert(event("NS", null, "2026-12-01T12:00:00Z"), null).sports();
+        assertThat(created.homeTeamBadge()).isEqualTo("home.png");
+        assertThat(created.awayTeamBadge()).isEqualTo("away.png");
+
+        var preserved = converter.convert(badgeEvent(null, "  "), existing("SCHEDULED")).sports();
+        assertThat(preserved.homeTeamBadge()).isEqualTo("old-home.png");
+        assertThat(preserved.awayTeamBadge()).isEqualTo("old-away.png");
+
+        var updated = converter.convert(badgeEvent("new-home.png", "new-away.png"), existing("SCHEDULED")).sports();
+        assertThat(updated.homeTeamBadge()).isEqualTo("new-home.png");
+        assertThat(updated.awayTeamBadge()).isEqualTo("new-away.png");
+    }
+
+    @Test
+    void 컬럼_길이를_넘는_로고_URL은_자르지_않고_기존값을_유지한다() {
+        String tooLong = "https://cdn.example.com/" + "a".repeat(500);
+
+        var withExisting = converter.convert(badgeEvent(tooLong, tooLong), existing("SCHEDULED")).sports();
+        assertThat(withExisting.homeTeamBadge()).isEqualTo("old-home.png");
+        assertThat(withExisting.awayTeamBadge()).isEqualTo("old-away.png");
+
+        var withoutExisting = converter.convert(badgeEvent(tooLong, tooLong), null).sports();
+        assertThat(withoutExisting.homeTeamBadge()).isNull();
+        assertThat(withoutExisting.awayTeamBadge()).isNull();
+    }
+
+    private SportsDbEvent badgeEvent(String homeBadge, String awayBadge) {
+        return new SportsDbEvent("event-1", null, "Premier League", "2026", "Soccer",
+                "Arsenal", "Chelsea", null, "2026-12-01T12:00:00Z", "England",
+                null, null, homeBadge, awayBadge, "NS", null);
+    }
+
     private SportsDbEvent event(String status, String postponed, String timestamp) {
         return new SportsDbEvent("event-1", null, "Premier League", "2026", "Soccer",
                 "Arsenal", "Chelsea", "Stadium", timestamp, "England",
-                "thumb.png", "league.png", "home.png", status, postponed);
+                "thumb.png", "league.png", "home.png", "away.png", status, postponed);
     }
 
     private SportsDbEvent thumbnailEvent(String eventImage, String leagueImage, String homeImage) {
         return new SportsDbEvent("event-1", null, "Premier League", "2026", "Soccer",
                 "Arsenal", "Chelsea", null, "2026-12-01T12:00:00Z", "England",
-                eventImage, leagueImage, homeImage, "NS", null);
+                eventImage, leagueImage, homeImage, null, "NS", null);
     }
 
     private ExistingSportsContent existing(String status) {
         return new ExistingSportsContent("id", "old", null, "old.png", null, null, "England",
                 "Soccer", "Premier League", "2026", "Arsenal", "Chelsea", "Stadium",
-                status, Instant.parse("2026-12-01T12:00:00Z"));
+                "old-home.png", "old-away.png", status, Instant.parse("2026-12-01T12:00:00Z"));
     }
 
     private void assertInvalid(Runnable action, String field) {

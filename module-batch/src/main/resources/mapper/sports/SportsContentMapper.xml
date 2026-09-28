@@ -19,6 +19,8 @@
                s.home_team AS homeTeam,
                s.away_team AS awayTeam,
                s.venue,
+               s.home_team_badge AS homeTeamBadge,
+               s.away_team_badge AS awayTeamBadge,
                s.status,
                s.kickoff_at AS kickoffAt
         FROM contents c
@@ -107,11 +109,12 @@
     <insert id="upsertSports">
         INSERT INTO content_sports (
             content_id, sport_type, league, season, home_team,
-            away_team, venue, status, kickoff_at
+            away_team, venue, home_team_badge, away_team_badge, status, kickoff_at
         ) VALUES (
             UUID_TO_BIN(#{contentId}), #{sports.sportType}, #{sports.league},
             #{sports.season}, #{sports.homeTeam}, #{sports.awayTeam},
-            #{sports.venue}, #{sports.status}, #{sports.kickoffAt}
+            #{sports.venue}, #{sports.homeTeamBadge}, #{sports.awayTeamBadge},
+            #{sports.status}, #{sports.kickoffAt}
         )
         AS incoming
         ON DUPLICATE KEY UPDATE
@@ -121,6 +124,8 @@
             home_team = incoming.home_team,
             away_team = incoming.away_team,
             venue = incoming.venue,
+            home_team_badge = incoming.home_team_badge,
+            away_team_badge = incoming.away_team_badge,
             status = incoming.status,
             kickoff_at = incoming.kickoff_at
     </insert>

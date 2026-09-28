@@ -124,6 +124,6 @@ class SportsEventLoaderTest {
     private SportsDbEvent event(String id, String title) {
         return new SportsDbEvent(id, title, "league", "season", "Soccer", "home", "away",
                 "venue", "2026-09-14T12:00:00Z", "country", "thumb", "leagueBadge",
-                "homeBadge", "Scheduled", "no");
+                "homeBadge", "awayBadge", "Scheduled", "no");
     }
 }
