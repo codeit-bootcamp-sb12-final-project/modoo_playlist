@@ -311,8 +311,10 @@ class PlaylistServiceImplTest {
     void 구독을_취소하면_삭제된다() {
         UUID playlistId = UUID.randomUUID();
         UUID subscriberId = UUID.randomUUID();
+        Playlist playlist = playlist(playlistId, UUID.randomUUID(), "제목", "설명");
         PlaylistSubscriptionId id = new PlaylistSubscriptionId(playlistId, subscriberId);
         PlaylistSubscription subscription = PlaylistSubscription.builder().id(id).build();
+        when(playlistRepository.findById(playlistId)).thenReturn(Optional.of(playlist));
         when(playlistSubscriptionRepository.findById(id)).thenReturn(Optional.of(subscription));
 
         playlistService.unsubscribe(playlistId, subscriberId);
@@ -324,7 +326,9 @@ class PlaylistServiceImplTest {
     void 구독하지_않은_상태에서_취소하면_PLAYLIST_SUBSCRIPTION_NOT_FOUND를_반환한다() {
         UUID playlistId = UUID.randomUUID();
         UUID subscriberId = UUID.randomUUID();
+        Playlist playlist = playlist(playlistId, UUID.randomUUID(), "제목", "설명");
         PlaylistSubscriptionId id = new PlaylistSubscriptionId(playlistId, subscriberId);
+        when(playlistRepository.findById(playlistId)).thenReturn(Optional.of(playlist));
         when(playlistSubscriptionRepository.findById(id)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> playlistService.unsubscribe(playlistId, subscriberId))
