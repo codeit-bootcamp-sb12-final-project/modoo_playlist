@@ -19,6 +19,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.codeit.modoo_playlist.core.domain.content.entity.Content;
@@ -45,6 +46,7 @@ class ReviewServiceImplTest {
     @Mock private ContentRepository contentRepository;
     @Mock private UserRepository userRepository;
     @Mock private ReviewMapper reviewMapper;
+    @Mock private ApplicationEventPublisher eventPublisher;
     @InjectMocks private ReviewServiceImpl reviewService;
 
     @Test
