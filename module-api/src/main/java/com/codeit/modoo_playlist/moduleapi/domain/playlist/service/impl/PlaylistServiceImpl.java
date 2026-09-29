@@ -13,9 +13,9 @@ import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import com.codeit.modoo_playlist.infra.mapper.ContentSummaryMapper;
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.jpa.ContentRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.content.repository.jpa.ContentTagRepository;
-import com.codeit.modoo_playlist.moduleapi.domain.notification.event.PlaylistContentAddedEvent;
-import com.codeit.modoo_playlist.moduleapi.domain.notification.event.PlaylistCreatedEvent;
-import com.codeit.modoo_playlist.moduleapi.domain.notification.event.PlaylistSubscribedEvent;
+import com.codeit.modoo_playlist.moduleapi.event.PlaylistContentAddedEvent;
+import com.codeit.modoo_playlist.moduleapi.event.PlaylistCreatedEvent;
+import com.codeit.modoo_playlist.moduleapi.event.PlaylistSubscribedEvent;
 import com.codeit.modoo_playlist.moduleapi.domain.playlist.mapper.PlaylistMapper;
 import com.codeit.modoo_playlist.moduleapi.domain.playlist.repository.PlaylistContentRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.playlist.repository.PlaylistRepository;
@@ -109,7 +109,7 @@ public class PlaylistServiceImpl implements PlaylistService {
 
         playlistContentRepository.save(playlistContent);
 
-        eventPublisher.publishEvent(new PlaylistContentAddedEvent(playlistId, contentId));
+        eventPublisher.publishEvent(new PlaylistContentAddedEvent(playlistId, contentId, ownerId));
     }
 
     @Override

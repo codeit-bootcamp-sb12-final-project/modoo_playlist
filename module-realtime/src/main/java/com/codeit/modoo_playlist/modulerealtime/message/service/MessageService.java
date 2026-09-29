@@ -10,6 +10,7 @@ import com.codeit.modoo_playlist.core.domain.message.entity.MessageDto;
 import com.codeit.modoo_playlist.core.global.exception.BaseException;
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 
+import com.codeit.modoo_playlist.infra.event.DMSentEvent;
 import com.codeit.modoo_playlist.infra.repository.RealtimeContentRepository;
 import com.codeit.modoo_playlist.infra.repository.RealtimeConversationRepository;
 import com.codeit.modoo_playlist.infra.repository.RealtimeMessageRepository;
@@ -19,8 +20,9 @@ import com.codeit.modoo_playlist.infra.mapper.UserSummaryMapper;
 import com.codeit.modoo_playlist.modulerealtime.dto.chat.ContentChatDto;
 import com.codeit.modoo_playlist.modulerealtime.dto.chat.ContentChatSendRequest;
 import com.codeit.modoo_playlist.modulerealtime.dto.chat.DirectMessageSendRequest;
+import com.codeit.modoo_playlist.modulerealtime.event.DMCreateEvent;
 import lombok.RequiredArgsConstructor;
-//import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,7 +35,7 @@ public class MessageService {
     private final RealtimeMessageRepository messageRepository;
     private final RealtimeUserRepository userRepository;
     private final RealtimeConversationRepository conversationRepository;
-//    private final ApplicationEventPublisher eventPublisher;
+    private final ApplicationEventPublisher eventPublisher;
     private final RealtimeContentRepository contentRepository;
     private final MessageMapper messageMapper;
     private final UserSummaryMapper userSummaryMapper;
@@ -46,10 +48,10 @@ public class MessageService {
             DirectMessageSendRequest payload
     ) {
         User sender = userRepository.findById(senderId)
-                .orElseThrow(()-> new BaseException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
 
         Conversation conversation = conversationRepository.findById(conversationId)
-                .orElseThrow(()-> new BaseException(ErrorCode.CONVERSATION_NOT_FOUND));
+                .orElseThrow(() -> new BaseException(ErrorCode.CONVERSATION_NOT_FOUND));
 
         // sender가 해당 대화에 속하는지 검사
         boolean senderParticipates =
@@ -84,7 +86,13 @@ public class MessageService {
         Message saved = messageRepository.save(message);
 
         MessageDto response = messageMapper.toDto(saved);
-//        eventPublisher.publishEvent(new DMCreatedEvent(receiverUserId, response));
+
+        eventPublisher.publishEvent(
+                new DMCreateEvent(receiver.getId(), response));
+
+        eventPublisher.publishEvent(
+                new DMSentEvent(receiver.getId(), senderId, payload.content(), message.getId()));
+
         return response;
     }
 
@@ -96,7 +104,7 @@ public class MessageService {
             ContentChatSendRequest payload
     ) {
         User sender = userRepository.findById(senderId)
-                .orElseThrow(()-> new BaseException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
 
         Content content = contentRepository.findById(contentId)
                 .filter(value -> value.getDeletedAt() == null)
@@ -113,11 +121,10 @@ public class MessageService {
                 .build();
 
         Message saved = messageRepository.save(message);
-        ContentChatDto response = new ContentChatDto(
+
+        return new ContentChatDto(
                 userSummaryMapper.toSummary(sender),
                 saved.getMessage()
         );
-//        eventPublisher.publishEvent(new DMCreatedEvent(receiverUserId, response));
-        return response;
     }
 }

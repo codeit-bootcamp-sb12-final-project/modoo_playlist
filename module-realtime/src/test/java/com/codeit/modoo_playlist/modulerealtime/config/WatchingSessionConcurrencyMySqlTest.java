@@ -7,7 +7,7 @@ import com.codeit.modoo_playlist.core.domain.watchingSession.entity.WatchingSess
 import com.codeit.modoo_playlist.core.global.realtime.RealtimeNotifier;
 import com.codeit.modoo_playlist.infra.config.JpaConfig;
 import com.codeit.modoo_playlist.infra.config.QuerydslConfig;
-import com.codeit.modoo_playlist.infra.event.kafka.WatcherCountChangedEvent;
+import com.codeit.modoo_playlist.infra.event.WatcherCountChangedEvent;
 import com.codeit.modoo_playlist.infra.repository.watchingsession.WatchingSessionRepository;
 import com.codeit.modoo_playlist.modulerealtime.dto.watchingsession.ChangeType;
 import com.codeit.modoo_playlist.modulerealtime.dto.watchingsession.WatchingSessionChange;

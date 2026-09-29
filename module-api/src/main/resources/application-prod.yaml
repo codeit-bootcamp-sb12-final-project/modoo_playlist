@@ -1,3 +1,5 @@
+INSTANCE_ID: api-prod-1
+
 spring:
   config:
     activate:

@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -17,10 +16,10 @@ import com.codeit.modoo_playlist.core.global.exception.BaseException;
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
 import com.codeit.modoo_playlist.moduleapi.domain.notification.mapper.NotificationMapper;
 import com.codeit.modoo_playlist.moduleapi.domain.notification.repository.NotificationRepository;
-import com.codeit.modoo_playlist.moduleapi.domain.notification.sse.SseEmitterRepository;
+import com.codeit.modoo_playlist.moduleapi.event.NotificationCreatedEvent;
 import com.codeit.modoo_playlist.moduleapi.domain.notification.repository.query.NotificationListCondition;
 import com.codeit.modoo_playlist.moduleapi.domain.notification.repository.query.NotificationQueryPage;
-import com.codeit.modoo_playlist.moduleapi.dto.notification.response.NotificationResponse;
+import com.codeit.modoo_playlist.core.domain.notification.dto.NotificationResponse;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -30,6 +29,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 class NotificationServiceImplTest {
@@ -41,7 +41,7 @@ class NotificationServiceImplTest {
     private NotificationMapper notificationMapper;
 
     @Mock
-    private SseEmitterRepository sseEmitterRepository;
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private NotificationServiceImpl notificationService;
@@ -125,11 +125,11 @@ class NotificationServiceImplTest {
         );
 
         assertThat(result).isEmpty();
-        verifyNoInteractions(notificationRepository, notificationMapper, sseEmitterRepository);
+        verifyNoInteractions(notificationRepository, notificationMapper, eventPublisher);
     }
 
     @Test
-    void createBatch는_saveAll로_한번에_저장하고_수신자별로_SSE를_전송한다() {
+    void createBatch는_saveAll로_한번에_저장하고_수신자별로_알림생성_이벤트를_발행한다() {
         UUID receiverId1 = UUID.randomUUID();
         UUID receiverId2 = UUID.randomUUID();
         List<UUID> receiverIds = List.of(receiverId1, receiverId2);
@@ -139,24 +139,27 @@ class NotificationServiceImplTest {
                 .map(this::buildNotification)
                 .toList();
 
-        NotificationResponse dummyResponse =
+        NotificationResponse response1 =
                 new NotificationResponse(UUID.randomUUID(), Instant.now(), receiverId1, "title", "content", ANY_LEVEL, false);
+        NotificationResponse response2 =
+                new NotificationResponse(UUID.randomUUID(), Instant.now(), receiverId2, "title", "content", ANY_LEVEL, false);
 
         when(notificationRepository.saveAll(anyList())).thenReturn(saved);
-        when(notificationMapper.toResponse(any(Notification.class))).thenReturn(dummyResponse);
+        when(notificationMapper.toResponse(saved.get(0))).thenReturn(response1);
+        when(notificationMapper.toResponse(saved.get(1))).thenReturn(response2);
 
         List<Notification> result = notificationService.createBatch(
                 receiverIds, "title", "content", ANY_LEVEL, sourceId
         );
 
-        assertThat(result).hasSize(2);
+        assertThat(result).containsExactlyElementsOf(saved);
         verify(notificationRepository, times(1)).saveAll(anyList());
-        verify(sseEmitterRepository, times(1)).sendToUser(eq(receiverId1), eq("notifications"), any());
-        verify(sseEmitterRepository, times(1)).sendToUser(eq(receiverId2), eq("notifications"), any());
+        verify(eventPublisher).publishEvent(new NotificationCreatedEvent(response1));
+        verify(eventPublisher).publishEvent(new NotificationCreatedEvent(response2));
     }
 
     @Test
-    void create는_알림을_저장하고_수신자에게_SSE로_전송한다() {
+    void create는_알림을_저장하고_알림생성_이벤트를_발행한다() {
         UUID receiverId = UUID.randomUUID();
         UUID sourceId = UUID.randomUUID();
         Notification saved = buildNotification(receiverId);
@@ -171,7 +174,7 @@ class NotificationServiceImplTest {
 
         assertThat(result).isEqualTo(saved);
         verify(notificationRepository, times(1)).save(any(Notification.class));
-        verify(sseEmitterRepository, times(1)).sendToUser(eq(receiverId), eq("notifications"), any());
+        verify(eventPublisher).publishEvent(new NotificationCreatedEvent(dummyResponse));
     }
 
     @Test
@@ -185,6 +188,6 @@ class NotificationServiceImplTest {
 
         assertThat(result).isEqualTo(expected);
         verify(notificationRepository, times(1)).findAllByCondition(condition);
-        verifyNoInteractions(notificationMapper, sseEmitterRepository);
+        verifyNoInteractions(notificationMapper, eventPublisher);
     }
 }
