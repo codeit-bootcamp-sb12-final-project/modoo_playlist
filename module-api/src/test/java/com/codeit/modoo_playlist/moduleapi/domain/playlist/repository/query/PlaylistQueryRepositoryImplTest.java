@@ -16,6 +16,7 @@ import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.persistence.autoconfigure.EntityScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
@@ -235,7 +236,8 @@ class PlaylistQueryRepositoryImplTest {
         assertThatThrownBy(() -> playlistRepository.findAllByCondition(
                 condition(owner, null, null, "not-a-number", UUID.randomUUID(), 20, SortType.SUBSCRIBER_COUNT,
                         SortDirection.DESCENDING)))
-                .isInstanceOf(NumberFormatException.class);
+                .isInstanceOf(InvalidDataAccessApiUsageException.class)
+                .hasCauseInstanceOf(NumberFormatException.class);
     }
 
     private Playlist persistPlaylist(
