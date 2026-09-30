@@ -171,16 +171,16 @@ jobs:
       - name: ECS 서비스 업데이트 및 안정화 대기 (${{ matrix.module }})
         run: |
           case "${{ matrix.module }}" in
-            module-api)      SERVICE="${{ vars.ECS_SERVICE_API }}" ;;
-            module-batch)    SERVICE="${{ vars.ECS_SERVICE_BATCH }}" ;;
-            module-realtime) SERVICE="${{ vars.ECS_SERVICE_REALTIME }}" ;;
+            module-api)      SERVICE="${{ vars.ECS_SERVICE_API }}";      DESIRED_COUNT=2 ;;
+            module-batch)    SERVICE="${{ vars.ECS_SERVICE_BATCH }}";    DESIRED_COUNT=1 ;;
+            module-realtime) SERVICE="${{ vars.ECS_SERVICE_REALTIME }}"; DESIRED_COUNT=1 ;;
           esac
 
           aws ecs update-service \
             --cluster "${{ vars.ECS_CLUSTER }}" \
             --service "$SERVICE" \
             --task-definition "$NEW_TASK_DEF_ARN" \
-            --desired-count 1 \
+            --desired-count "$DESIRED_COUNT" \
             --force-new-deployment
 
           aws ecs wait services-stable \
