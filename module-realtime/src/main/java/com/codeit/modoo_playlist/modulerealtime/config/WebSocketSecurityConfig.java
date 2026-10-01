@@ -24,72 +24,78 @@ import org.springframework.web.cors.CorsConfiguration;
 @EnableWebSecurity
 @EnableMethodSecurity
 public class WebSocketSecurityConfig {
-    // SecurityConfig에서 WebSocket 서버만 필요한 설정을 옮김.
+  // SecurityConfig에서 WebSocket 서버만 필요한 설정을 옮김.
 
-    @Bean
-    public SecurityFilterChain webSocketFilterChain(
-            HttpSecurity http,
-            RealtimeAuthenticationService authenticationService
-    ) throws Exception {
+  @Bean
+  public SecurityFilterChain webSocketFilterChain(
+      HttpSecurity http,
+      RealtimeAuthenticationService authenticationService
+  ) throws Exception {
 
-        http
-                .authorizeHttpRequests(auth -> auth
-                        // SSE의 비동기 후속 디스패치 허용
-                        .dispatcherTypeMatchers(
-                                DispatcherType.ASYNC,
-                                DispatcherType.ERROR
-                        ).permitAll()
+    http
+        .authorizeHttpRequests(auth -> auth
+            // SSE의 비동기 후속 디스패치 허용
+            .dispatcherTypeMatchers(
+                DispatcherType.ASYNC,
+                DispatcherType.ERROR
+            ).permitAll()
 
-                        .requestMatchers("/ws","/ws/**","/error").permitAll()
+            // health check
+            .requestMatchers(
+                "/actuator/health",
+                "/actuator/health/**"
+            ).permitAll()
 
-                        // 최초 SSE 요청에 인증 및 USER 권한 요구
-                        .requestMatchers(HttpMethod.GET,"/api/sse")
-                        .hasRole("USER")
+            .requestMatchers("/ws", "/ws/**", "/error").permitAll()
 
-                        .anyRequest().denyAll()
-                )
-                .addFilterBefore(
-                        new SseAuthenticationFilter(authenticationService),
-                        UsernamePasswordAuthenticationFilter.class
-                )
+            // 최초 SSE 요청에 인증 및 USER 권한 요구
+            .requestMatchers(HttpMethod.GET, "/api/sse")
+            .hasRole("USER")
 
-                .csrf(csrf -> csrf.disable())
+            .anyRequest().denyAll()
+        )
+        .addFilterBefore(
+            new SseAuthenticationFilter(authenticationService),
+            UsernamePasswordAuthenticationFilter.class
+        )
 
-                .cors(cors -> cors.configurationSource(request -> {
-                            CorsConfiguration config = new CorsConfiguration();
-                            config.addAllowedOriginPattern("*");
-                            config.addAllowedHeader("*");
-                            config.addAllowedMethod("GET");
-                            config.addAllowedMethod("POST");
-                            config.addAllowedMethod("OPTIONS");
-                            config.setAllowCredentials(true);
-                            return config;
-                        }
-                ))
-                .sessionManagement( session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
-                .exceptionHandling(exceptions -> exceptions
-                        .authenticationEntryPoint(
-                                (request, response, exception) ->
-                                response.sendError(HttpServletResponse.SC_UNAUTHORIZED)
-                        )
-                        .accessDeniedHandler((request, response, exception) ->
-                                response.setStatus(403)
-                        )
-                )
-                .formLogin(AbstractHttpConfigurer::disable)
-                .httpBasic(AbstractHttpConfigurer::disable)
-                .requestCache(RequestCacheConfigurer::disable);
+        .csrf(csrf -> csrf.disable())
 
-        return http.build();
-    }
+        .cors(cors -> cors.configurationSource(request -> {
+              CorsConfiguration config = new CorsConfiguration();
+              config.addAllowedOriginPattern("*");
+              config.addAllowedHeader("*");
+              config.addAllowedMethod("GET");
+              config.addAllowedMethod("POST");
+              config.addAllowedMethod("OPTIONS");
+              config.setAllowCredentials(true);
+              return config;
+            }
+        ))
+        .sessionManagement(session -> session
+            .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+        )
+        .exceptionHandling(exceptions -> exceptions
+            .authenticationEntryPoint(
+                (request, response, exception) ->
+                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED)
+            )
+            .accessDeniedHandler((request, response, exception) ->
+                response.setStatus(403)
+            )
+        )
+        .formLogin(AbstractHttpConfigurer::disable)
+        .httpBasic(AbstractHttpConfigurer::disable)
+        .requestCache(RequestCacheConfigurer::disable);
 
-    @Bean
-    public RoleHierarchy roleHierarchy() {
-        return RoleHierarchyImpl.withDefaultRolePrefix()
-                .role(UserRole.ADMIN.name())
-                .implies(UserRole.USER.name())
-                .build();
-    }
+    return http.build();
+  }
+
+  @Bean
+  public RoleHierarchy roleHierarchy() {
+    return RoleHierarchyImpl.withDefaultRolePrefix()
+        .role(UserRole.ADMIN.name())
+        .implies(UserRole.USER.name())
+        .build();
+  }
 }
