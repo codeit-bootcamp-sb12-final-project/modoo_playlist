@@ -3,6 +3,7 @@ package com.codeit.modoo_playlist.infra.config.impl;
 import com.codeit.modoo_playlist.infra.config.FileConfig;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
@@ -12,6 +13,7 @@ import java.nio.file.Path;
 
 @Configuration
 @Profile("prod")
+@ConditionalOnProperty(name = "storage.type", havingValue = "local", matchIfMissing = true)
 public class FileConfigProd implements FileConfig {
 
     // prod는 S3 사용이므로 로컬 경로는 임시 디렉토리 용도 (필요 시 활용)
