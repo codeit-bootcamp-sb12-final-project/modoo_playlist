@@ -12,6 +12,8 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.codeit.modoo_playlist.core.domain.conversation.entity.Conversation;
+import com.codeit.modoo_playlist.moduleapi.domain.chat.dto.response.ChatCardsEvent;
+import com.codeit.modoo_playlist.moduleapi.domain.chat.dto.response.ContentCardDto;
 import com.codeit.modoo_playlist.core.domain.conversation.entity.ConversationParticipant;
 import com.codeit.modoo_playlist.core.domain.conversation.entity.ConversationType;
 import com.codeit.modoo_playlist.core.domain.message.entity.Message;
@@ -200,9 +202,8 @@ class ChatServiceImplTest {
   }
 
   @Test
-  void chat은_툴_결과로_카드가_모이면_cards_이벤트를_함께_내려준다() {
+  void chat은_답변에_제목이_나온_콘텐츠만_cards_이벤트로_내려준다() {
     UUID userId = UUID.randomUUID();
-    UUID contentId = UUID.randomUUID();
     User user = user(userId, "user");
     when(userRepository.findById(userId)).thenReturn(Optional.of(user));
     when(userRepository.findByRole(UserRole.BOT)).thenReturn(Optional.of(user(UUID.randomUUID(), "bot")));
@@ -211,18 +212,46 @@ class ChatServiceImplTest {
       ReflectionTestUtils.setField(saved, "id", UUID.randomUUID());
       return saved;
     });
-    stubChatChain(Flux.just("답변"));
+    stubChatChain(Flux.just("**기생", "충**을 추천합니다."));
 
     Flux<ServerSentEvent<Object>> result = service().chat(userId, null, "안녕");
 
     ArgumentCaptor<Map<String, Object>> contextCaptor = captureToolContext();
-    Object collector = contextCaptor.getValue().get(ChatToolContext.CARD_COLLECTOR);
-    ((ContentCardCollector) collector)
-        .add(contentId, "제목", "thumb");
+    ContentCardCollector collector =
+        (ContentCardCollector) contextCaptor.getValue().get(ChatToolContext.CARD_COLLECTOR);
+    collector.add(UUID.randomUUID(), "기생충", "thumb");
+    collector.add(UUID.randomUUID(), "답변에 없는 작품", "thumb");
 
     List<ServerSentEvent<Object>> events = result.collectList().block();
 
-    assertThat(events).extracting(ServerSentEvent::event).containsExactly("message", "cards", "done");
+    assertThat(events).extracting(ServerSentEvent::event)
+        .containsExactly("message", "message", "cards", "done");
+    ChatCardsEvent cards = (ChatCardsEvent) events.get(2).data();
+    assertThat(cards.cards()).extracting(ContentCardDto::title).containsExactly("기생충");
+  }
+
+  @Test
+  void chat은_답변에_나온_작품이_없으면_cards_이벤트를_보내지_않는다() {
+    UUID userId = UUID.randomUUID();
+    User user = user(userId, "user");
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(userRepository.findByRole(UserRole.BOT)).thenReturn(Optional.of(user(UUID.randomUUID(), "bot")));
+    when(conversationRepository.save(any(Conversation.class))).thenAnswer(invocation -> {
+      Conversation saved = invocation.getArgument(0);
+      ReflectionTestUtils.setField(saved, "id", UUID.randomUUID());
+      return saved;
+    });
+    stubChatChain(Flux.just("조건에 맞는 작품을 찾을 수 없습니다."));
+
+    Flux<ServerSentEvent<Object>> result = service().chat(userId, null, "안녕");
+
+    ArgumentCaptor<Map<String, Object>> contextCaptor = captureToolContext();
+    ((ContentCardCollector) contextCaptor.getValue().get(ChatToolContext.CARD_COLLECTOR))
+        .add(UUID.randomUUID(), "뜨거운 기억", "thumb");
+
+    List<ServerSentEvent<Object>> events = result.collectList().block();
+
+    assertThat(events).extracting(ServerSentEvent::event).containsExactly("message", "done");
   }
 
   private void stubChatChain(Flux<String> content) {

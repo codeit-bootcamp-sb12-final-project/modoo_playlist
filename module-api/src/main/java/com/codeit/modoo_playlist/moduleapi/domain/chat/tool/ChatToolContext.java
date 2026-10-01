@@ -19,6 +19,11 @@ public final class ChatToolContext {
     return (UUID) userId;
   }
 
+  public static ContentCardCollector findCardCollector(ToolContext toolContext) {
+    return toolContext.getContext().get(CARD_COLLECTOR) instanceof ContentCardCollector collector
+        ? collector : null;
+  }
+
   public static UUID parseUuid(String value) {
     if (value == null) {
       return null;

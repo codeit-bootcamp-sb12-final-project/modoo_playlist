@@ -3,6 +3,7 @@ package com.codeit.modoo_playlist.moduleapi.domain.chat.tool;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.codeit.modoo_playlist.moduleapi.domain.recommendation.service.SemanticSearchService;
@@ -53,6 +54,21 @@ class ChatToolCallbackTest {
     assertThatThrownBy(() -> callback.call("{\"query\":\"질의\"}", new ToolContext(Map.of("key", "value"))))
         .isInstanceOf(ToolExecutionException.class)
         .hasRootCauseMessage("검색 엔진 장애");
+  }
+
+  @Test
+  void LLM이_보낸_retry_true가_파라미터로_바인딩되어_재검색_한도가_적용된다() {
+    SemanticSearchService semanticSearchService = mock(SemanticSearchService.class);
+    ContentCardCollector collector = new ContentCardCollector();
+    collector.nextRetry();
+    ToolCallback callback =
+        ToolCallbacks.from(new SearchContentsTool(semanticSearchService, null))[0];
+
+    String json = callback.call("{\"query\":\"질의\",\"retry\":true}",
+        new ToolContext(Map.of(ChatToolContext.CARD_COLLECTOR, collector)));
+
+    assertThat(json).isEqualTo("[]");
+    verifyNoInteractions(semanticSearchService);
   }
 
   @Test

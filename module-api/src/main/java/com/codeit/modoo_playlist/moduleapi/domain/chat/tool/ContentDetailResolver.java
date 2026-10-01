@@ -37,8 +37,8 @@ public class ContentDetailResolver {
   }
 
   private void collectCards(List<RecommendedContentDto> hits, List<ContentDetailDto> details, ToolContext toolContext) {
-    Object collector = toolContext.getContext().get(ChatToolContext.CARD_COLLECTOR);
-    if (!(collector instanceof ContentCardCollector cardCollector)) {
+    ContentCardCollector cardCollector = ChatToolContext.findCardCollector(toolContext);
+    if (cardCollector == null) {
       return;
     }
     Set<UUID> resolvedIds = details.stream().map(ContentDetailDto::contentId).collect(Collectors.toSet());

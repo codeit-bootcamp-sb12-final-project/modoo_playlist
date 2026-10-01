@@ -128,7 +128,7 @@ public class ChatServiceImpl implements ChatService {
               .event("error").build());
         });
 
-    Flux<ServerSentEvent<Object>> cardsEvent = cardsEvent(cardCollector);
+    Flux<ServerSentEvent<Object>> cardsEvent = cardsEvent(cardCollector, responseBuilder);
 
     Flux<ServerSentEvent<Object>> doneEvent = Flux.just(
         ServerSentEvent.builder((Object) new ChatDoneEvent(conversation.getId())).event("done")
@@ -156,9 +156,13 @@ public class ChatServiceImpl implements ChatService {
     eventPublisher.publishEvent(new ChatMemoryClearRequestedEvent(conversationId));
   }
 
-  private Flux<ServerSentEvent<Object>> cardsEvent(ContentCardCollector cardCollector) {
+  private Flux<ServerSentEvent<Object>> cardsEvent(ContentCardCollector cardCollector,
+      StringBuilder responseBuilder) {
     return Flux.defer(() -> {
-      List<ContentCardDto> cards = cardCollector.getCards();
+      String answer = responseBuilder.toString();
+      List<ContentCardDto> cards = cardCollector.getCards().stream()
+          .filter(card -> card.title() != null && answer.contains(card.title()))
+          .toList();
       if (cards.isEmpty()) {
         return Flux.empty();
       }

@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class SearchContentsTool {
   private static final int DEFAULT_LIMIT = 5;
+  private static final int MAX_RETRIES = 1;
 
   private final SemanticSearchService semanticSearchService;
   private final ContentDetailResolver contentDetailResolver;
@@ -30,13 +31,25 @@ public class SearchContentsTool {
   public List<ContentDetailDto> searchContents(
       @ToolParam(description = "사용자가 찾고 있는 콘텐츠에 대한 자연어 설명. "
           + "이름·연도·국가 같은 조건도 사용자의 표현 그대로 포함") String query,
+      @ToolParam(required = false, description = "직전 search_contents 결과가 사용자 조건에 맞지 않아 "
+          + "검색어를 바꿔 다시 검색하는 경우에만 true. 서로 다른 조건을 각각 검색할 때는 생략") Boolean retry,
       ToolContext toolContext
   ) {
     if (query == null || query.isBlank()) {
       log.warn("search_contents 호출: query가 비어 있어 검색을 건너뜁니다");
       return List.of();
     }
-    log.info("search_contents 호출: queryLength={}", query.length());
+
+    boolean isRetry = Boolean.TRUE.equals(retry);
+    ContentCardCollector collector = ChatToolContext.findCardCollector(toolContext);
+    if (isRetry && collector != null) {
+      if (collector.nextRetry() > MAX_RETRIES) {
+        log.warn("search_contents 재검색 한도 초과");
+        return List.of();
+      }
+      collector.clear();
+    }
+    log.info("search_contents 호출: retry={}, queryLength={}", isRetry, query.length());
 
     List<RecommendedContentDto> hits = semanticSearchService.search(query, DEFAULT_LIMIT);
     log.info("search_contents 결과: {}건", hits.size());
