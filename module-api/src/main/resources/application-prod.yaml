@@ -25,3 +25,12 @@ module-api:
 
 storage:
   type: ${STORAGE_TYPE:s3}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never

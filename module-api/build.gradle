@@ -36,6 +36,9 @@ dependencies {
     // AI
 //    implementation 'org.springframework.ai:spring-ai-starter-model-openai'
 
+    // actuator
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    
     // 현재 코드가 Jackson 2 패키지를 직접 import함
     implementation 'com.fasterxml.jackson.core:jackson-databind'
 
