@@ -9,6 +9,10 @@ spring:
     url: ${DB_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
+  session:
+    timeout: 10m
+    redis:
+      namespace: modoo:api:session
   security:
     oauth2:
       client:
