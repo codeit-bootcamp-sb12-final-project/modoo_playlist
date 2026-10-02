@@ -13,6 +13,7 @@ import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtLoginSuccessHandler;
 import com.codeit.modoo_playlist.moduleapi.security.jwt.JwtLogoutHandler;
 import com.codeit.modoo_playlist.moduleapi.security.oauth.OAuthLoginSuccessHandler;
 import com.codeit.modoo_playlist.moduleapi.security.oauth.OAuthOidcUserService;
+import jakarta.servlet.DispatcherType;
 import java.util.List;
 import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
@@ -65,7 +66,11 @@ public class SecurityConfig {
     http
         .authenticationProvider(userAuthenticationProvider)
         // 1) URL별 인가 설정
-        .authorizeHttpRequests(auth -> auth
+            .authorizeHttpRequests(auth -> auth
+            .dispatcherTypeMatchers(
+                DispatcherType.ASYNC,
+                DispatcherType.ERROR
+            ).permitAll()
             // 정적 리소스
             .requestMatchers(
                 "/",
