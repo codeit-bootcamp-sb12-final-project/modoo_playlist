@@ -21,10 +21,8 @@ public class SummarizeReviewsTool {
 
   @Tool(
       name = "summarize_reviews",
-      description = "특정 콘텐츠에 대한 사용자 리뷰를 AI가 미리 요약해 둔 내용을 조회합니다. "
-          + "사용자가 '평이 어때?', '사람들 반응은?'처럼 작품에 대한 평가를 물을 때 사용합니다. "
-          + "콘텐츠 ID가 필요합니다(이전 대화나 다른 툴 결과에서 얻은 값). "
-          + "요약이 없거나 콘텐츠를 찾을 수 없으면 빈 결과를 돌려줍니다."
+      description = "특정 콘텐츠의 AI 리뷰 요약을 조회합니다. '평이 어때?', '사람들 반응은?' 같은 평가 질문에 쓰며 콘텐츠 ID가 필요합니다. "
+          + "요약이 없으면 빈 결과입니다."
   )
   public List<String> summarizeReviews(
       @ToolParam(description = "리뷰 요약을 조회할 콘텐츠 ID (UUID)") String contentId

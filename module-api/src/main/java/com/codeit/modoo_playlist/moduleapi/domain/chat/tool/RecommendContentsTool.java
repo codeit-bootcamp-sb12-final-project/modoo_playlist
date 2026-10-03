@@ -25,13 +25,11 @@ public class RecommendContentsTool {
 
   @Tool(
       name = "recommend_contents",
-      description = "특정 콘텐츠와 비슷한 콘텐츠를 장르/태그 기반으로 추천합니다. "
-          + "기준 콘텐츠 ID가 필요합니다(이전 대화나 다른 툴 결과에서 얻은 값). "
-          + "결과에는 유형·연도·국가·태그·감독·출연진·줄거리 요약이 포함됩니다. "
-          + "분위기·줄거리 등 자연어 묘사로 콘텐츠를 찾는 요청에는 대신 search_contents를 쓰세요."
+      description = "특정 콘텐츠와 비슷한 콘텐츠를 장르·태그 기반으로 추천합니다. 기준 콘텐츠 ID가 필요합니다. "
+          + "자연어 묘사로 찾을 때는 search_contents를 쓰세요."
   )
   public List<ContentDetailDto> recommendContents(
-      @ToolParam(description = "기준이 되는 콘텐츠 ID (UUID)") String contentId,
+      @ToolParam(description = "기준 콘텐츠 ID (UUID)") String contentId,
       ToolContext toolContext
   ) {
     UUID id = ChatToolContext.parseUuid(contentId);

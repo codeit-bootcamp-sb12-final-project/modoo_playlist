@@ -19,13 +19,11 @@ public class GetContentDetailTool {
 
   @Tool(
       name = "get_content_detail",
-      description = "이미 특정된 콘텐츠 하나의 상세 정보(유형·연도·국가·태그·감독·출연진·줄거리 요약, 스포츠는 "
-          + "종목·리그·팀·경기 상태와 일시)를 조회합니다. 앞선 툴 결과로 알게 된 작품에 대해 "
-          + "'주연이 누구야?', '몇 년도 작품이야?' 같은 후속 질문을 받았는데 그 값이 이미 받은 결과에 없을 때 사용합니다. "
-          + "콘텐츠 ID가 필요합니다. 이미 받은 결과에 답이 있으면 다시 호출하지 마세요."
+      description = "이미 특정된 콘텐츠 하나의 상세 정보(유형·연도·국가·태그·감독·출연진·줄거리, 스포츠는 종목·리그·팀·경기 상태와 일시)를 조회합니다. "
+          + "후속 질문('주연이 누구야?', '몇 년도 작품이야?')인데 이미 받은 결과에 그 값이 없을 때만 쓰며, 콘텐츠 ID가 필요합니다."
   )
   public List<ContentDetailDto> getContentDetail(
-      @ToolParam(description = "상세 정보를 조회할 콘텐츠 ID (UUID)") String contentId
+      @ToolParam(description = "조회할 콘텐츠 ID (UUID)") String contentId
   ) {
     UUID id = ChatToolContext.parseUuid(contentId);
     if (id == null) {
