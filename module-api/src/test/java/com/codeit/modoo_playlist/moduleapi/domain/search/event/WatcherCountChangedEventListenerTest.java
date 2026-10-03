@@ -7,7 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
-import com.codeit.modoo_playlist.infra.event.kafka.WatcherCountChangedEvent;
+import com.codeit.modoo_playlist.infra.event.WatcherCountChangedEvent;
 import com.codeit.modoo_playlist.moduleapi.domain.search.service.ContentIndexService;
 import java.io.IOException;
 import java.util.UUID;
