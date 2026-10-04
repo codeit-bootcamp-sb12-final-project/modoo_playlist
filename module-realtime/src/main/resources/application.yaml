@@ -36,7 +36,7 @@ spring:
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       auto-offset-reset: latest
       properties:
-        spring.json.trusted.packages: com.codeit.modoo_playlist.infra.event.kafka
+        spring.json.trusted.packages: com.codeit.modoo_playlist.infra.event.kafka,com.codeit.modoo_playlist.infra.event
 
 #  # infra 의존성으로 들어오는 AI 모델/ AI 채팅 메모리 자동 설정을 제외하는 설정
   autoconfigure:
