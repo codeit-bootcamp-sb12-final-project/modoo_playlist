@@ -231,6 +231,30 @@ class ChatServiceImplTest {
   }
 
   @Test
+  void chat은_답변의_제목_표기가_공백이나_구두점만_달라도_cards_이벤트로_내려준다() {
+    UUID userId = UUID.randomUUID();
+    User user = user(userId, "user");
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(userRepository.findByRole(UserRole.BOT)).thenReturn(Optional.of(user(UUID.randomUUID(), "bot")));
+    when(conversationRepository.save(any(Conversation.class))).thenAnswer(invocation -> {
+      Conversation saved = invocation.getArgument(0);
+      ReflectionTestUtils.setField(saved, "id", UUID.randomUUID());
+      return saved;
+    });
+    stubChatChain(Flux.just("스파이더맨 브랜드 뉴 데이의 리뷰 요약입니다."));
+
+    Flux<ServerSentEvent<Object>> result = service().chat(userId, null, "안녕");
+
+    ArgumentCaptor<Map<String, Object>> contextCaptor = captureToolContext();
+    ((ContentCardCollector) contextCaptor.getValue().get(ChatToolContext.CARD_COLLECTOR))
+        .add(UUID.randomUUID(), "스파이더맨: 브랜드 뉴 데이", "thumb");
+
+    List<ServerSentEvent<Object>> events = result.collectList().block();
+
+    assertThat(events).extracting(ServerSentEvent::event).containsExactly("message", "cards", "done");
+  }
+
+  @Test
   void chat은_답변에_나온_작품이_없으면_cards_이벤트를_보내지_않는다() {
     UUID userId = UUID.randomUUID();
     User user = user(userId, "user");

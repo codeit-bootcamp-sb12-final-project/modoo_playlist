@@ -21,6 +21,7 @@ import com.codeit.modoo_playlist.moduleapi.domain.chat.exception.ChatNotFoundExc
 import com.codeit.modoo_playlist.moduleapi.domain.chat.service.ChatService;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.ChatToolContext;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.ContentCardCollector;
+import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.ContentRefResolver;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.GetContentDetailTool;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.GetPersonalizedRecommendationsTool;
 import com.codeit.modoo_playlist.moduleapi.domain.chat.tool.GetTrendingTool;
@@ -159,9 +160,9 @@ public class ChatServiceImpl implements ChatService {
   private Flux<ServerSentEvent<Object>> cardsEvent(ContentCardCollector cardCollector,
       StringBuilder responseBuilder) {
     return Flux.defer(() -> {
-      String answer = responseBuilder.toString();
+      String answer = ContentRefResolver.normalizeTitle(responseBuilder.toString());
       List<ContentCardDto> cards = cardCollector.getCards().stream()
-          .filter(card -> card.title() != null && answer.contains(card.title()))
+          .filter(card -> card.title() != null && mentions(answer, card.title()))
           .toList();
       if (cards.isEmpty()) {
         return Flux.empty();
@@ -169,5 +170,10 @@ public class ChatServiceImpl implements ChatService {
       return Flux.just(
           ServerSentEvent.builder((Object) new ChatCardsEvent(cards)).event("cards").build());
     });
+  }
+
+  private static boolean mentions(String normalizedAnswer, String title) {
+    String normalizedTitle = ContentRefResolver.normalizeTitle(title);
+    return !normalizedTitle.isEmpty() && normalizedAnswer.contains(normalizedTitle);
   }
 }
