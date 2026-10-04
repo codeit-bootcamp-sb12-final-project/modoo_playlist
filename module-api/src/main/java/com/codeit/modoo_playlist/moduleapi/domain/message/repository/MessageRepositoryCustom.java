@@ -15,7 +15,6 @@ public interface MessageRepositoryCustom {
 
     Optional<Message> findMessageForRead(
             UUID messageId,
-            UUID conversationId,
-            UUID receiverId
+            UUID conversationId
     );
 }

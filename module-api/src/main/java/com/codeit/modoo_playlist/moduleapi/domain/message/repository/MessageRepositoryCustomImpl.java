@@ -94,16 +94,14 @@ public class MessageRepositoryCustomImpl implements MessageRepositoryCustom {
     @Override
     public Optional<Message> findMessageForRead(
             UUID messageId,
-            UUID conversationId,
-            UUID receiverId
+            UUID conversationId
     ) {
         return Optional.ofNullable(
                 queryFactory
                         .selectFrom(m)
                         .where(
                                 m.id.eq(messageId),
-                                m.conversation.id.eq(conversationId),
-                                m.receiver.id.eq(receiverId)
+                                m.conversation.id.eq(conversationId)
                         )
                         .fetchOne());
     }
