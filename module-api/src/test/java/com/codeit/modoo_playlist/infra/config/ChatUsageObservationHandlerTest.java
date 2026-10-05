@@ -18,6 +18,7 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.observation.ChatModelObservationContext;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.google.genai.metadata.GoogleGenAiUsage;
 
 class ChatUsageObservationHandlerTest {
 
@@ -44,16 +45,50 @@ class ChatUsageObservationHandlerTest {
   }
 
   @Test
-  void 스트리밍_기본_usage면_thinking_토큰을_합계에서_입력과_출력을_빼서_구한다() {
-    assertThat(ChatUsageObservationHandler.thoughtsTokens(new DefaultUsage(1000, 30, 1100))).isEqualTo(70);
-    assertThat(ChatUsageObservationHandler.thoughtsTokens(new DefaultUsage(1000, 30))).isZero();
+  void 스트리밍_기본_usage면_캐시와_thinking_토큰을_추정하지_않고_모르는_값으로_둔다() {
+    // 스트리밍 합산 결과에는 input·output·total만 남는다. total의 나머지에는 tool-use 토큰도 섞일 수 있다
+    DefaultUsage streaming = new DefaultUsage(1000, 30, 1100);
+
+    assertThat(ChatUsageObservationHandler.cachedTokens(streaming)).isNull();
+    assertThat(ChatUsageObservationHandler.thoughtsTokens(streaming)).isNull();
+
+    ChatUsageTotal total = new ChatUsageTotal(System.nanoTime());
+    total.add(geminiUsage(50, 200, 20));
+    total.add(streaming);
+    assertThat(total.cached()).isNull();
+    assertThat(total.input()).isEqualTo(2000);
   }
 
   @Test
-  void Spring_AI_관측만_통과시키고_다른_관측은_끈다() {
+  void Gemini_확장_usage면_캐시와_thinking_토큰을_그대로_쓰고_tool_use_토큰을_thinking에_섞지_않는다() {
+    GoogleGenAiUsage usage = geminiUsage(50, 200, 20);
+
+    assertThat(ChatUsageObservationHandler.cachedTokens(usage)).isEqualTo(200);
+    assertThat(ChatUsageObservationHandler.thoughtsTokens(usage)).isEqualTo(50);
+    assertThat(ChatUsageObservationHandler.cachedTokens(geminiUsage(null, null, null))).isZero();
+
+    ChatUsageTotal total = new ChatUsageTotal(System.nanoTime());
+    total.add(usage);
+    total.add(usage);
+    assertThat(total.cached()).isEqualTo(400);
+  }
+
+  @Test
+  void 챗_관측이_아닌_관측은_끄지_않고_핸들러만_건너뛴다() {
     assertThat(Observation.createNotStarted("spring.ai.chat.client", registry).isNoop()).isFalse();
-    assertThat(Observation.createNotStarted("gen_ai.client.operation", registry).isNoop()).isFalse();
-    assertThat(Observation.createNotStarted("spring.security.filterchains", registry).isNoop()).isTrue();
+    assertThat(Observation.createNotStarted("http.server.requests", registry).isNoop()).isFalse();
+    assertThat(Observation.createNotStarted("spring.security.authorizations", registry).isNoop()).isFalse();
+
+    ChatUsageObservationHandler handler = new ChatUsageObservationHandler();
+    assertThat(handler.supportsContext(new Observation.Context())).isFalse();
+    assertThat(handler.supportsContext(ChatModelObservationContext.builder()
+        .prompt(new Prompt("질문")).provider("google-genai").build())).isTrue();
+  }
+
+  // input 1000, output 30. total에는 thinking과 tool-use 토큰이 함께 들어간다
+  private static GoogleGenAiUsage geminiUsage(Integer thoughts, Integer cached, Integer toolUse) {
+    int total = 1030 + (thoughts == null ? 0 : thoughts) + (toolUse == null ? 0 : toolUse);
+    return new GoogleGenAiUsage(1000, 30, total, thoughts, cached, toolUse, null, null, null, null, null, null);
   }
 
   private void modelCall(Observation parent, int input, int output) {

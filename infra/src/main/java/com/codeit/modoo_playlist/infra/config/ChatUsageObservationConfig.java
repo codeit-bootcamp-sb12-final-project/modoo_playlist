@@ -10,9 +10,7 @@ public class ChatUsageObservationConfig {
   @Bean
   public ObservationRegistry observationRegistry() {
     ObservationRegistry registry = ObservationRegistry.create();
-    registry.observationConfig()
-        .observationPredicate((name, context) -> name.startsWith("spring.ai.") || name.startsWith("gen_ai."))
-        .observationHandler(new ChatUsageObservationHandler());
+    registry.observationConfig().observationHandler(new ChatUsageObservationHandler());
     return registry;
   }
 }
