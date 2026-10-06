@@ -32,10 +32,12 @@ spring:
         spring.json.add.type.headers: true
 
     consumer:
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      key-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
       auto-offset-reset: latest
       properties:
+        spring.deserializer.key.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
         spring.json.trusted.packages: com.codeit.modoo_playlist.infra.event.kafka,com.codeit.modoo_playlist.infra.event
 
 #  # infra 의존성으로 들어오는 AI 모델/ AI 채팅 메모리 자동 설정을 제외하는 설정
