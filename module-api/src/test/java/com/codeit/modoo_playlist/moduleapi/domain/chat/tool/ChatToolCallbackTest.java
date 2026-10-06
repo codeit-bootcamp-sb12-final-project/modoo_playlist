@@ -24,8 +24,8 @@ class ChatToolCallbackTest {
   void 새_툴_3개가_고유한_이름의_콜백으로_등록된다() {
     ToolCallback[] callbacks = ToolCallbacks.from(
         new GetTrendingTool(null, null),
-        new SummarizeReviewsTool(null),
-        new GetContentDetailTool(null));
+        new SummarizeReviewsTool(null, null),
+        new GetContentDetailTool(null, null));
 
     assertThat(Arrays.stream(callbacks).map(c -> c.getToolDefinition().name()))
         .containsExactlyInAnyOrder("get_trending", "summarize_reviews", "get_content_detail");
@@ -37,9 +37,9 @@ class ChatToolCallbackTest {
     ReviewSummaryService reviewSummaryService = mock(ReviewSummaryService.class);
     when(reviewSummaryService.getReviewSummary(contentId))
         .thenReturn(new ReviewSummaryDto(contentId, "연출이 좋다는 평이 많습니다.", null));
-    ToolCallback callback = ToolCallbacks.from(new SummarizeReviewsTool(reviewSummaryService))[0];
+    ToolCallback callback = ToolCallbacks.from(new SummarizeReviewsTool(reviewSummaryService, new ContentRefResolver(null)))[0];
 
-    String json = callback.call("{\"contentId\":\"" + contentId + "\"}");
+    String json = callback.call("{\"content\":\"" + contentId + "\"}", new ToolContext(Map.of("key", "value")));
 
     assertThat(json).isEqualTo("[\"연출이 좋다는 평이 많습니다.\"]");
   }
@@ -77,9 +77,9 @@ class ChatToolCallbackTest {
     ReviewSummaryService reviewSummaryService = mock(ReviewSummaryService.class);
     when(reviewSummaryService.getReviewSummary(contentId))
         .thenReturn(new ReviewSummaryDto(contentId, null, null));
-    ToolCallback callback = ToolCallbacks.from(new SummarizeReviewsTool(reviewSummaryService))[0];
+    ToolCallback callback = ToolCallbacks.from(new SummarizeReviewsTool(reviewSummaryService, new ContentRefResolver(null)))[0];
 
-    String json = callback.call("{\"contentId\":\"" + contentId + "\"}");
+    String json = callback.call("{\"content\":\"" + contentId + "\"}", new ToolContext(Map.of("key", "value")));
 
     assertThat(json).isEqualTo("[]");
   }

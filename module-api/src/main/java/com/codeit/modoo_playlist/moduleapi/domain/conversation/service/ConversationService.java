@@ -177,10 +177,20 @@ public class ConversationService {
         Message message = messageRepository
                 .findMessageForRead(
                         messageId,
-                        conversationId,
-                        requesterId
+                        conversationId
                 ).orElseThrow(() ->
                         new BaseException(ErrorCode.MESSAGE_NOT_FOUND));
+
+        boolean isSender =
+                message.getSender().getId().equals(requesterId);
+
+        boolean isReceiver = message.getReceiver().getId().equals(requesterId);
+
+        if(!isSender && !isReceiver) {
+            throw new BaseException(ErrorCode.CONVERSATION_ACCESS_DENIED);
+        }
+
+        if(isSender) return;
 
         if (!message.isRead()) {
             message.markAsRead();

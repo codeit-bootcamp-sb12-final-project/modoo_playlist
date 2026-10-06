@@ -22,9 +22,8 @@ public class GetPersonalizedRecommendationsTool {
 
   @Tool(
       name = "get_personalized_recommendations",
-      description = "로그인한 사용자와 취향이 비슷한 사람들이 좋아한 콘텐츠 기반으로 개인화 추천을 합니다. "
-          + "결과에는 유형·연도·국가·태그·감독·출연진·줄거리 요약이 포함됩니다. "
-          + "장르 등 기준이 명확하면 recommend_contents를, 취향 태그 자체가 궁금하면 get_user_preference를 쓰세요."
+      description = "취향이 비슷한 사용자들이 좋아한 콘텐츠로 로그인한 사용자에게 개인화 추천을 합니다. "
+          + "기준이 명확하면 recommend_contents를, 취향 태그 자체가 궁금하면 get_user_preference를 쓰세요."
   )
   public List<ContentDetailDto> getPersonalizedRecommendations(ToolContext toolContext) {
     UUID userId = ChatToolContext.requireUserId(toolContext);

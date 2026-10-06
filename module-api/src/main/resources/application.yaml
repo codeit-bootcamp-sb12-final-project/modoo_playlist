@@ -99,7 +99,6 @@ spring:
       properties:
         spring.deserializer.key.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
         spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
-        # 신뢰 패키지는 하위 패키지를 포함하지 않으므로 이벤트 클래스가 있는 패키지를 모두 적는다.
         spring.json.trusted.packages: com.codeit.modoo_playlist.infra.event,com.codeit.modoo_playlist.infra.event.kafka
 
 user-deletion:

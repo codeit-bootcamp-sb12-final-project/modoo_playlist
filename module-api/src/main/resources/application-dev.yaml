@@ -9,6 +9,8 @@ spring:
     bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     consumer:
       auto-offset-reset: latest
+      properties:
+        spring.json.trusted.packages: com.codeit.modoo_playlist.infra.event.kafka,com.codeit.modoo_playlist.infra.event
 
 
 module-api:

@@ -21,10 +21,8 @@ public class GetTrendingTool {
 
   @Tool(
       name = "get_trending",
-      description = "서비스에서 평점이 높은 인기 콘텐츠를 조회합니다. 사용자가 '요즘 인기 있는 작품', "
-          + "'평점 높은 콘텐츠'처럼 전체적인 흐름을 물을 때 사용합니다. 사용자 취향과 무관한 결과이므로, "
-          + "'뭐 볼까요?' 같은 개인 맞춤 요청에는 get_personalized_recommendations를 먼저 쓰세요. "
-          + "결과에는 유형·연도·국가·태그·감독·출연진·줄거리 요약이 포함됩니다."
+      description = "서비스에서 평점이 높은 인기 콘텐츠를 조회합니다('요즘 인기 작품', '평점 높은 콘텐츠'). "
+          + "취향과 무관한 결과이므로 개인 맞춤 요청에는 get_personalized_recommendations를 먼저 쓰세요."
   )
   public List<ContentDetailDto> getTrending(ToolContext toolContext) {
     log.info("get_trending 호출");

@@ -2,11 +2,14 @@ package com.codeit.modoo_playlist.moduleapi.domain.chat.tool;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.codeit.modoo_playlist.core.global.exception.BaseException;
 import com.codeit.modoo_playlist.core.global.exception.ErrorCode;
+import com.codeit.modoo_playlist.moduleapi.domain.chat.dto.response.ContentCardDto;
+import com.codeit.modoo_playlist.moduleapi.domain.chat.repository.ContentTitleRepository;
 import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.ContentDetailDto;
 import com.codeit.modoo_playlist.moduleapi.domain.recommendation.dto.RecommendedContentDto;
 import com.codeit.modoo_playlist.moduleapi.domain.recommendation.service.RecommendationService;
@@ -22,13 +25,15 @@ import org.springframework.ai.chat.model.ToolContext;
 @ExtendWith(MockitoExtension.class)
 class RecommendContentsToolTest {
 
+  @Mock private ContentTitleRepository contentTitleRepository;
   @Mock private RecommendationService recommendationService;
   @Mock private ContentDetailResolver contentDetailResolver;
 
   private final ToolContext emptyContext = new ToolContext(Map.of());
 
   private RecommendContentsTool tool() {
-    return new RecommendContentsTool(recommendationService, contentDetailResolver);
+    return new RecommendContentsTool(recommendationService, contentDetailResolver,
+        new ContentRefResolver(contentTitleRepository));
   }
 
   @Test
@@ -60,6 +65,22 @@ class RecommendContentsToolTest {
     List<ContentDetailDto> result = tool().recommendContents(contentId.toString(), toolContext);
 
     assertThat(result).containsExactly(detail);
+  }
+
+  @Test
+  void 제목으로_기준_콘텐츠를_찾아_추천하고_기준_콘텐츠는_카드에_넣지_않는다() {
+    UUID contentId = UUID.randomUUID();
+    ContentCardCollector collector = new ContentCardCollector();
+    ToolContext toolContext = new ToolContext(Map.of(ChatToolContext.CARD_COLLECTOR, collector));
+    when(contentTitleRepository.findCardsByNormalizedTitle("토이스토리5"))
+        .thenReturn(List.of(new ContentCardDto(contentId, "토이 스토리 5", "thumb")));
+    when(recommendationService.getSimilarContents(contentId, 5)).thenReturn(List.of());
+    when(contentDetailResolver.resolve(List.of(), toolContext)).thenReturn(List.of());
+
+    tool().recommendContents("토이 스토리 5", toolContext);
+
+    verify(recommendationService).getSimilarContents(contentId, 5);
+    assertThat(collector.getCards()).isEmpty();
   }
 
   @Test

@@ -1,6 +1,8 @@
 package com.codeit.modoo_playlist.infra.config;
 
 import java.time.Duration;
+import java.util.List;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
@@ -37,7 +39,8 @@ public class ChatClientConfig {
 
     ChatMemoryRepository chatMemoryRepository = RedisChatMemoryRepository.builder()
         .jedisClient(jedisClient)
-        .indexName("modoo-chat-index")
+        .indexName("modoo-chat-index-v2")
+        .metadataFields(List.of(Map.of("name", "messageType", "type", "tag")))
         .keyPrefix("modoo-chat:")
         .timeToLive(Duration.ofHours(24))
         .build();
